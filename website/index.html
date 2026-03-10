@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EyeRest — 20-20-20 Eye Rest Rule</title>
+  <meta name="description" content="EyeRest automatically enforces the 20-20-20 rule — every 20 minutes, your screen goes dark for 20 seconds. Free for Mac and Windows." />
+  <meta property="og:title" content="EyeRest — 20-20-20 Eye Rest Rule" />
+  <meta property="og:description" content="Your screen goes dark so your eyes don't have to." />
+  <meta property="og:image" content="https://eyerest.app/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────────────────── -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <ellipse cx="14" cy="14" rx="13" ry="8" stroke="#FF6B35" stroke-width="2.5"/>
+        <circle cx="14" cy="14" r="4" fill="#FF6B35"/>
+      </svg>
+      EyeRest
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#download" class="nav-cta">Download free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="container">
+    <div class="badge">👁 Science-backed eye care</div>
+    <h1>Give your eyes a break.<br /><span class="gradient-text">Automatically.</span></h1>
+    <p class="hero-sub">
+      EyeRest enforces the 20-20-20 rule — every 20 minutes, your screen goes
+      completely dark for 20 seconds so you look 20 feet away. No willpower needed.
+    </p>
+    <div class="hero-btns">
+      <a href="#download" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Free
+      </a>
+      <a href="#how" class="btn btn-ghost">See how it works</a>
+    </div>
+    <p class="hero-note">Free · No account · Mac &amp; Windows</p>
+
+    <!-- App preview mockup -->
+    <div class="mockup-wrap">
+      <div class="menubar-mockup">
+        <div class="menubar-bar">
+          <span class="menubar-icons">●</span>
+          <span class="menubar-title">menubar</span>
+          <div class="menubar-eye">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF6B35"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3" fill="#FF6B35"/></svg>
+          </div>
+        </div>
+        <div class="popup">
+          <div class="popup-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#FF6B35" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="#FF6B35" stroke-width="2"/></svg>
+            <div>
+              <div class="popup-appname">EyeRest</div>
+              <div class="popup-sub">20-20-20 Rule</div>
+            </div>
+          </div>
+          <div class="popup-timer">
+            <div class="popup-timer-label">Next rest in</div>
+            <div class="popup-timer-val" id="timer-demo">18:42</div>
+          </div>
+          <div class="popup-btns">
+            <div class="popup-btn ghost">⏸ Pause</div>
+            <div class="popup-btn accent">👁 Rest Now</div>
+            <div class="popup-btn ghost">↺</div>
+          </div>
+          <div class="popup-settings">
+            <div class="popup-row">
+              <span>Rest every</span><span class="popup-val">20 min</span>
+            </div>
+            <div class="popup-row">
+              <span>Warn before</span><span class="popup-val">2 min</span>
+            </div>
+            <div class="popup-row">
+              <span>Duration</span><span class="popup-val">20 s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="overlay-mockup">
+        <div class="overlay-eye">👁</div>
+        <div class="overlay-title">Rest your eyes</div>
+        <div class="overlay-sub">Look at something 20 feet away</div>
+        <div class="overlay-ring">
+          <svg viewBox="0 0 120 120" width="90" height="90">
+            <circle cx="60" cy="60" r="52" stroke="#333" stroke-width="6" fill="none"/>
+            <circle cx="60" cy="60" r="52" stroke="white" stroke-width="6" fill="none"
+                    stroke-dasharray="327" stroke-dashoffset="82"
+                    stroke-linecap="round" transform="rotate(-90 60 60)" id="ring-demo"/>
+          </svg>
+          <span class="overlay-num" id="count-demo">14</span>
+        </div>
+        <div class="overlay-skip">Skip available in 5s</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS ─────────────────────────────────────────────────────────────── -->
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-num">20</div>
+        <div class="stat-label">minutes between breaks</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <div class="stat-num">20</div>
+        <div class="stat-label">seconds of rest each time</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <div class="stat-num">20</div>
+        <div class="stat-label">feet to focus on</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label">willpower required</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ──────────────────────────────────────────────────────────── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <h2>Everything your eyes need.<br />Nothing they don't.</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🖥</div>
+        <h3>Full-screen blackout</h3>
+        <p>Your entire screen goes black — no sneaking a peek. The only way out is the 20-second countdown.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Advance warning</h3>
+        <p>A slim banner drops from the top of your screen before each break so you're never caught off-guard mid-sentence.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️🖥️</div>
+        <h3>All displays covered</h3>
+        <p>Got two or three monitors? EyeRest blacks out every single one simultaneously.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <h3>Fully customizable</h3>
+        <p>Adjust the interval (5–120 min), warning time, and rest duration to fit your workflow.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔋</div>
+        <h3>Zero battery drain</h3>
+        <p>Sleeps between breaks. Uses a simple timer — no background polling, no energy impact.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <h3>Launch at login</h3>
+        <p>Set it once and forget it. EyeRest starts automatically when your computer boots up.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ──────────────────────────────────────────────────────── -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="section-label">How it works</div>
+    <h2>The 20-20-20 rule,<br />on autopilot.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <h3>Install &amp; forget</h3>
+          <p>Download EyeRest. It lives quietly in your menu bar (Mac) or system tray (Windows) — no Dock icon, no clutter.</p>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <h3>Warning banner drops</h3>
+          <p>A slim notification slides down 2 minutes before your break. You can dismiss it or let it time out naturally.</p>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <h3>Screen goes black</h3>
+          <p>Every display goes completely dark for 20 seconds. Look out a window, stand up, blink — let your eyes reset.</p>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <h3>Back to work</h3>
+          <p>The screen fades back in automatically. The timer resets and the cycle begins again.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DOWNLOAD ──────────────────────────────────────────────────────────── -->
+<section class="download" id="download">
+  <div class="download-glow"></div>
+  <div class="container">
+    <div class="section-label">Download</div>
+    <h2>Free. Forever.</h2>
+    <p class="download-sub">No account, no subscription, no tracking. Just install and go.</p>
+
+    <div class="download-cards">
+
+      <div class="download-card">
+        <div class="platform-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <path d="M35.5 25c-.06-5.37 4.38-7.97 4.58-8.09-2.5-3.65-6.38-4.15-7.74-4.2-3.29-.33-6.43 1.94-8.1 1.94-1.67 0-4.24-1.9-6.98-1.84-3.59.05-6.9 2.09-8.74 5.29-3.74 6.47-.96 16.04 2.69 21.28 1.79 2.57 3.92 5.46 6.71 5.35 2.7-.11 3.72-1.74 6.99-1.74 3.27 0 4.2 1.74 7.07 1.68 2.9-.05 4.75-2.61 6.52-5.2 2.06-2.98 2.91-5.87 2.95-6.02-.06-.03-5.9-2.27-5.95-8.45z" fill="white"/>
+            <path d="M30.12 9.3c1.49-1.8 2.49-4.31 2.22-6.81-2.14.09-4.75 1.43-6.29 3.23-1.38 1.6-2.58 4.16-2.26 6.61 2.39.18 4.84-1.21 6.33-3.03z" fill="white"/>
+          </svg>
+        </div>
+        <div class="platform-name">macOS</div>
+        <div class="platform-req">Requires macOS 13 Ventura or later · Apple Silicon &amp; Intel</div>
+        <a href="https://github.com/Jack-Attackz101/eyerest/releases/latest/download/EyeRest.dmg"
+           class="btn btn-primary btn-download" id="mac-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for Mac
+        </a>
+        <div class="platform-detail">EyeRest.dmg · ~400 KB</div>
+      </div>
+
+      <div class="download-card">
+        <div class="platform-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect x="6" y="6" width="16" height="16" fill="white"/>
+            <rect x="26" y="6" width="16" height="16" fill="white"/>
+            <rect x="6" y="26" width="16" height="16" fill="white"/>
+            <rect x="26" y="26" width="16" height="16" fill="white"/>
+          </svg>
+        </div>
+        <div class="platform-name">Windows</div>
+        <div class="platform-req">Requires Windows 10 or later · 64-bit · Python not needed</div>
+        <a href="https://github.com/Jack-Attackz101/eyerest/releases/latest/download/EyeRest.exe"
+           class="btn btn-primary btn-download" id="win-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for Windows
+        </a>
+        <div class="platform-detail">EyeRest.exe · ~8 MB</div>
+      </div>
+
+    </div>
+
+    <div class="also-python">
+      Prefer to run from source?
+      <a href="https://github.com/Jack-Attackz101/eyerest" target="_blank" rel="noopener">
+        View on GitHub →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="#" class="logo footer-logo">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+          <ellipse cx="14" cy="14" rx="13" ry="8" stroke="#FF6B35" stroke-width="2.5"/>
+          <circle cx="14" cy="14" r="4" fill="#FF6B35"/>
+        </svg>
+        EyeRest
+      </a>
+      <div class="footer-links">
+        <a href="https://github.com/Jack-Attackz101/eyerest" target="_blank" rel="noopener">GitHub</a>
+        <a href="#features">Features</a>
+        <a href="#download">Download</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2024 EyeRest. Free &amp; open source. No data collected. All settings stored locally.
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
