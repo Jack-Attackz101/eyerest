@@ -292,7 +292,20 @@ footer {
 .footer-links { display: flex; gap: 24px; font-size: .85rem; }
 .footer-links a { color: var(--gray); transition: color .2s; }
 .footer-links a:hover { color: var(--white); }
+.footer-bottom {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+}
 .footer-copy { font-size: .78rem; color: #444; }
+.made-by {
+  font-size: .82rem; font-weight: 600;
+  color: var(--gray);
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: color .2s, border-color .2s;
+}
+.made-by:hover { color: var(--accent); border-color: rgba(255,107,53,.4); }
 
 /* ── Scroll reveal ─────────────────────────────────────────────────────────── */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s; }
