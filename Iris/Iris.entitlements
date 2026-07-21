@@ -4,5 +4,8 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<false/>
+	<!-- Required to read camera in-use state under Hardened Runtime (call detection). -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
 </dict>
 </plist>

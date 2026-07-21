@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Iris — the 20-20-20 rule, enforced.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Iris checks whether your camera is active so it can automatically pause breaks during video calls. It never records or transmits video.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

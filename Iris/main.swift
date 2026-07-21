@@ -10,8 +10,13 @@
 
 import Cocoa
 
+NSLog("Iris: main starting")
 let application = NSApplication.shared
+// Instantiating the delegate builds TimerEngine.shared (which touches
+// SMAppService). Logging brackets that so an early crash is locatable.
+NSLog("Iris: creating AppDelegate")
 let delegate = AppDelegate()
 application.delegate = delegate
 application.setActivationPolicy(.accessory)
+NSLog("Iris: delegate set, entering run loop")
 application.run()

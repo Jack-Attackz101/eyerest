@@ -30,27 +30,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Launch
 
+    private enum LaunchError: Error {
+        case statusItemUnavailable
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSLog("Iris: applicationDidFinishLaunching started")
+        do {
+            try performLaunch()
+            NSLog("Iris: launch complete")
+        } catch {
+            NSLog("Iris: FATAL error during launch: \(error)")
+            FileHandle.standardError.write(Data("Iris: FATAL error during launch: \(error)\n".utf8))
+        }
+    }
+
+    private func performLaunch() throws {
         setupStatusItem()
+        NSLog("Iris: status item created")
+        guard statusItem?.button != nil else { throw LaunchError.statusItemUnavailable }
+
         setupPopover()
+        NSLog("Iris: popover configured")
 
         warningController = WarningPillController(engine: engine)
         blackoutController = BlackoutController(engine: engine)
         challengeController = ChallengeController(engine: engine)
-
-        // Auto-pause during calls (Feature 1).
-        callDetector.onChange = { [weak self] inCall in
-            self?.engine.setCallActive(inCall)
-        }
-        callDetector.start()
+        NSLog("Iris: window controllers created")
 
         observeState()
         engine.start()
+        NSLog("Iris: timer engine started")
 
         // Touch the stats engine so the daily rollover / streak check runs, and
         // fire a morning challenge if one is due at launch.
         stats.refreshForToday()
         challengeController.presentIfDue()
+        NSLog("Iris: stats refreshed, challenge checked")
+
+        // Start call detection off the launch path so the menu bar icon is
+        // guaranteed to appear first; any trouble here can't block startup.
+        callDetector.onChange = { [weak self] inCall in
+            self?.engine.setCallActive(inCall)
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.callDetector.start()
+            NSLog("Iris: call detector started")
+        }
     }
 
     // MARK: - Status item

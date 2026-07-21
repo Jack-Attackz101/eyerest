@@ -64,10 +64,18 @@ final class CallDetector {
     }
 
     /// Whether the default video camera is currently in use by any application.
-    /// Reading this property does not prompt for camera permission.
+    /// Reading this property is passive (no capture session, no prompt), but it
+    /// still requires an `NSCameraUsageDescription` in Info.plist; without one,
+    /// touching an `AVCaptureDevice` is a hard TCC crash. We also skip the query
+    /// entirely when access has been explicitly denied/restricted.
     private func isCameraInUse() -> Bool {
-        guard let device = AVCaptureDevice.default(for: .video) else { return false }
-        return device.isInUseByAnotherApplication
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .denied, .restricted:
+            return false
+        default:
+            guard let device = AVCaptureDevice.default(for: .video) else { return false }
+            return device.isInUseByAnotherApplication
+        }
     }
 
     /// Best-effort check for a "Meet" window title in Chrome via Accessibility.
