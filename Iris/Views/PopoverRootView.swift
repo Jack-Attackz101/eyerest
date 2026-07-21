@@ -2,9 +2,8 @@
 //  PopoverRootView.swift
 //  Iris
 //
-//  The popover's container. Holds the dark #111111 background and crossfades
-//  between the main countdown view and the settings panel — no navigation
-//  stack, just a @State flag.
+//  The popover container: crossfades between the main state and the settings
+//  panel. Each face renders its own header.
 //
 
 import SwiftUI
@@ -14,7 +13,7 @@ struct PopoverRootView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x111111)
+            Color.irisBackground
 
             if showSettings {
                 SettingsView(showSettings: $showSettings)
@@ -24,8 +23,8 @@ struct PopoverRootView: View {
                     .transition(.opacity)
             }
         }
-        .frame(width: 280)
+        .frame(width: 300)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showSettings)
+        .animation(.easeInOut(duration: 0.2), value: showSettings)
     }
 }

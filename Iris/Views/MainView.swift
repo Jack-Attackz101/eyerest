@@ -2,8 +2,8 @@
 //  MainView.swift
 //  Iris
 //
-//  Default popover face: header, countdown ring (or a suspension status),
-//  a slim stats row, and the Pause/Rest Now buttons.
+//  Default popover face: header, timer card (status pill, countdown, progress
+//  bar, actions) and a floating stats row.
 //
 
 import SwiftUI
@@ -13,132 +13,158 @@ struct MainView: View {
     @ObservedObject private var stats = StatsEngine.shared
     @Binding var showSettings: Bool
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.timeStyle = .short
-        return f
-    }()
-
     var body: some View {
-        VStack(spacing: 16) {
-            header
-            centerSection
-            if stats.breaksToday >= 1 {
-                statsRow
+        VStack(spacing: 0) {
+            PopoverHeader(showSettings: $showSettings)
+
+            VStack(spacing: 12) {
+                timerCard
+                if stats.breaksToday > 0 {
+                    statsRow
+                }
             }
-            actionButtons
+            .padding(16)
         }
-        .padding(20)
     }
 
-    // MARK: - Header
+    // MARK: - Timer card
 
-    private var header: some View {
-        ZStack {
-            Text("Iris")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
+    private var timerCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            StatusPill(status: statusDescriptor)
 
+            VStack(alignment: .leading, spacing: 2) {
+                Text(engine.formattedTimeRemaining)
+                    .font(.system(size: 52, weight: .thin, design: .monospaced))
+                    .foregroundStyle(.white)
+                    .monospacedDigit()
+                Text("until your next break")
+                    .font(.system(size: 11, weight: .light))
+                    .foregroundStyle(Color.irisTertiary)
+            }
+
+            progressBar
+
+            HStack(spacing: 8) {
+                Button(engine.isPaused ? "Resume" : "Pause") { engine.togglePause() }
+                    .buttonStyle(SecondaryButtonStyle())
+                Button("Rest Now") { engine.restNow() }
+                    .buttonStyle(AccentButtonStyle())
+            }
+            .padding(.top, 2)
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.irisCard)
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.irisBorder, lineWidth: 1))
+        )
+    }
+
+    private var progressBar: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 1).fill(Color.white.opacity(0.08))
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(Color.irisAccent)
+                    .frame(width: max(0, geo.size.width * engine.intervalElapsedFraction))
+            }
+        }
+        .frame(height: 2)
+        .animation(.easeInOut(duration: 0.9), value: engine.intervalElapsedFraction)
+    }
+
+    // MARK: - Stats row
+
+    private var statsRow: some View {
+        HStack {
+            Text("🔥 \(stats.currentStreak) day streak")
+            Spacer()
+            Text("\(stats.breaksToday) breaks today")
+        }
+        .font(.system(size: 11))
+        .foregroundStyle(Color.irisTertiary)
+        .padding(.horizontal, 4)
+    }
+
+    // MARK: - Status descriptor
+
+    private var statusDescriptor: StatusPill.Descriptor {
+        if engine.timerState == .warning {
+            return .init(color: Color.irisAccent, text: "Break soon", pulsing: true)
+        }
+        switch engine.popoverStatus {
+        case .scheduled(let label, _):
+            return .init(color: .gray, text: label, pulsing: false)
+        case .callDetected:
+            return .init(color: .orange, text: "Call detected", pulsing: false)
+        case .quietHours:
+            return .init(color: .gray, text: "Quiet hours", pulsing: false)
+        case .userPaused:
+            return .init(color: .yellow, text: "Paused", pulsing: false)
+        case .counting:
+            return .init(color: .green, text: "Active", pulsing: false)
+        }
+    }
+}
+
+// MARK: - Shared popover header
+
+struct PopoverHeader: View {
+    @Binding var showSettings: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
             HStack {
-                Image(systemName: "eye.fill")
-                    .font(.system(size: 16))
+                Text("iris")
+                    .font(.system(size: 16, weight: .light))
                     .foregroundStyle(.white)
                 Spacer()
                 Button {
                     showSettings = true
                 } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.white.opacity(0.8))
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color.irisSecondary)
                 }
                 .buttonStyle(.plain)
             }
+            .padding(16)
+
+            Rectangle()
+                .fill(Color.irisBorder)
+                .frame(height: 1)
         }
     }
+}
 
-    // MARK: - Center (countdown ring or suspension status)
+// MARK: - Status pill
 
-    @ViewBuilder
-    private var centerSection: some View {
-        switch engine.popoverStatus {
-        case .counting, .userPaused:
-            VStack(spacing: 8) {
-                ZStack {
-                    CountdownRing(progress: engine.intervalElapsedFraction, diameter: 130, lineWidth: 3)
-                    Text(engine.formattedTimeRemaining)
-                        .font(.system(size: 26, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.white)
+struct StatusPill: View {
+    struct Descriptor {
+        let color: Color
+        let text: String
+        let pulsing: Bool
+    }
+
+    let status: Descriptor
+    @State private var pulse = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(status.color)
+                .frame(width: 6, height: 6)
+                .opacity(status.pulsing && pulse ? 0.3 : 1.0)
+                .onAppear {
+                    guard status.pulsing else { return }
+                    withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                        pulse = true
+                    }
                 }
-                Text("until your next break")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.gray)
-            }
-
-        case .callDetected:
-            statusView(icon: "video.fill", title: "Paused — call detected", subtitle: nil)
-
-        case .quietHours:
-            statusView(icon: "moon.fill", title: "Quiet hours active", subtitle: nil)
-
-        case let .scheduled(label, endsAt):
-            statusView(icon: "calendar",
-                       title: "Paused — \(label)",
-                       subtitle: "ends at \(Self.timeFormatter.string(from: endsAt))")
-        }
-    }
-
-    private func statusView(icon: String, title: String, subtitle: String?) -> some View {
-        VStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 34))
-                .foregroundStyle(.white.opacity(0.85))
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-            if let subtitle {
-                Text(subtitle)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.gray)
-            }
-        }
-        .frame(height: 138)
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Stats row (Feature 2)
-
-    private var statsRow: some View {
-        HStack {
-            Label {
-                Text("\(stats.currentStreak) day\(stats.currentStreak == 1 ? "" : "s")")
-            } icon: {
-                Image(systemName: "flame.fill")
-            }
-            Spacer()
-            Label {
-                Text("\(stats.breaksToday) today")
-            } icon: {
-                Image(systemName: "eye.fill")
-            }
-        }
-        .font(.system(size: 11))
-        .foregroundStyle(.gray)
-    }
-
-    // MARK: - Buttons
-
-    private var actionButtons: some View {
-        HStack(spacing: 10) {
-            Button(engine.isPaused ? "Resume" : "Pause") {
-                engine.togglePause()
-            }
-            .buttonStyle(OutlineButtonStyle())
-
-            Button("Rest Now") {
-                engine.restNow()
-            }
-            .buttonStyle(FilledButtonStyle())
+            Text(status.text)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Color.irisSecondary)
         }
     }
 }

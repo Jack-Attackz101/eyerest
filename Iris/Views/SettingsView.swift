@@ -2,9 +2,8 @@
 //  SettingsView.swift
 //  Iris
 //
-//  The settings face of the popover, organized into sections. Every control
-//  binds straight to the shared TimerEngine, whose property observers persist
-//  to UserDefaults immediately. The section body scrolls if it overflows.
+//  Settings face of the popover: a back header and scrollable, sectioned
+//  controls bound directly to the shared TimerEngine.
 //
 
 import SwiftUI
@@ -16,84 +15,75 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
-                .padding(.bottom, 10)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 20) {
                     timerSection
-                    SectionDivider()
                     soundSection
-                    SectionDivider()
                     scheduleSection
-                    SectionDivider()
                     wellnessSection
-                    SectionDivider()
                     systemSection
-                    SectionDivider()
                     quitButton
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 18)
             }
-            .frame(height: 420)
+            .frame(height: 440)
         }
-        .frame(width: 280)
     }
 
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Button {
                 showSettings = false
             } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.left")
+                    Text("Settings")
+                }
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.white)
             }
             .buttonStyle(.plain)
-
-            Text("Settings")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-
             Spacer()
         }
+        .padding(16)
     }
 
     // MARK: - Sections
 
     private var timerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Timer")
-            SettingStepperRow(label: "Break interval", value: $engine.intervalMinutes,
+            SettingStepperRow(label: "Break every", value: $engine.intervalMinutes,
                               range: 5...120, step: 5, display: "\(engine.intervalMinutes) min")
             SettingStepperRow(label: "Warn me", value: $engine.warningMinutes,
                               range: 1...5, step: 1, display: "\(engine.warningMinutes) min before")
-            SettingStepperRow(label: "Rest duration", value: $engine.restDuration,
+            SettingStepperRow(label: "Rest for", value: $engine.restDuration,
                               range: 10...60, step: 5, display: "\(engine.restDuration) sec")
         }
     }
 
     private var soundSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Sound")
             SettingToggleRow(label: "Sound cues", isOn: $engine.soundEnabled)
-            SettingToggleRow(label: "Ambient sound", isOn: $engine.ambientSoundEnabled)
+            SettingToggleRow(label: "Ambient during rest", isOn: $engine.ambientSoundEnabled)
         }
     }
 
     private var scheduleSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Schedule")
             ScheduleSettingsSection()
         }
     }
 
     private var wellnessSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Wellness")
             SettingToggleRow(label: "Posture nudges", isOn: $engine.postureNudgesEnabled)
             ChallengeSettingsSection()
@@ -101,10 +91,10 @@ struct SettingsView: View {
     }
 
     private var systemSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "System")
             SettingToggleRow(label: "Launch at login", isOn: $engine.launchAtLogin)
-            SettingToggleRow(label: "Auto-pause during calls", isOn: $engine.autoPauseDuringCalls)
+            SettingToggleRow(label: "Pause during calls", isOn: $engine.autoPauseDuringCalls)
         }
     }
 
@@ -113,11 +103,17 @@ struct SettingsView: View {
             NSApp.terminate(nil)
         } label: {
             Text("Quit Iris")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Color.red)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color(hex: 0xCC4444))
                 .frame(maxWidth: .infinity)
-                .frame(height: 30)
+                .frame(height: 36)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(hex: 0x1A0A0A))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: 0x3D1010), lineWidth: 1))
+                )
         }
         .buttonStyle(.plain)
+        .padding(.top, 8)
     }
 }

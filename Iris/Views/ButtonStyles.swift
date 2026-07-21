@@ -2,42 +2,46 @@
 //  ButtonStyles.swift
 //  Iris
 //
-//  The two action-button looks used in the popover: a white outline button and
-//  a filled white button. Both are 32pt tall with a 10pt corner radius.
+//  The two popover action-button looks: a neutral secondary button and the
+//  accent-blue primary button. Both 34pt tall, 8pt corner radius.
 //
 
 import SwiftUI
 
-/// Outline style — white border, white text, transparent fill.
-struct OutlineButtonStyle: ButtonStyle {
+/// Secondary — #1e1e1e fill, subtle white border, white text.
+struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .medium))
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 32)
+            .frame(height: 34)
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.irisButton)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
             )
-            .contentShape(RoundedRectangle(cornerRadius: 10))
-            .opacity(configuration.isPressed ? 0.6 : 1.0)
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .opacity(configuration.isPressed ? 0.65 : 1.0)
     }
 }
 
-/// Filled style — solid white fill, black text.
-struct FilledButtonStyle: ButtonStyle {
+/// Primary — accent-blue fill, white text.
+struct AccentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(.black)
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 32)
+            .frame(height: 34)
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.white)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.irisAccent)
             )
-            .contentShape(RoundedRectangle(cornerRadius: 10))
-            .opacity(configuration.isPressed ? 0.7 : 1.0)
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
 }

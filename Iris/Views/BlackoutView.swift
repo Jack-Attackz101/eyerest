@@ -2,9 +2,10 @@
 //  BlackoutView.swift
 //  Iris
 //
-//  The full-screen rest overlay shown on every display. Pure black with the eye
-//  glyph, a depleting countdown ring and the remaining seconds. Opacity is
-//  driven by the controller for the fade in/out.
+//  The full-screen rest overlay shown on every display. Pure black with a
+//  refined eye glyph, a depleting countdown ring, the remaining seconds, a
+//  posture nudge, and a barely-there wordmark. Opacity is driven by the
+//  controller for the fade in/out.
 //
 
 import SwiftUI
@@ -29,28 +30,38 @@ struct BlackoutView: View {
             VStack(spacing: 18) {
                 ZStack {
                     CountdownRing(progress: engine.restFraction, diameter: 150, lineWidth: 3)
-                    Image(systemName: "eye.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.white)
+                    Image(systemName: "eye")
+                        .font(.system(size: 56))
+                        .foregroundStyle(.white.opacity(0.9))
                 }
 
                 Text("\(max(0, engine.restTimeRemaining))")
-                    .font(.system(size: 52, weight: .thin))
+                    .font(.system(size: 64, weight: .thin, design: .monospaced))
                     .foregroundStyle(.white)
 
                 Text("seconds")
-                    .font(.system(size: 14, weight: .light))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .font(.system(size: 13, weight: .light))
+                    .foregroundStyle(.white.opacity(0.4))
 
                 if !model.promptText.isEmpty {
                     Text(model.promptText)
-                        .font(.system(size: 16, weight: .light))
+                        .font(.system(size: 15, weight: .light))
                         .italic()
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(.white.opacity(0.35))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 280)
                         .padding(.top, 12)
                         .opacity(model.showPrompt ? 1 : 0)
                         .animation(.easeInOut(duration: 0.5), value: model.showPrompt)
                 }
+            }
+
+            VStack {
+                Spacer()
+                Text("iris")
+                    .font(.system(size: 11, weight: .light))
+                    .foregroundStyle(.white.opacity(0.15))
+                    .padding(.bottom, 28)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

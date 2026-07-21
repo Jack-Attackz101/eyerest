@@ -17,13 +17,13 @@ struct ChallengeSettingsSection: View {
     }()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             SettingToggleRow(label: "Physical challenge", isOn: $engine.challenge.isEnabled)
 
             if engine.challenge.isEnabled {
                 exercisePicker
                 repsStepper
-                triggerPicker
+                triggerControl
 
                 if engine.challenge.triggerMode.usesMorningTime {
                     morningTimePicker
@@ -31,7 +31,7 @@ struct ChallengeSettingsSection: View {
 
                 Text(previewText)
                     .font(.system(size: 11))
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(Color.irisTertiary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
             }
@@ -42,57 +42,58 @@ struct ChallengeSettingsSection: View {
 
     private var exercisePicker: some View {
         HStack {
-            Text("Exercise").font(.system(size: 12)).foregroundStyle(.white)
+            Text("Exercise").font(.system(size: 13)).foregroundStyle(Color.irisSecondary)
             Spacer()
             Picker("", selection: exerciseBinding) {
-                ForEach(Exercise.allCases) { ex in
-                    Text(ex.rawValue).tag(ex)
-                }
+                ForEach(Exercise.allCases) { ex in Text(ex.rawValue).tag(ex) }
             }
-            .labelsHidden()
-            .fixedSize()
+            .labelsHidden().fixedSize().tint(Color.irisSecondary)
         }
+        .frame(height: 36)
     }
 
     private var repsStepper: some View {
         HStack {
-            Text("Amount").font(.system(size: 12)).foregroundStyle(.white)
+            Text("Reps").font(.system(size: 13)).foregroundStyle(Color.irisSecondary)
             Spacer()
             Text("\(engine.challenge.reps) \(currentExercise.repUnit)")
-                .font(.system(size: 12))
-                .foregroundStyle(.gray)
+                .font(.system(size: 13)).foregroundStyle(.white)
             Stepper("", value: $engine.challenge.reps, in: 1...50, step: 1).labelsHidden()
         }
+        .frame(height: 36)
     }
 
-    private var triggerPicker: some View {
-        HStack {
-            Text("When").font(.system(size: 12)).foregroundStyle(.white)
-            Spacer()
-            Picker("", selection: $engine.challenge.triggerMode) {
-                ForEach(Challenge.TriggerMode.allCases) { mode in
-                    Text(mode.displayName).tag(mode)
-                }
+    private var triggerControl: some View {
+        Picker("", selection: $engine.challenge.triggerMode) {
+            ForEach(Challenge.TriggerMode.allCases) { mode in
+                Text(shortLabel(mode)).tag(mode)
             }
-            .labelsHidden()
-            .fixedSize()
         }
+        .labelsHidden()
+        .pickerStyle(.segmented)
     }
 
     private var morningTimePicker: some View {
         HStack {
-            Text("After").font(.system(size: 12)).foregroundStyle(.white)
+            Text("After").font(.system(size: 13)).foregroundStyle(Color.irisSecondary)
             Spacer()
             DatePicker("", selection: morningTimeBinding, displayedComponents: .hourAndMinute)
-                .labelsHidden()
-                .datePickerStyle(.stepperField)
-                .fixedSize()
+                .labelsHidden().datePickerStyle(.stepperField).fixedSize()
         }
+        .frame(height: 36)
     }
 
     // MARK: - Bindings / helpers
 
     private var currentExercise: Exercise { Exercise.from(engine.challenge.exercise) }
+
+    private func shortLabel(_ mode: Challenge.TriggerMode) -> String {
+        switch mode {
+        case .morningOnly: return "Morning"
+        case .everyUnlock: return "Every unlock"
+        case .both: return "Both"
+        }
+    }
 
     private var exerciseBinding: Binding<Exercise> {
         Binding(
