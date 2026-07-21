@@ -18,9 +18,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let sound = SoundManager()
     private let ambient = AmbientPlayer()
     private let callDetector = CallDetector()
+    private let dashboard = DashboardState()
 
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
+    private var dashboardPanel: DashboardPanelController!
     private var warningController: WarningPillController!
     private var blackoutController: BlackoutController!
     private var challengeController: ChallengeController!
@@ -47,7 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusItem()
         guard statusItem?.button != nil else { throw LaunchError.statusItemUnavailable }
 
-        setupPopover()
+        dashboardPanel = DashboardPanelController(engine: engine, dashboard: dashboard)
 
         warningController = WarningPillController(engine: engine)
         blackoutController = BlackoutController(engine: engine)
@@ -92,33 +93,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return image
     }
 
-    // MARK: - Popover
-
-    private func setupPopover() {
-        let popover = NSPopover()
-        popover.behavior = .transient
-        popover.animates = true
-        popover.appearance = NSAppearance(named: .darkAqua)
-        // Size the popover to the SwiftUI content (no dead space).
-        let hosting = NSHostingController(rootView: PopoverRootView().environmentObject(engine))
-        hosting.sizingOptions = .preferredContentSize
-        popover.contentViewController = hosting
-        self.popover = popover
-    }
+    // MARK: - Popover (cinematic dashboard panel)
 
     @objc private func togglePopover() {
         guard let button = statusItem.button else {
             FileHandle.standardError.write(Data("Iris: status item button unavailable\n".utf8))
             return
         }
-        if popover.isShown {
-            popover.performClose(nil)
-        } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            // Activating makes the transient popover reliably appear and take focus.
-            NSApp.activate(ignoringOtherApps: true)
-            popover.contentViewController?.view.window?.makeKey()
-        }
+        dashboardPanel.toggle(from: button)
     }
 
     // MARK: - State observation
@@ -144,7 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             warningController.show()
         case .resting:
             updateIcon(symbol: "eye.slash", pulsing: false)
-            popover.performClose(nil)
+            dashboardPanel.hide()
             blackoutController.show()
         }
 

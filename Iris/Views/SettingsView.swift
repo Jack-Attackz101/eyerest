@@ -29,8 +29,9 @@ struct SettingsView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 18)
             }
-            .frame(height: 440)
         }
+        .frame(width: 320, height: 380)
+        .background(Color.irisBackground.opacity(0.97))
     }
 
     // MARK: - Header
