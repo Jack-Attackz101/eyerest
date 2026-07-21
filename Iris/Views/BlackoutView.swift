@@ -13,6 +13,9 @@ import SwiftUI
 final class BlackoutModel: ObservableObject {
     @Published var visible = false
     @Published var fadeDuration: Double = 0.6
+    /// Posture nudge (Feature 5). Shown a couple of seconds into the rest.
+    @Published var promptText: String = ""
+    @Published var showPrompt: Bool = false
 }
 
 struct BlackoutView: View {
@@ -38,6 +41,16 @@ struct BlackoutView: View {
                 Text("seconds")
                     .font(.system(size: 14, weight: .light))
                     .foregroundStyle(.white.opacity(0.6))
+
+                if !model.promptText.isEmpty {
+                    Text(model.promptText)
+                        .font(.system(size: 16, weight: .light))
+                        .italic()
+                        .foregroundStyle(.white.opacity(0.5))
+                        .padding(.top, 12)
+                        .opacity(model.showPrompt ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.5), value: model.showPrompt)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

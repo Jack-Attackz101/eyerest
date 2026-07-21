@@ -41,6 +41,7 @@ final class BlackoutController {
 
         model.fadeDuration = 0.6
         startEventMonitor()
+        preparePosturePrompt()
 
         // Flip visibility next runloop so the 0 -> 1 opacity fade actually plays.
         DispatchQueue.main.async { [weak self] in
@@ -48,10 +49,25 @@ final class BlackoutController {
         }
     }
 
+    /// Feature 5: pick this session's prompt and reveal it 2s in (fade over 0.5s).
+    private func preparePosturePrompt() {
+        model.showPrompt = false
+        guard engine.postureNudgesEnabled else {
+            model.promptText = ""
+            return
+        }
+        model.promptText = engine.consumePosturePrompt()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self, self.isActive else { return }
+            self.model.showPrompt = true
+        }
+    }
+
     func hide() {
         isActive = false
         model.fadeDuration = 0.8
         model.visible = false
+        model.showPrompt = false
         stopEventMonitor()
 
         // Tear the panels down after the fade-out completes.

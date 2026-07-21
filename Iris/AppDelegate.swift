@@ -14,12 +14,16 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let engine = TimerEngine.shared
+    private let stats = StatsEngine.shared
     private let sound = SoundManager()
+    private let ambient = AmbientPlayer()
+    private let callDetector = CallDetector()
 
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var warningController: WarningPillController!
     private var blackoutController: BlackoutController!
+    private var challengeController: ChallengeController!
 
     private var cancellables = Set<AnyCancellable>()
     private var previousState: TimerEngine.TimerState = .idle
@@ -32,9 +36,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         warningController = WarningPillController(engine: engine)
         blackoutController = BlackoutController(engine: engine)
+        challengeController = ChallengeController(engine: engine)
+
+        // Auto-pause during calls (Feature 1).
+        callDetector.onChange = { [weak self] inCall in
+            self?.engine.setCallActive(inCall)
+        }
+        callDetector.start()
 
         observeState()
         engine.start()
+
+        // Touch the stats engine so the daily rollover / streak check runs, and
+        // fire a morning challenge if one is due at launch.
+        stats.refreshForToday()
+        challengeController.presentIfDue()
     }
 
     // MARK: - Status item
@@ -93,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // --- Entering a state ---
         switch state {
-        case .idle, .counting:
+        case .idle, .counting, .scheduledPause:
             updateIcon(symbol: "eye.fill", pulsing: false)
         case .warning:
             updateIcon(symbol: "eye.fill", pulsing: true)
@@ -118,9 +134,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if state == .resting && previous != .resting {
             sound.play(.restStart, enabled: engine.soundEnabled)
+            if engine.soundEnabled && engine.ambientSoundEnabled {
+                ambient.start()
+            }
         }
         if previous == .resting && state != .resting {
             sound.play(.restEnd, enabled: engine.soundEnabled)
+            ambient.stop()
         }
 
         previousState = state
