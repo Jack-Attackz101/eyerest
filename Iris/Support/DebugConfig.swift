@@ -17,7 +17,7 @@ enum DebugConfig {
     /// ⚠️ SHIPPING: flip this to `false`. It is *also* force-disabled in Release
     /// builds below, so a stray `true` can never reach production — but keep it
     /// tidy anyway.
-    private static let fastCycleRequested = true
+    private static let fastCycleRequested = false
 
     /// The effective flag. Always `false` outside of Debug builds.
     static var fastCycle: Bool {
