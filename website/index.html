@@ -3,378 +3,560 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Iris — 20-20-20 Eye Care for Mac</title>
-  <meta name="description" content="Iris enforces the 20-20-20 rule automatically. Every 20 minutes, your screen goes dark for 20 seconds. A quiet macOS menu bar app. Free." />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Iris — 20-20-20 Eye Care for Mac" />
-  <meta property="og:description" content="Rest your eyes. Your screen will remind you." />
+  <title>Iris — Rest your eyes, automatically.</title>
+  <meta name="description" content="Iris enforces the 20-20-20 eye health rule on macOS. Every 20 minutes, your screen goes dark for 20 seconds. Free." />
+  <meta property="og:title" content="Iris" />
+  <meta property="og:description" content="Rest your eyes, automatically." />
   <meta property="og:image" content="/og-image.png" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Shippori+Mincho:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/splitting/1.0.6/splitting.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/splitting/1.0.6/splitting.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
   <style>
     :root {
-      --bg: #F5F0E8;
-      --surface: #EDE8DC;
-      --text: #2C3B2D;
-      --text-2: #7A8C6E;
-      --sage: #4A6741;
-      --sage-dark: #3A5331;
-      --sky: #7BAFD4;
-      --terracotta: #C4956A;
-      --border: #D4CCBC;
-      --maxw: 1120px;
-      --serif: "Noto Serif JP", Georgia, serif;
+      --bg-base: #F4EFE6;
+      --bg-surface: #EDE6D9;
+      --bg-dark: #1C2B1E;
+      --bg-ink: #0E1A10;
+      --text-primary: #1C2B1E;
+      --text-secondary: #5C6B52;
+      --text-tertiary: #8A9A80;
+      --text-inverse: #F4EFE6;
+      --accent-sage: #4A7A3A;
+      --accent-sky: #6BA3BE;
+      --accent-earth: #8B6914;
+      --accent-ink: #2C1810;
+      --border: #D4C9B4;
+      --border-dark: #2d4a2d;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out-circ: cubic-bezier(0.85, 0, 0.15, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.25rem;
+      --text-xl: 1.5rem;
+      --text-2xl: 2rem;
+      --text-3xl: 3rem;
+      --text-hero: clamp(4rem, 8vw, 7rem);
+      --text-huge: clamp(6rem, 14vw, 12rem);
+
+      --serif: "Shippori Mincho", Georgia, serif;
       --sans: "DM Sans", sans-serif;
-      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --mono: "Azeret Mono", ui-monospace, monospace;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
-    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.6; overflow-x: hidden; }
-    ::selection { background: rgba(74, 103, 65, 0.2); }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--sans); font-size: var(--text-base); line-height: 1.6; overflow-x: hidden; }
     a { color: inherit; text-decoration: none; }
-    .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 40px; }
+    ::selection { background: rgba(74, 122, 58, 0.2); }
+    h1, h2, h3 { font-family: var(--serif); font-weight: 400; line-height: 1.08; }
 
-    h1, h2, h3 { font-family: var(--serif); font-weight: 500; color: var(--text); letter-spacing: 0.01em; }
+    /* ---------- custom cursor ---------- */
+    .cursor { position: fixed; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%;
+      background: var(--accent-sage); mix-blend-mode: multiply; pointer-events: none; z-index: 9999;
+      transform: translate(-50%, -50%); transition: width 0.3s var(--ease-out-expo), height 0.3s var(--ease-out-expo), border-radius 0.3s var(--ease-out-expo); }
+    .cursor.big { width: 40px; height: 40px; }
+    @media (hover: none) { .cursor { display: none; } }
 
-    /* ---------------- NAV ---------------- */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 40px; background: var(--bg);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      border-bottom: 1px solid transparent;
-    }
-    nav.scrolled { border-bottom: 1px solid var(--border); box-shadow: 0 2px 20px rgba(44, 59, 45, 0.04); }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand .name { font-family: var(--serif); font-size: 18px; color: var(--text); }
-    .btn-download {
-      background: var(--sage); color: #fff; font-family: var(--sans); font-weight: 500; font-size: 14px;
-      padding: 10px 22px; border-radius: 24px; transition: background 0.25s ease;
-    }
-    .btn-download:hover { background: var(--sage-dark); }
+    /* ---------- preloader ---------- */
+    .preloader { position: fixed; inset: 0; z-index: 10000; background: var(--bg-ink);
+      display: flex; align-items: center; justify-content: center; transition: transform 0.7s var(--ease-in-out-circ); }
+    .preloader.done { transform: translateY(-100%); }
+    .preloader svg { width: 40px; height: 40px; color: var(--text-inverse); animation: logo-pulse 0.6s var(--ease-out-expo) 0.3s; }
+    @keyframes logo-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 
-    /* ---------------- HERO ---------------- */
-    .hero { min-height: 100vh; display: grid; grid-template-columns: 60% 40%; align-items: center; position: relative; padding-top: 80px; }
-    .hero-left { position: relative; z-index: 2; }
-    .eyebrow { font-family: var(--mono); font-size: 13px; letter-spacing: 0.2em; color: var(--sky); }
-    .hero h1 { font-size: clamp(42px, 5.6vw, 72px); line-height: 1.12; margin: 20px 0 24px; }
-    .hero h1 .soft { font-weight: 400; color: var(--text-2); }
-    .hero-sub { font-size: 18px; color: var(--text-2); max-width: 480px; line-height: 1.7; }
-    .cta-row { display: flex; align-items: center; gap: 22px; margin-top: 40px; }
-    .btn-primary {
-      display: inline-flex; align-items: center; justify-content: center;
-      background: var(--sage); color: #fff; font-family: var(--sans); font-weight: 500; font-size: 15px;
-      height: 52px; width: 180px; border-radius: 24px; transition: background 0.25s ease;
-    }
-    .btn-primary:hover { background: var(--sage-dark); }
-    .btn-secondary { color: var(--sage); font-family: var(--sans); font-weight: 500; font-size: 15px; border-bottom: 1px solid transparent; padding-bottom: 2px; }
-    .btn-secondary:hover { border-bottom-color: var(--sage); }
-    .meta-line { margin-top: 26px; font-family: var(--mono); font-size: 12px; color: var(--text-2); letter-spacing: 0.02em; }
+    /* ---------- reveals ---------- */
+    [data-splitting] .char { display: inline-block; opacity: 0; transform: translateY(40px) rotate(8deg);
+      transition: opacity 0.6s var(--ease-out-expo), transform 0.6s var(--ease-out-expo);
+      transition-delay: calc(var(--char-index, 0) * 0.025s); }
+    .revealed[data-splitting] .char, .revealed [data-splitting] .char { opacity: 1; transform: none; }
+    .line-reveal > * { opacity: 0; transform: translateY(16px); transition: opacity 0.6s var(--ease-out-expo), transform 0.6s var(--ease-out-expo); }
+    .line-reveal.revealed > * { opacity: 1; transform: none; }
+    .line-reveal.revealed > *:nth-child(2) { transition-delay: 0.08s; }
+    .line-reveal.revealed > *:nth-child(3) { transition-delay: 0.16s; }
+    .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo); }
+    .fade-up.revealed { opacity: 1; transform: none; }
 
-    /* hero right — decorative stage */
-    .hero-right { position: relative; height: 460px; display: flex; align-items: center; justify-content: center; }
-    .torii { position: absolute; right: -40px; top: 50%; transform: translateY(-50%); height: 300px; color: var(--sage); opacity: 0.06; z-index: 0; }
-    .eye-ring { width: 300px; height: 300px; color: var(--sage); z-index: 1; animation: rotate 30s linear infinite; }
-    @keyframes rotate { to { transform: rotate(360deg); } }
+    /* ---------- nav ---------- */
+    nav { position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 40px;
+      background: transparent; border-bottom: 1px solid transparent; transition: background 0.4s var(--ease-out-expo), border-color 0.4s var(--ease-out-expo), backdrop-filter 0.4s; }
+    nav.scrolled { background: rgba(244, 239, 230, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom-color: var(--border); }
+    .nav-brand { display: flex; align-items: center; gap: 9px; }
+    .nav-brand .eye { transition: transform 0.4s var(--ease-spring); }
+    .nav-brand:hover .eye { transform: rotate(15deg); }
+    .nav-brand span { font-family: var(--serif); font-weight: 600; font-size: 18px; letter-spacing: -0.02em; }
+    .nav-dl { background: var(--accent-sage); color: var(--text-inverse); border-radius: 100px; padding: 10px 24px;
+      font-family: var(--sans); font-weight: 500; font-size: 14px; transition: transform 0.3s var(--ease-spring); will-change: transform; }
 
-    /* train line + moving train */
-    .train-track { position: absolute; left: -10%; right: -10%; top: 78%; height: 2px; background: rgba(123, 175, 212, 0.6); z-index: 1; }
-    .train { position: absolute; top: 78%; left: 0; transform: translate(-40px, -50%); z-index: 2; animation: ride 18s linear infinite; }
-    @keyframes ride { from { left: -6%; } to { left: 106%; } }
+    /* ---------- hero ---------- */
+    .hero { min-height: 100svh; display: grid; grid-template-columns: 58% 42%; align-items: center; gap: 60px; padding: 0 80px; overflow: hidden; }
+    .eyebrow { font-family: var(--mono); font-size: 12px; color: var(--accent-sage); letter-spacing: 0.15em; display: inline-flex; flex-direction: column; }
+    .eyebrow .rule-line { height: 1px; background: var(--accent-sage); width: 0; margin-top: 6px; }
+    .revealed .eyebrow .rule-line { width: 100%; transition: width 0.6s var(--ease-out-expo) 0.2s; }
+    .hero h1 { margin: 22px 0 0; }
+    .hero h1 .l1 { display: block; font-weight: 300; font-size: var(--text-huge); color: var(--text-primary); }
+    .hero h1 .l2 { display: inline-block; position: relative; font-weight: 700; font-size: var(--text-huge); color: var(--accent-sage); }
+    .brush { position: absolute; left: -2%; bottom: -0.12em; width: 104%; height: 0.35em; overflow: visible; }
+    .brush path { fill: none; stroke: var(--accent-sky); stroke-opacity: 0.6; stroke-width: 10; stroke-linecap: round;
+      stroke-dasharray: 640; stroke-dashoffset: 640; }
+    .revealed .brush path { animation: draw 0.8s var(--ease-out-expo) 0.6s forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    .hero-sub { margin-top: 30px; max-width: 440px; font-size: var(--text-lg); color: var(--text-secondary); line-height: 1.75; }
+    .cta-row { display: flex; align-items: center; gap: 26px; margin-top: 40px; }
+    .btn-primary { background: var(--accent-sage); color: var(--text-inverse); padding: 16px 36px; border-radius: 4px;
+      font-family: var(--sans); font-weight: 500; font-size: 15px; border: 1px solid transparent; transition: background 0.3s var(--ease-out-expo), border-color 0.3s var(--ease-out-expo); }
+    .btn-primary:hover { background: var(--bg-ink); border-color: var(--accent-sage); }
+    .btn-ghost { color: var(--text-secondary); font-family: var(--sans); font-size: 14px; transition: color 0.3s; }
+    .btn-ghost:hover { color: var(--accent-sage); }
+    .btn-ghost .arrow { display: inline-block; animation: bounce 1.5s ease-in-out 2s infinite; }
+    .btn-ghost:hover .arrow { animation-duration: 0.75s; }
+    @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+    .meta { margin-top: 16px; font-family: var(--mono); font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.05em; }
 
-    /* ink brush texture */
-    .ink { position: absolute; border-radius: 50%; background: var(--text); filter: blur(30px); z-index: 0; pointer-events: none; }
-    .ink.a { width: 420px; height: 60px; top: 24%; left: -60px; opacity: 0.05; }
-    .ink.b { width: 320px; height: 44px; top: 62%; left: 20%; opacity: 0.04; }
+    /* hero art */
+    .hero-art { position: relative; width: clamp(340px, 40vw, 520px); aspect-ratio: 1; margin-left: auto; }
+    .art-ring { position: absolute; inset: 10%; border: 1px solid var(--border); border-radius: 50%; animation: spin 60s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .scene { position: absolute; inset: 14%; border-radius: 50%; overflow: hidden; }
+    .train { animation: drift 8s ease-in-out infinite alternate; }
+    @keyframes drift { from { transform: translateX(40px); } to { transform: translateX(-40px); } }
+    .counter-pill { position: absolute; font-family: var(--mono); font-size: 11px; background: var(--bg-surface); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 100px; opacity: 0; }
+    .revealed .counter-pill { opacity: 1; transition: opacity 0.5s var(--ease-out-expo); }
+    .counter-pill.c-top { top: -2%; left: 50%; transform: translateX(-50%); color: var(--accent-sage); animation: float 3s ease-in-out infinite; }
+    .counter-pill.c-right { top: 46%; right: -8%; color: var(--accent-sky); animation: float 3s ease-in-out 1s infinite; }
+    .counter-pill.c-left { bottom: 6%; left: -6%; color: var(--text-secondary); animation: float 3s ease-in-out 2s infinite; }
+    .revealed .counter-pill.c-right { transition-delay: 0.5s; }
+    .revealed .counter-pill.c-left { transition-delay: 1s; }
+    @keyframes float { 0%,100% { transform: translateY(0) translateX(var(--tx,0)); } 50% { transform: translateY(-4px) translateX(var(--tx,0)); } }
+    .counter-pill.c-top { --tx: -50%; }
 
-    /* ---------------- WAVE DIVIDER ---------------- */
-    .wave { width: 100%; height: 40px; display: block; color: var(--border); }
-
-    /* ---------------- SECTIONS ---------------- */
+    /* ---------- generic section ---------- */
     section { position: relative; }
-    .section-pad { padding: 110px 0; }
-    .section-head { text-align: center; max-width: 640px; margin: 0 auto 60px; }
-    .section-head h2 { font-size: clamp(30px, 4vw, 40px); }
-    .section-head p { color: var(--text-2); font-size: 16px; margin-top: 14px; }
+    .pad { padding: 120px 80px; }
+    .eyebrow-label { font-family: var(--mono); font-size: 12px; color: var(--text-tertiary); letter-spacing: 0.1em; }
 
-    /* ---------------- FEATURES ---------------- */
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; transition: transform 0.25s ease, border-color 0.25s ease; }
-    .card:hover { transform: translateY(-4px); border-color: var(--sage); }
-    .card .icon { color: var(--sage); margin-bottom: 18px; }
-    .card h3 { font-size: 18px; margin-bottom: 8px; }
-    .card p { font-family: var(--sans); font-size: 14px; color: var(--text-2); line-height: 1.6; }
+    /* divider */
+    .divider { width: 100%; height: 80px; display: block; color: var(--border); }
+    .divider path { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 2000; stroke-dashoffset: 2000; }
+    .divider.revealed path { animation: draw2 1.4s var(--ease-out-expo) forwards; }
+    @keyframes draw2 { to { stroke-dashoffset: 0; } }
 
-    /* ---------------- HOW IT WORKS ---------------- */
-    .steps { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: start; gap: 24px; }
-    .step { position: relative; text-align: center; padding-top: 20px; }
-    .step .num { font-family: var(--mono); font-size: 72px; color: var(--border); line-height: 1; display: block; margin-bottom: 6px; }
-    .step h3 { font-size: 20px; margin-bottom: 10px; }
-    .step p { font-family: var(--sans); font-size: 14px; color: var(--text-2); max-width: 260px; margin: 0 auto; }
-    .track-mark { display: flex; align-items: center; justify-content: center; padding-top: 70px; color: var(--sage); }
+    /* ---------- features ---------- */
+    .feat-title { margin: 14px 0 60px; font-weight: 300; font-size: var(--text-3xl); color: var(--text-primary); }
+    .row1 { display: grid; grid-template-columns: 45% 55%; gap: 50px; align-items: center; margin-bottom: 0; }
+    .row1 h3 { font-weight: 500; font-size: 28px; margin-bottom: 16px; }
+    .row1 p { font-family: var(--sans); font-size: 16px; color: var(--text-secondary); line-height: 1.8; max-width: 380px; }
+    .blackout-sim { background: #0a0a0a; border-radius: 16px; aspect-ratio: 16/10; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px; box-shadow: 0 30px 80px rgba(28,43,30,0.18); }
+    .blackout-sim .ring-wrap { position: relative; width: 74px; height: 74px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 8px rgba(107,163,190,0.5)); }
+    .blackout-sim .ring-wrap svg.ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .blackout-sim .ring-wrap svg.ring circle { fill: none; stroke: var(--accent-sky); stroke-width: 2; stroke-linecap: round;
+      stroke-dasharray: 207; stroke-dashoffset: 52; }
+    .blackout-sim .num { font-family: var(--mono); font-size: 24px; color: #fff; }
 
-    /* ---------------- CALLOUT ---------------- */
-    .callout { background: var(--surface); text-align: center; padding: 90px 0; position: relative; overflow: hidden; }
-    .callout .ghost { font-family: var(--serif); font-size: clamp(120px, 20vw, 220px); color: var(--border); opacity: 0.5; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -54%); line-height: 1; z-index: 0; pointer-events: none; }
-    .callout h2 { font-size: clamp(30px, 5vw, 48px); position: relative; z-index: 1; }
-    .callout p { position: relative; z-index: 1; color: var(--text-2); font-size: 18px; max-width: 500px; margin: 22px auto 0; }
+    .row2 { position: relative; background: var(--bg-dark); border-radius: 16px; padding: 80px; margin: 90px 0; overflow: hidden; }
+    .row2 .ghost20 { position: absolute; left: 40px; top: 50%; transform: translateY(-50%); font-family: var(--serif); font-weight: 700;
+      font-size: var(--text-huge); color: var(--accent-sage); opacity: 0.08; pointer-events: none; }
+    .stats { position: relative; display: flex; align-items: center; justify-content: center; gap: 60px; }
+    .stat { text-align: center; }
+    .stat .n { font-family: var(--serif); font-weight: 600; font-size: 64px; color: var(--accent-sky); line-height: 1; }
+    .stat .lbl { font-family: var(--sans); font-size: 14px; color: rgba(244,239,230,0.6); margin-top: 8px; }
+    .stat-div { width: 1px; height: 60px; background: var(--border-dark); }
 
-    /* ---------------- DOWNLOAD ---------------- */
-    .download { text-align: center; }
-    .dl-card { width: 400px; max-width: 100%; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px; }
-    .dl-card .apple { color: var(--text); margin-bottom: 16px; }
-    .dl-card h3 { font-size: 24px; margin-bottom: 12px; }
-    .dl-card .req { font-family: var(--sans); font-size: 13px; color: var(--text-2); line-height: 1.7; margin-bottom: 24px; }
-    .dl-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; background: var(--sage); color: #fff; font-family: var(--sans); font-weight: 500; border-radius: 12px; transition: background 0.25s ease; }
-    .dl-btn:hover { background: var(--sage-dark); }
-    .dl-size { font-family: var(--mono); font-size: 12px; color: var(--text-2); margin-top: 14px; }
-    .dl-github { display: inline-block; font-family: var(--sans); font-size: 13px; color: var(--sage); margin-top: 16px; }
-    .dl-github:hover { text-decoration: underline; }
-    .install-steps { font-family: var(--sans); font-size: 13px; color: var(--text-2); text-align: center; line-height: 2.2; margin-top: 24px; }
+    .row3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .col { padding: 32px; border-left: 1px solid var(--border); border-left-width: 1px; transition: background 0.25s var(--ease-out-expo), box-shadow 0.25s; position: relative; }
+    .col:first-child { border-left: none; }
+    .col::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--accent-sage); transform: scaleY(0); transform-origin: top; transition: transform 0.25s var(--ease-out-expo); }
+    .col:hover { background: var(--bg-surface); }
+    .col:hover::before { transform: scaleY(1); }
+    .col .icon { color: var(--accent-sage); transition: color 0.25s; }
+    .col:hover .icon { color: var(--accent-sky); }
+    .col h4 { font-family: var(--serif); font-weight: 500; font-size: 20px; margin: 16px 0 8px; }
+    .col p { font-family: var(--sans); font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
 
-    /* ---------------- FOOTER ---------------- */
-    footer { background: var(--surface); }
-    footer .wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 26px; padding-bottom: 26px; font-family: var(--sans); font-size: 13px; color: var(--text-2); }
-    footer .f-brand { display: flex; align-items: center; gap: 8px; }
-    footer a.gh { color: var(--sage); }
-    footer a.gh:hover { text-decoration: underline; }
+    /* ---------- how it works ---------- */
+    .how { background: var(--bg-surface); }
+    .how h2 { font-weight: 300; font-size: var(--text-3xl); text-align: center; margin-bottom: 80px; }
+    .how h2 .dot { color: var(--accent-sage); }
+    .timeline { position: relative; max-width: 900px; margin: 0 auto; height: 220px; }
+    .timeline .bar { position: absolute; top: 50%; left: 0; right: 0; height: 2px; }
+    .timeline .bar svg { width: 100%; height: 2px; overflow: visible; }
+    .timeline .bar path { stroke: var(--border); stroke-width: 2; fill: none; stroke-dasharray: 900; stroke-dashoffset: 900; }
+    .timeline.revealed .bar path { animation: draw3 1.2s var(--ease-out-expo) forwards; }
+    @keyframes draw3 { to { stroke-dashoffset: 0; } }
+    .node { position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%; background: var(--bg-base);
+      border: 2px solid var(--accent-sage); transform: translate(-50%, -50%); transition: background 0.3s; }
+    .timeline.revealed .node.on { background: var(--accent-sage); }
+    .tstep { position: absolute; width: 190px; transform: translateX(-50%); text-align: center; }
+    .tstep .tn { font-family: var(--mono); font-size: 11px; color: var(--text-tertiary); }
+    .tstep h4 { font-family: var(--serif); font-weight: 500; font-size: 20px; margin: 4px 0 6px; }
+    .tstep p { font-family: var(--sans); font-size: 13px; color: var(--text-secondary); }
 
-    /* ---------------- REVEAL ---------------- */
-    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
-    .reveal.in { opacity: 1; transform: none; }
+    /* ---------- statement ---------- */
+    .statement { text-align: center; }
+    .statement .lbl { font-family: var(--mono); font-size: 11px; color: var(--accent-sage); letter-spacing: 0.12em; }
+    .statement h2 { margin-top: 24px; }
+    .statement .s1 { display: block; font-weight: 300; font-size: clamp(3rem, 6vw, 5rem); }
+    .statement .s2 { display: inline-block; position: relative; font-weight: 700; font-size: clamp(3rem, 6vw, 5rem); }
+    .statement .brush { height: 0.3em; bottom: -0.1em; }
+
+    /* ---------- download ---------- */
+    .download { background: var(--bg-dark); text-align: center; }
+    .download h2 { font-weight: 300; font-size: var(--text-3xl); color: var(--text-inverse); }
+    .download .sub { font-family: var(--sans); font-size: 18px; color: rgba(244,239,230,0.5); line-height: 1.7; margin: 16px auto 48px; max-width: 460px; }
+    .dl-card { width: 420px; max-width: 100%; margin: 0 auto; background: var(--bg-ink); border: 1px solid var(--border-dark); border-radius: 8px; padding: 48px; }
+    .dl-card .apple { color: var(--text-inverse); }
+    .dl-card h3 { font-family: var(--serif); font-weight: 500; font-size: 24px; color: var(--text-inverse); margin: 16px 0 12px; }
+    .dl-card .req { font-family: var(--sans); font-size: 13px; color: rgba(244,239,230,0.4); line-height: 1.6; margin-bottom: 28px; }
+    .dl-btn { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; overflow: hidden;
+      background: var(--accent-sage); color: var(--text-inverse); font-family: var(--sans); font-weight: 600; font-size: 15px; border-radius: 4px; transition: background 0.3s var(--ease-out-expo); }
+    .dl-btn:hover { background: #3D6B2E; }
+    .dl-btn .shimmer { position: absolute; top: 0; bottom: 0; width: 60%; left: -100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); }
+    .dl-btn:hover .shimmer { animation: shimmer 0.6s ease-in-out; }
+    @keyframes shimmer { to { left: 150%; } }
+    .dl-size { font-family: var(--mono); font-size: 11px; color: rgba(244,239,230,0.25); margin-top: 14px; }
+    .dl-steps { margin-top: 32px; }
+    .dl-steps p { font-family: var(--sans); font-size: 13px; color: rgba(244,239,230,0.4); line-height: 2.2; opacity: 0; transform: translateY(8px); transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo); }
+    .dl-card.revealed .dl-steps p { opacity: 1; transform: none; }
+    .dl-card.revealed .dl-steps p:nth-child(2){transition-delay:.08s}
+    .dl-card.revealed .dl-steps p:nth-child(3){transition-delay:.16s}
+    .dl-card.revealed .dl-steps p:nth-child(4){transition-delay:.24s}
+
+    /* ---------- footer ---------- */
+    footer { background: var(--bg-ink); height: 80px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+    footer .f-l { display: flex; align-items: center; gap: 8px; font-family: var(--sans); font-size: 13px; color: rgba(244,239,230,0.4); }
+    footer .f-c { font-family: var(--sans); font-size: 12px; color: rgba(244,239,230,0.25); }
 
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; }
-      .reveal { opacity: 1 !important; transform: none !important; }
+      [data-splitting] .char, .line-reveal > *, .fade-up { opacity: 1 !important; transform: none !important; }
       html { scroll-behavior: auto; }
     }
 
-    /* ---------------- RESPONSIVE ---------------- */
+    /* ---------- responsive ---------- */
     @media (max-width: 768px) {
-      .wrap { padding: 0 24px; }
-      nav { padding: 16px 24px; }
-      .brand .name { display: inline; }
-      .hero { grid-template-columns: 1fr; padding-top: 110px; min-height: auto; padding-bottom: 60px; }
-      .hero-right { height: 300px; margin-top: 20px; }
-      .eye-ring { width: 220px; height: 220px; }
-      .grid { grid-template-columns: 1fr; }
-      .steps { grid-template-columns: 1fr; }
-      .track-mark { display: none; }
-      .section-pad { padding: 72px 0; }
-      footer .wrap { flex-direction: column; gap: 10px; text-align: center; }
+      nav, footer { padding: 0 24px; }
+      .hero { grid-template-columns: 1fr; padding: 100px 24px 60px; gap: 40px; min-height: auto; }
+      .hero h1 .l1, .hero h1 .l2 { font-size: clamp(2.5rem, 12vw, 4rem); }
+      .hero-art { width: 100%; max-width: 360px; margin: 0 auto; }
+      .pad { padding: 72px 24px; }
+      .row1 { grid-template-columns: 1fr; gap: 30px; }
+      .row2 { padding: 48px 24px; }
+      .stats { flex-direction: column; gap: 30px; }
+      .stat-div { width: 60px; height: 1px; }
+      .row3 { grid-template-columns: 1fr; }
+      .col { border-left: none; border-top: 1px solid var(--border); }
+      .col:first-child { border-top: none; }
+      .timeline { height: auto; display: flex; flex-direction: column; gap: 28px; }
+      .timeline .bar { display: none; }
+      .node { display: none; }
+      .tstep { position: static; width: 100%; transform: none; text-align: left; }
+      .dl-card { width: 100%; padding: 32px 24px; }
     }
   </style>
 </head>
 <body>
+  <div class="cursor" id="cursor"></div>
 
-  <!-- Reusable eye mark (almond + iris ring + pupil), matches the app icon -->
+  <!-- reusable eye mark -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="eye-mark" viewBox="0 0 100 100">
-      <path d="M25,50 Q50,24.2 75,50 Q50,75.8 25,50 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-      <circle cx="50" cy="50" r="8.6" fill="none" stroke="currentColor" stroke-width="3"/>
-      <circle cx="50" cy="50" r="3.7" fill="currentColor"/>
-    </symbol>
-    <symbol id="eye-ring-mark" viewBox="0 0 100 100">
-      <path d="M25,50 Q50,24.2 75,50 Q50,75.8 25,50 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-      <circle cx="50" cy="50" r="8.6" fill="none" stroke="currentColor" stroke-width="1.2"/>
-      <circle cx="50" cy="50" r="3.7" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <symbol id="eye" viewBox="0 0 100 100">
+      <path d="M20,50 Q50,22 80,50 Q50,78 20,50 Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+      <circle cx="50" cy="50" r="10" fill="none" stroke="currentColor" stroke-width="4"/>
+      <circle cx="50" cy="50" r="4" fill="currentColor"/>
     </symbol>
   </svg>
 
-  <!-- NAV -->
+  <!-- SECTION 0 — preloader -->
+  <div class="preloader" id="preloader"><svg><use href="#eye"/></svg></div>
+
+  <!-- SECTION 1 — nav -->
   <nav id="nav">
-    <a href="#top" class="brand">
-      <svg width="30" height="30" style="color: var(--text)"><use href="#eye-mark"/></svg>
-      <span class="name">iris</span>
+    <a href="#top" class="nav-brand">
+      <svg class="eye" width="24" height="24" style="color:var(--text-primary)"><use href="#eye"/></svg>
+      <span>iris</span>
     </a>
-    <a class="btn-download" href="/Iris.dmg" download="Iris.dmg">Download for Mac</a>
+    <a class="nav-dl magnetic" href="/Iris.dmg" download="Iris.dmg">Download for Mac</a>
   </nav>
 
-  <!-- HERO -->
-  <header class="hero wrap" id="top">
-    <div class="ink a"></div>
-    <div class="ink b"></div>
-
+  <!-- SECTION 2 — hero -->
+  <header class="hero fade-up" id="top">
     <div class="hero-left">
-      <span class="eyebrow">20 · 20 · 20</span>
-      <h1>Rest your eyes.<br /><span class="soft">Your screen will remind you.</span></h1>
-      <p class="hero-sub">Iris enforces the 20-20-20 rule automatically. Every 20 minutes, your screen goes dark for 20 seconds. No willpower needed.</p>
-      <div class="cta-row">
-        <a class="btn-primary" href="/Iris.dmg" download="Iris.dmg">Download Free</a>
-        <a class="btn-secondary" href="#how">See how it works ↓</a>
+      <div class="eyebrow"><span data-splitting>20 · 20 · 20 &nbsp;Rule</span><span class="rule-line"></span></div>
+      <h1>
+        <span class="l1" data-splitting>Rest your</span>
+        <span class="l2" data-splitting>eyes.<svg class="brush" viewBox="0 0 300 30" preserveAspectRatio="none"><path d="M6 20 C 70 8, 150 26, 210 14 S 288 10, 294 16"/></svg></span>
+      </h1>
+      <div class="hero-sub line-reveal">
+        <div>Iris enforces the 20-20-20 rule automatically.</div>
+        <div>Every 20 minutes, your screen goes dark for 20 seconds.</div>
+        <div>No willpower needed.</div>
       </div>
-      <p class="meta-line">Free · macOS 13+ · No account · 15MB</p>
+      <div class="cta-row">
+        <a class="btn-primary magnetic" href="/Iris.dmg" download="Iris.dmg">Download for Mac</a>
+        <a class="btn-ghost" href="#features">See how it works <span class="arrow">↓</span></a>
+      </div>
+      <p class="meta">Free · macOS 13+ · No account · 15MB</p>
     </div>
 
-    <div class="hero-right" aria-hidden="true">
-      <!-- torii gate silhouette -->
-      <svg class="torii" viewBox="0 0 120 130" fill="currentColor">
-        <rect x="8" y="26" width="104" height="9" />
-        <path d="M2 20 h116 l-8 8 h-100 z" />
-        <rect x="22" y="35" width="9" height="92" />
-        <rect x="89" y="35" width="9" height="92" />
-        <rect x="30" y="46" width="60" height="6" />
-      </svg>
-
-      <!-- slowly rotating eye ring -->
-      <svg class="eye-ring"><use href="#eye-ring-mark"/></svg>
-
-      <!-- train line + moving train -->
-      <div class="train-track"></div>
-      <svg class="train" width="30" height="14" viewBox="0 0 30 14" fill="var(--sage)">
-        <rect x="0" y="2" width="20" height="8" rx="1.5" />
-        <rect x="19" y="0" width="9" height="10" rx="1.5" />
-        <circle cx="6" cy="12" r="2" />
-        <circle cx="15" cy="12" r="2" />
-        <circle cx="24" cy="12" r="2" />
-      </svg>
+    <div class="hero-art" id="heroArt">
+      <div class="art-ring"></div>
+      <div class="scene">
+        <svg viewBox="0 0 300 300" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+          <!-- sky bands -->
+          <path d="M0,0 H300 V78 Q225,74 150,78 T0,76 Z" fill="#6BA3BE"/>
+          <path d="M0,74 Q150,80 300,74 V116 Q225,112 150,116 T0,114 Z" fill="#8BBDD4"/>
+          <path d="M0,112 Q150,118 300,112 V150 Q225,146 150,150 T0,148 Z" fill="#AACFDF"/>
+          <path d="M0,146 Q150,152 300,146 V182 H0 Z" fill="#C8DFE8"/>
+          <!-- mountain -->
+          <path d="M70,182 Q150,70 230,182 Z" fill="#3D5C40"/>
+          <path d="M135,110 L150,88 L166,110 Q150,102 135,110 Z" fill="#F4EFE6"/>
+          <!-- pine trees -->
+          <path d="M28,200 l10,-46 l10,46 z M30,182 l8,-30 l8,30 z" fill="#1C2B1E"/>
+          <path d="M270,204 l11,-50 l11,50 z M272,186 l9,-32 l9,32 z" fill="#1C2B1E"/>
+          <!-- track -->
+          <line x1="0" y1="216" x2="300" y2="216" stroke="#8A9A80" stroke-width="1"/>
+          <line x1="0" y1="222" x2="300" y2="222" stroke="#8A9A80" stroke-width="1"/>
+          <g stroke="#8A9A80" stroke-width="0.5">
+            <!-- ties generated below via JS would be ideal; static set here -->
+            <line x1="12" y1="216" x2="12" y2="222"/><line x1="36" y1="216" x2="36" y2="222"/>
+            <line x1="60" y1="216" x2="60" y2="222"/><line x1="84" y1="216" x2="84" y2="222"/>
+            <line x1="108" y1="216" x2="108" y2="222"/><line x1="132" y1="216" x2="132" y2="222"/>
+            <line x1="156" y1="216" x2="156" y2="222"/><line x1="180" y1="216" x2="180" y2="222"/>
+            <line x1="204" y1="216" x2="204" y2="222"/><line x1="228" y1="216" x2="228" y2="222"/>
+            <line x1="252" y1="216" x2="252" y2="222"/><line x1="276" y1="216" x2="276" y2="222"/>
+          </g>
+          <!-- train -->
+          <g class="train" transform="translate(110,196)">
+            <rect x="0" y="0" width="80" height="18" rx="3" fill="#0E1A10"/>
+            <rect x="76" y="-4" width="22" height="22" rx="3" fill="#0E1A10"/>
+            <rect x="8" y="5" width="6" height="4" rx="1" fill="#6BA3BE" fill-opacity="0.7"/>
+            <rect x="22" y="5" width="6" height="4" rx="1" fill="#6BA3BE" fill-opacity="0.7"/>
+            <rect x="36" y="5" width="6" height="4" rx="1" fill="#6BA3BE" fill-opacity="0.7"/>
+            <circle cx="14" cy="20" r="4" fill="#0E1A10" stroke="#8A9A80" stroke-width="1"/>
+            <circle cx="34" cy="20" r="4" fill="#0E1A10" stroke="#8A9A80" stroke-width="1"/>
+            <circle cx="60" cy="20" r="4" fill="#0E1A10" stroke="#8A9A80" stroke-width="1"/>
+            <circle cx="88" cy="20" r="4" fill="#0E1A10" stroke="#8A9A80" stroke-width="1"/>
+          </g>
+          <!-- foreground -->
+          <path d="M0,264 Q150,258 300,264 V300 H0 Z" fill="#132014"/>
+        </svg>
+      </div>
+      <span class="counter-pill c-top">20 min</span>
+      <span class="counter-pill c-right">20 sec</span>
+      <span class="counter-pill c-left">20 ft</span>
     </div>
   </header>
 
-  <!-- WAVE -->
-  <div class="wrap"><svg class="wave" viewBox="0 0 1120 40" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1"><path d="M0 20 Q 35 2 70 20 T 140 20 T 210 20 T 280 20 T 350 20 T 420 20 T 490 20 T 560 20 T 630 20 T 700 20 T 770 20 T 840 20 T 910 20 T 980 20 T 1050 20 T 1120 20" /></svg></div>
+  <!-- SECTION 3 — divider -->
+  <div class="pad" style="padding-top:0;padding-bottom:0">
+    <svg class="divider" viewBox="0 0 1000 80" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,40 C 200,10 300,70 500,40 S 800,10 1000,40"/>
+      <path d="M0,54 C 250,30 350,74 560,50 S 820,30 1000,54"/>
+    </svg>
+  </div>
 
-  <!-- FEATURES -->
-  <section class="section-pad">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <h2>Everything your eyes and body need.</h2>
-        <p>Quietly. Automatically. Every day.</p>
+  <!-- SECTION 4 — features -->
+  <section class="pad" id="features">
+    <div class="eyebrow-label fade-up">What Iris does</div>
+    <h2 class="feat-title" data-splitting>Everything your eyes and body need.</h2>
+
+    <!-- ROW 1 -->
+    <div class="row1 fade-up">
+      <div>
+        <h3>Full blackout, no exceptions</h3>
+        <p>Every screen. Every display. Twenty seconds of pure dark. No countdown skip. No escape. That's the point.</p>
       </div>
-      <div class="grid">
-        <div class="card reveal">
-          <svg class="icon" width="28" height="28"><use href="#eye-mark"/></svg>
-          <h3>Full blackout</h3>
-          <p>Every screen goes dark. No sneaking a peek.</p>
+      <div class="blackout-sim">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 74 74"><circle cx="37" cy="37" r="33"/></svg>
+          <svg width="28" height="28" style="color:#fff"><use href="#eye"/></svg>
         </div>
-        <div class="card reveal">
-          <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-          <h3>No skip button</h3>
-          <p>Twenty seconds. No escape. That's the point.</p>
-        </div>
-        <div class="card reveal">
-          <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2-7-5-7-9a4 4 0 0 1 7-2.5A4 4 0 0 1 19 12c0 4-3 7-7 9Z"/><path d="M12 9v12"/></svg>
-          <h3>Morning challenge</h3>
-          <p>Start your day with movement before your Mac unlocks.</p>
-        </div>
-        <div class="card reveal">
-          <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A7.5 7.5 0 0 1 9.5 4 7.5 7.5 0 1 0 20 14.5Z"/></svg>
-          <h3>Quiet hours</h3>
-          <p>Iris steps aside during calls, meetings, and after hours.</p>
-        </div>
-        <div class="card reveal">
-          <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="12" rx="2"/><path d="M4 11h16M8 20l2-4m6 4-2-4"/><circle cx="8.5" cy="13" r="0.6" fill="currentColor"/><circle cx="15.5" cy="13" r="0.6" fill="currentColor"/></svg>
-          <h3>Posture nudges</h3>
-          <p>Each break reminds you to breathe, sit up, and reset.</p>
-        </div>
-        <div class="card reveal">
-          <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-          <h3>Launch at login</h3>
-          <p>Install once. It's just there, every day, quietly working.</p>
-        </div>
+        <div class="num">18</div>
+      </div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="row2 fade-up">
+      <div class="ghost20">20</div>
+      <div class="stats">
+        <div class="stat"><div class="n" data-count="20">0</div><div class="lbl">minutes between breaks</div></div>
+        <div class="stat-div"></div>
+        <div class="stat"><div class="n" data-count="20">0</div><div class="lbl">seconds of complete rest</div></div>
+        <div class="stat-div"></div>
+        <div class="stat"><div class="n" data-count="20" data-suffix="ft">0</div><div class="lbl">to focus your eyes on</div></div>
+      </div>
+    </div>
+
+    <!-- ROW 3 -->
+    <div class="row3 fade-up">
+      <div class="col">
+        <svg class="icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M12 7v6m0 0-4 5m4-5 4 5M6 10l6 1 6-1"/></svg>
+        <h4>Morning challenge</h4>
+        <p>Start your day with movement before your Mac unlocks.</p>
+      </div>
+      <div class="col">
+        <svg class="icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="12" height="14" rx="2"/><path d="m17 8 4-2v12l-4-2"/><path d="m5 5 14 14"/></svg>
+        <h4>Smart call detection</h4>
+        <p>Iris steps aside automatically during video calls and meetings.</p>
+      </div>
+      <div class="col">
+        <svg class="icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4m8-4v4"/><path d="M9 15a3 3 0 0 1 6 0"/></svg>
+        <h4>Schedule blocks</h4>
+        <p>Set quiet hours and recurring windows where Iris stays out of your way.</p>
       </div>
     </div>
   </section>
 
-  <!-- WAVE -->
-  <div class="wrap"><svg class="wave" viewBox="0 0 1120 40" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1"><path d="M0 20 Q 35 2 70 20 T 140 20 T 210 20 T 280 20 T 350 20 T 420 20 T 490 20 T 560 20 T 630 20 T 700 20 T 770 20 T 840 20 T 910 20 T 980 20 T 1050 20 T 1120 20" /></svg></div>
+  <!-- SECTION 5 — how it works -->
+  <section class="pad how">
+    <h2 data-splitting>The rule, automated<span class="dot">.</span></h2>
+    <div class="timeline">
+      <div class="bar"><svg viewBox="0 0 900 2" preserveAspectRatio="none"><path d="M0,1 H900"/></svg></div>
+      <div class="node" style="left:10%"></div>
+      <div class="node" style="left:37%"></div>
+      <div class="node" style="left:63%"></div>
+      <div class="node" style="left:90%"></div>
+      <div class="tstep" style="left:10%; top:0"><div class="tn">01</div><h4>Install</h4><p>Lives in your menu bar. Nothing to configure.</p></div>
+      <div class="tstep" style="left:37%; bottom:0"><div class="tn">02</div><h4>Warning drops</h4><p>A pill grows from your notch before each break.</p></div>
+      <div class="tstep" style="left:63%; top:0"><div class="tn">03</div><h4>Screen goes dark</h4><p>Every display. Twenty seconds.</p></div>
+      <div class="tstep" style="left:90%; bottom:0"><div class="tn">04</div><h4>Reset</h4><p>Fades back. The timer starts again.</p></div>
+    </div>
+  </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="section-pad" id="how">
-    <div class="wrap">
-      <div class="section-head reveal"><h2>The rule that protects your eyes.</h2></div>
-      <div class="steps reveal">
-        <div class="step">
-          <span class="num">01</span>
-          <h3>Install &amp; forget</h3>
-          <p>Lives in your menu bar. No Dock icon. No clutter.</p>
-        </div>
-        <div class="track-mark">
-          <svg width="46" height="16" viewBox="0 0 46 16" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="0" y1="13" x2="46" y2="13"/><rect x="12" y="4" width="14" height="7" rx="1.5" fill="var(--sage)" stroke="none"/><rect x="25" y="2" width="7" height="9" rx="1.5" fill="var(--sage)" stroke="none"/></svg>
-        </div>
-        <div class="step">
-          <span class="num">02</span>
-          <h3>A warning arrives</h3>
-          <p>A pill drops from your menu bar. Your break is coming.</p>
-        </div>
-        <div class="track-mark">
-          <svg width="46" height="16" viewBox="0 0 46 16" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="0" y1="13" x2="46" y2="13"/><rect x="12" y="4" width="14" height="7" rx="1.5" fill="var(--sage)" stroke="none"/><rect x="25" y="2" width="7" height="9" rx="1.5" fill="var(--sage)" stroke="none"/></svg>
-        </div>
-        <div class="step">
-          <span class="num">03</span>
-          <h3>Screen goes dark</h3>
-          <p>Every display. Twenty seconds. Look out a window.</p>
-        </div>
+  <!-- SECTION 6 — statement -->
+  <section class="pad statement">
+    <div class="lbl fade-up">The 20-20-20 rule</div>
+    <h2>
+      <span class="s1" data-splitting>Your screen can wait.</span>
+      <span class="s2" data-splitting>Your eyes cannot.<svg class="brush" viewBox="0 0 300 30" preserveAspectRatio="none"><path d="M6 20 C 70 8, 150 26, 210 14 S 288 10, 294 16"/></svg></span>
+    </h2>
+  </section>
+
+  <!-- SECTION 7 — download -->
+  <section class="pad download">
+    <h2 class="fade-up">Free. Forever.</h2>
+    <p class="sub fade-up">No account. No subscription. No tracking. Just install and go.</p>
+    <div class="dl-card fade-up">
+      <svg class="apple" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.417 2.2-1.114 2.98-.72.81-1.9 1.44-2.99 1.35-.13-1.1.42-2.24 1.08-2.97.73-.82 2-1.42 3.02-1.36zM20.9 17.02c-.55 1.27-.82 1.84-1.53 2.97-.99 1.57-2.39 3.52-4.12 3.53-1.54.02-1.93-1-4.02-.99-2.09.01-2.52 1.01-4.06.99-1.73-.01-3.05-1.78-4.04-3.34C.55 16.75-.03 12.4 1.66 9.63 2.86 7.67 4.75 6.53 6.53 6.53c1.81 0 2.95 1 4.45 1 1.45 0 2.34-1 4.44-1 1.58 0 3.26.86 4.45 2.35-3.91 2.14-3.27 7.72.03 8.14z"/></svg>
+      <h3>Download Iris</h3>
+      <p class="req">macOS 13 Ventura or later<br />Apple Silicon &amp; Intel universal</p>
+      <a class="dl-btn magnetic" href="/Iris.dmg" download="Iris.dmg"><span class="shimmer"></span>Download for macOS</a>
+      <p class="dl-size">15MB</p>
+      <div class="dl-steps">
+        <p>① Open Iris.dmg from your downloads</p>
+        <p>② Drag Iris to your Applications folder</p>
+        <p>③ Open Iris from Applications</p>
+        <p>④ Find the eye icon in your menu bar</p>
       </div>
     </div>
   </section>
 
-  <!-- CALLOUT -->
-  <section class="callout reveal">
-    <span class="ghost">20</span>
-    <div class="wrap">
-      <h2>20 minutes. 20 seconds. 20 feet.</h2>
-      <p>The science-backed rule for digital eye strain, running quietly in the background of your day.</p>
-    </div>
-  </section>
-
-  <!-- WAVE -->
-  <div class="wrap"><svg class="wave" viewBox="0 0 1120 40" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1"><path d="M0 20 Q 35 2 70 20 T 140 20 T 210 20 T 280 20 T 350 20 T 420 20 T 490 20 T 560 20 T 630 20 T 700 20 T 770 20 T 840 20 T 910 20 T 980 20 T 1050 20 T 1120 20" /></svg></div>
-
-  <!-- DOWNLOAD -->
-  <section class="section-pad download">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <h2>Free. Forever.</h2>
-        <p>No account. No subscription. No tracking.</p>
-      </div>
-      <div class="dl-card reveal">
-        <svg class="apple" width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.417 2.2-1.114 2.98-.72.81-1.9 1.44-2.99 1.35-.13-1.1.42-2.24 1.08-2.97.73-.82 2-1.42 3.02-1.36zM20.9 17.02c-.55 1.27-.82 1.84-1.53 2.97-.99 1.57-2.39 3.52-4.12 3.53-1.54.02-1.93-1-4.02-.99-2.09.01-2.52 1.01-4.06.99-1.73-.01-3.05-1.78-4.04-3.34C.55 16.75-.03 12.4 1.66 9.63 2.86 7.67 4.75 6.53 6.53 6.53c1.81 0 2.95 1 4.45 1 1.45 0 2.34-1 4.44-1 1.58 0 3.26.86 4.45 2.35-3.91 2.14-3.27 7.72.03 8.14z"/></svg>
-        <h3>Download for macOS</h3>
-        <p class="req">Requires macOS 13 Ventura or later<br />Apple Silicon &amp; Intel</p>
-        <a class="dl-btn" href="/Iris.dmg" download="Iris.dmg">Download for macOS</a>
-        <p class="dl-size">15MB</p>
-        <a class="dl-github" href="https://github.com/Jack-Attackz101/eyerest">View on GitHub →</a>
-      </div>
-      <p class="install-steps reveal">
-        ① Download and open Iris.dmg<br />
-        ② Drag Iris into your Applications folder<br />
-        ③ Open Iris from Applications<br />
-        ④ Look for the eye icon in your menu bar
-      </p>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
+  <!-- SECTION 8 — footer -->
   <footer>
-    <div class="wrap">
-      <span class="f-brand">
-        <svg width="16" height="16" style="color: var(--text-2)"><use href="#eye-mark"/></svg>
-        iris
-      </span>
-      <span>© 2026 Iris · Free &amp; open source</span>
-      <a class="gh" href="https://github.com/Jack-Attackz101/eyerest">GitHub</a>
-    </div>
+    <span class="f-l"><svg width="16" height="16" style="color:var(--text-inverse);opacity:0.5"><use href="#eye"/></svg> iris</span>
+    <span class="f-c">Made by Jack · 2026</span>
+    <span style="width:16px"></span>
   </footer>
 
   <script>
-    const nav = document.getElementById('nav');
-    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 20);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const touch = window.matchMedia('(hover: none)').matches;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) { entry.target.classList.add('in'); observer.unobserve(entry.target); }
-      });
+    // ---------- preloader ----------
+    window.addEventListener('load', () => {
+      setTimeout(() => document.getElementById('preloader').classList.add('done'), 1100);
+    });
+
+    // ---------- Splitting ----------
+    if (window.Splitting) Splitting();
+
+    // ---------- reveals (IntersectionObserver) ----------
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('revealed'); io.unobserve(e.target); } });
     }, { threshold: 0.15 });
-    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+    document.querySelectorAll('[data-splitting], .fade-up, .line-reveal, .divider, .timeline, .dl-card').forEach((el) => io.observe(el));
+
+    // ---------- counters ----------
+    const cio = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return; cio.unobserve(e.target);
+        const el = e.target, target = +el.dataset.count, suffix = el.dataset.suffix || '';
+        if (reduce) { el.textContent = target + suffix; return; }
+        const start = performance.now(), dur = 1500;
+        const tick = (now) => { const p = Math.min(1, (now - start) / dur); const eased = 1 - Math.pow(1 - p, 4);
+          el.textContent = Math.round(eased * target) + suffix; if (p < 1) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach((el) => cio.observe(el));
+
+    // ---------- timeline node fill ----------
+    const tio = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return; tio.unobserve(e.target);
+        const nodes = e.target.querySelectorAll('.node');
+        nodes.forEach((n, i) => setTimeout(() => n.classList.add('on'), 300 + i * 300));
+      });
+    }, { threshold: 0.4 });
+    document.querySelectorAll('.timeline').forEach((el) => tio.observe(el));
+
+    // ---------- nav scroll ----------
+    const nav = document.getElementById('nav');
+    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 80);
+    onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
+
+    // ---------- custom cursor ----------
+    if (!touch && !reduce) {
+      const cur = document.getElementById('cursor');
+      let tx = innerWidth / 2, ty = innerHeight / 2, cx = tx, cy = ty;
+      addEventListener('mousemove', (e) => { tx = e.clientX; ty = e.clientY; });
+      const loop = () => { cx += (tx - cx) * 0.12; cy += (ty - cy) * 0.12;
+        cur.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`; requestAnimationFrame(loop); };
+      loop();
+      document.querySelectorAll('a, button, .magnetic').forEach((el) => {
+        el.addEventListener('mouseenter', () => cur.classList.add('big'));
+        el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+      });
+    }
+
+    // ---------- magnetic buttons ----------
+    if (!touch && !reduce) {
+      document.querySelectorAll('.magnetic').forEach((el) => {
+        el.addEventListener('mousemove', (e) => {
+          const r = el.getBoundingClientRect();
+          const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+          const dist = Math.hypot(dx, dy);
+          if (dist < 80) el.style.transform = `translate(${dx * 0.15}px, ${dy * 0.15}px)`;
+        });
+        el.addEventListener('mouseleave', () => { el.style.transform = 'translate(0,0)'; });
+      });
+    }
+
+    // ---------- GSAP scroll ----------
+    window.addEventListener('load', () => {
+      if (reduce || !window.gsap || !window.ScrollTrigger) return;
+      gsap.registerPlugin(ScrollTrigger);
+      // hero illustration parallax (~0.6x)
+      gsap.to('#heroArt', { yPercent: -12, ease: 'none',
+        scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+      // statement subtle scale
+      gsap.fromTo('.statement h2', { scale: 1.02 }, { scale: 1, ease: 'none',
+        scrollTrigger: { trigger: '.statement', start: 'top bottom', end: 'center center', scrub: true } });
+    });
   </script>
 </body>
 </html>
