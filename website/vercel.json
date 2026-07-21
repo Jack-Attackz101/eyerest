@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/((?!Iris.dmg).*)",
+      "source": "/((?!Iris.dmg|images/|favicon.svg).*)",
       "destination": "/index.html"
     }
   ],
