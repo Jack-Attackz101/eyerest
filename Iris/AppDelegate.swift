@@ -132,7 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // --- Leaving a state ---
         if previous == .warning && state != .warning {
-            warningController.hide()
+            warningController.collapse()
         }
         if previous == .resting && state != .resting {
             blackoutController.hide()
