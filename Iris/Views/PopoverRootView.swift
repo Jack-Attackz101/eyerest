@@ -23,7 +23,7 @@ struct PopoverRootView: View {
                     .transition(.opacity)
             }
         }
-        .frame(width: 300)
+        .frame(width: 280)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .animation(.easeInOut(duration: 0.2), value: showSettings)
     }

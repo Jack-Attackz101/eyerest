@@ -35,47 +35,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSLog("Iris: applicationDidFinishLaunching started")
         do {
             try performLaunch()
-            NSLog("Iris: launch complete")
         } catch {
-            NSLog("Iris: FATAL error during launch: \(error)")
-            FileHandle.standardError.write(Data("Iris: FATAL error during launch: \(error)\n".utf8))
+            // Only ever logged on an actual launch failure, not during normal runs.
+            FileHandle.standardError.write(Data("Iris: launch failed: \(error)\n".utf8))
         }
     }
 
     private func performLaunch() throws {
         setupStatusItem()
-        NSLog("Iris: status item created")
         guard statusItem?.button != nil else { throw LaunchError.statusItemUnavailable }
 
         setupPopover()
-        NSLog("Iris: popover configured")
 
         warningController = WarningPillController(engine: engine)
         blackoutController = BlackoutController(engine: engine)
         challengeController = ChallengeController(engine: engine)
-        NSLog("Iris: window controllers created")
 
         observeState()
         engine.start()
-        NSLog("Iris: timer engine started")
 
-        // Touch the stats engine so the daily rollover / streak check runs, and
-        // fire a morning challenge if one is due at launch.
+        // Daily rollover / streak check, plus a morning challenge if due.
         stats.refreshForToday()
         challengeController.presentIfDue()
-        NSLog("Iris: stats refreshed, challenge checked")
 
-        // Start call detection off the launch path so the menu bar icon is
-        // guaranteed to appear first; any trouble here can't block startup.
+        // Start call detection off the launch path so the menu bar icon always
+        // appears first and detection can never block startup.
         callDetector.onChange = { [weak self] inCall in
             self?.engine.setCallActive(inCall)
         }
         DispatchQueue.main.async { [weak self] in
             self?.callDetector.start()
-            NSLog("Iris: call detector started")
         }
     }
 
@@ -83,16 +74,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        if let button = statusItem.button {
-            button.image = Self.symbol("eye.fill")
-            button.wantsLayer = true
-            button.target = self
-            button.action = #selector(togglePopover(_:))
-        }
+        guard let button = statusItem.button else { return }
+        // Always an SF Symbol template — never the AppIcon — so it renders as a
+        // crisp, correctly-sized, light/dark-adaptive menu bar glyph.
+        button.image = Self.symbol("eye")
+        button.wantsLayer = true
+        button.target = self
+        button.action = #selector(togglePopover)
     }
 
+    /// A 16pt template SF Symbol for the menu bar.
     private static func symbol(_ name: String) -> NSImage? {
-        let image = NSImage(systemSymbolName: name, accessibilityDescription: "Iris")
+        let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
+        let image = NSImage(systemSymbolName: name, accessibilityDescription: "Iris")?
+            .withSymbolConfiguration(config)
         image?.isTemplate = true
         return image
     }
@@ -104,17 +99,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.animates = true
         popover.appearance = NSAppearance(named: .darkAqua)
-        let root = PopoverRootView().environmentObject(engine)
-        popover.contentViewController = NSHostingController(rootView: root)
+        // Size the popover to the SwiftUI content (no dead space).
+        let hosting = NSHostingController(rootView: PopoverRootView().environmentObject(engine))
+        hosting.sizingOptions = .preferredContentSize
+        popover.contentViewController = hosting
         self.popover = popover
     }
 
-    @objc private func togglePopover(_ sender: Any?) {
-        guard let button = statusItem.button else { return }
+    @objc private func togglePopover() {
+        guard let button = statusItem.button else {
+            FileHandle.standardError.write(Data("Iris: status item button unavailable\n".utf8))
+            return
+        }
         if popover.isShown {
-            popover.performClose(sender)
+            popover.performClose(nil)
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            // Activating makes the transient popover reliably appear and take focus.
+            NSApp.activate(ignoringOtherApps: true)
             popover.contentViewController?.view.window?.makeKey()
         }
     }
@@ -136,12 +138,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // --- Entering a state ---
         switch state {
         case .idle, .counting, .scheduledPause:
-            updateIcon(symbol: "eye.fill", pulsing: false)
+            updateIcon(symbol: "eye", pulsing: false)
         case .warning:
-            updateIcon(symbol: "eye.fill", pulsing: true)
+            updateIcon(symbol: "eye", pulsing: true)
             warningController.show()
         case .resting:
-            updateIcon(symbol: "eye.slash.fill", pulsing: false)
+            updateIcon(symbol: "eye.slash", pulsing: false)
             popover.performClose(nil)
             blackoutController.show()
         }

@@ -164,10 +164,8 @@ final class TimerEngine: ObservableObject {
         scheduleBlocks = Self.loadScheduleBlocks(from: defaults, key: Keys.scheduleBlocks)
         challenge = Self.loadChallenge(from: defaults, key: Keys.challenge)
 
-        NSLog("Iris: TimerEngine settings loaded; syncing login-item state")
         syncLoginItemStateFromSystem()
         registerSleepWakeObservers()
-        NSLog("Iris: TimerEngine init complete")
     }
 
     // MARK: - Lifecycle
