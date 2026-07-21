@@ -1,6 +1,6 @@
 //
 //  MainView.swift
-//  EyeRest
+//  Iris
 //
 //  Default popover face: header, countdown ring, and the Pause/Rest Now buttons.
 //
@@ -24,7 +24,7 @@ struct MainView: View {
 
     private var header: some View {
         ZStack {
-            Text("EyeRest")
+            Text("Iris")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white)
 

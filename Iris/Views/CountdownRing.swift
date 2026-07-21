@@ -1,6 +1,6 @@
 //
 //  CountdownRing.swift
-//  EyeRest
+//  Iris
 //
 //  A circular progress ring: a faint full-circle track with a bright arc drawn
 //  on top. `progress` is the fraction of the arc to fill (0...1), starting at

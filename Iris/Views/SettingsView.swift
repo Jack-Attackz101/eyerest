@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  EyeRest
+//  Iris
 //
 //  The settings face of the popover. Every control binds straight to the shared
 //  TimerEngine, whose property observers persist to UserDefaults immediately.
@@ -43,7 +43,7 @@ struct SettingsView: View {
             Button {
                 NSApp.terminate(nil)
             } label: {
-                Text("Quit EyeRest")
+                Text("Quit Iris")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Color.red)
                     .frame(maxWidth: .infinity)

@@ -1,6 +1,6 @@
 //
 //  WarningPillController.swift
-//  EyeRest
+//  Iris
 //
 //  Owns the borderless, always-on-top NSPanel that hosts the warning pill and
 //  positions it at the top-center of the main display.

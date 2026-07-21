@@ -1,6 +1,6 @@
 //
 //  BlackoutView.swift
-//  EyeRest
+//  Iris
 //
 //  The full-screen rest overlay shown on every display. Pure black with the eye
 //  glyph, a depleting countdown ring and the remaining seconds. Opacity is

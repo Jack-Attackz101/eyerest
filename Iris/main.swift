@@ -1,9 +1,9 @@
 //
 //  main.swift
-//  EyeRest
+//  Iris
 //
 //  Program entry point. We deliberately avoid a SwiftUI `@main App` struct and
-//  drive an AppKit application ourselves so EyeRest can live purely in the menu
+//  drive an AppKit application ourselves so Iris can live purely in the menu
 //  bar (no Dock icon, no main window). `LSUIElement` in Info.plist plus the
 //  `.accessory` activation policy keep it out of the Dock and app switcher.
 //

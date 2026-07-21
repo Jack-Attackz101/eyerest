@@ -1,6 +1,6 @@
 //
 //  BlackoutController.swift
-//  EyeRest
+//  Iris
 //
 //  Manages one full-screen blackout NSPanel per connected display, swallows all
 //  input while resting, and spawns overlays for displays that connect mid-rest.

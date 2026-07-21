@@ -1,6 +1,6 @@
 //
 //  PopoverRootView.swift
-//  EyeRest
+//  Iris
 //
 //  The popover's container. Holds the dark #111111 background and crossfades
 //  between the main countdown view and the settings panel — no navigation

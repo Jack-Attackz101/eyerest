@@ -1,6 +1,6 @@
 //
 //  ColorHex.swift
-//  EyeRest
+//  Iris
 //
 //  Small convenience for the hex colors used across the dark UI.
 //

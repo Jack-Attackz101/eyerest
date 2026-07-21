@@ -1,6 +1,6 @@
 //
 //  TimerEngine.swift
-//  EyeRest
+//  Iris
 //
 //  The single source of truth for the 20-20-20 cycle. Owns the countdown,
 //  the state machine, persisted settings, sleep/wake handling and launch-at-login.
@@ -260,7 +260,7 @@ final class TimerEngine: ObservableObject {
             }
         } catch {
             // Registration failed — reflect the true state back into the toggle.
-            NSLog("EyeRest: launch-at-login update failed: \(error.localizedDescription)")
+            NSLog("Iris: launch-at-login update failed: \(error.localizedDescription)")
             syncLoginItemStateFromSystem()
         }
     }

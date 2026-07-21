@@ -1,6 +1,6 @@
 //
 //  SoundManager.swift
-//  EyeRest
+//  Iris
 //
 //  Loads the three bundled .aiff cues and plays them with NSSound, which
 //  already respects the system output volume (a muted machine stays silent).

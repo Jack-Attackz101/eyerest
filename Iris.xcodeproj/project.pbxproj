@@ -7,23 +7,23 @@
 	objects = {
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		1A0000000000000000000010 /* Exceptions for "EyeRest" folder in "EyeRest" target */ = {
+		1A0000000000000000000010 /* Exceptions for "Iris" folder in "Iris" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				EyeRest.entitlements,
+				Iris.entitlements,
 			);
-			target = 1A0000000000000000000005 /* EyeRest */;
+			target = 1A0000000000000000000005 /* Iris */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1A0000000000000000000002 /* EyeRest */ = {
+		1A0000000000000000000002 /* Iris */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				1A0000000000000000000010 /* Exceptions for "EyeRest" folder in "EyeRest" target */,
+				1A0000000000000000000010 /* Exceptions for "Iris" folder in "Iris" target */,
 			);
-			path = EyeRest;
+			path = Iris;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -42,7 +42,7 @@
 		1A0000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
-				1A0000000000000000000002 /* EyeRest */,
+				1A0000000000000000000002 /* Iris */,
 				1A0000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,7 +50,7 @@
 		1A0000000000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1A0000000000000000000004 /* EyeRest.app */,
+				1A0000000000000000000004 /* Iris.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -58,9 +58,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1A0000000000000000000005 /* EyeRest */ = {
+		1A0000000000000000000005 /* Iris */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1A000000000000000000000A /* Build configuration list for PBXNativeTarget "EyeRest" */;
+			buildConfigurationList = 1A000000000000000000000A /* Build configuration list for PBXNativeTarget "Iris" */;
 			buildPhases = (
 				1A0000000000000000000007 /* Sources */,
 				1A0000000000000000000006 /* Frameworks */,
@@ -71,11 +71,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				1A0000000000000000000002 /* EyeRest */,
+				1A0000000000000000000002 /* Iris */,
 			);
-			name = EyeRest;
-			productName = EyeRest;
-			productReference = 1A0000000000000000000004 /* EyeRest.app */;
+			name = Iris;
+			productName = Iris;
+			productReference = 1A0000000000000000000004 /* Iris.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -93,7 +93,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 1A000000000000000000000B /* Build configuration list for PBXProject "EyeRest" */;
+			buildConfigurationList = 1A000000000000000000000B /* Build configuration list for PBXProject "Iris" */;
 			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -108,7 +108,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1A0000000000000000000005 /* EyeRest */,
+				1A0000000000000000000005 /* Iris */,
 			);
 		};
 /* End PBXProject section */
@@ -254,20 +254,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = EyeRest/EyeRest.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Iris/Iris.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = EyeRest/Info.plist;
+				INFOPLIST_FILE = Iris/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.marfi.EyeRest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iris.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -278,20 +278,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = EyeRest/EyeRest.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Iris/Iris.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = EyeRest/Info.plist;
+				INFOPLIST_FILE = Iris/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.marfi.EyeRest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iris.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -301,7 +301,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1A000000000000000000000A /* Build configuration list for PBXNativeTarget "EyeRest" */ = {
+		1A000000000000000000000A /* Build configuration list for PBXNativeTarget "Iris" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A000000000000000000000C /* Debug */,
@@ -310,7 +310,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1A000000000000000000000B /* Build configuration list for PBXProject "EyeRest" */ = {
+		1A000000000000000000000B /* Build configuration list for PBXProject "Iris" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1A000000000000000000000E /* Debug */,

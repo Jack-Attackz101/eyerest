@@ -6,5 +6,5 @@ build/
 *.spec
 *.egg-info/
 .eggs/
-EyeRest.app/
+Iris.app/
 /tmp/

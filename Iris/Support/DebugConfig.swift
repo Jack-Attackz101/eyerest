@@ -1,6 +1,6 @@
 //
 //  DebugConfig.swift
-//  EyeRest
+//  Iris
 //
 //  Development-only switches. Kept in one place so they're easy to find and
 //  flip off before shipping.

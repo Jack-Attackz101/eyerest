@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  EyeRest
+//  Iris
 //
 //  Wires everything together: the menu bar status item + popover, the warning
 //  pill HUD, the blackout overlays and the sound cues. It observes the shared
@@ -50,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private static func symbol(_ name: String) -> NSImage? {
-        let image = NSImage(systemSymbolName: name, accessibilityDescription: "EyeRest")
+        let image = NSImage(systemSymbolName: name, accessibilityDescription: "Iris")
         image?.isTemplate = true
         return image
     }

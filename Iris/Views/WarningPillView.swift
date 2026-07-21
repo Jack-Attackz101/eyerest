@@ -1,6 +1,6 @@
 //
 //  WarningPillView.swift
-//  EyeRest
+//  Iris
 //
 //  The Dynamic Island-style pill that drops from the top of the screen during
 //  the warning window. Its vertical offset is driven by `model.presented`, which

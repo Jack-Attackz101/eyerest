@@ -1,6 +1,6 @@
 //
 //  ButtonStyles.swift
-//  EyeRest
+//  Iris
 //
 //  The two action-button looks used in the popover: a white outline button and
 //  a filled white button. Both are 32pt tall with a 10pt corner radius.
