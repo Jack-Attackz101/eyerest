@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
-"""Generate the Iris app icon: a stylized, detailed human iris at 1024x1024.
+"""Generate the Iris app icon: a minimal Japanese brush-stroke eye mark.
 
-Layers are composited in the order described in the spec: base vignette, iris
-body gradient (numpy per-pixel), radial fibers, collarette, crypts, pupil,
-pupil glow, specular highlights, and a final outer vignette.
+Muji-meets-Hiroshige — a single almond eye outline, a sage iris ring, a dark
+pupil, a few lash strokes and calligraphic corner dots on warm parchment.
 
 Outputs installer/icon_1024.png.
 """
 import math
 import os
-import random
 
-import numpy as np
 from PIL import Image, ImageDraw
-
-random.seed(20)
-np.random.seed(20)
 
 SIZE = 1024
 CX = CY = 512
@@ -28,139 +22,58 @@ def hex_rgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
-BLACK = hex_rgb("000000")
-NAVY_EDGE = hex_rgb("0a0f1a")
-IRIS_INNER = hex_rgb("1a2a6c")
-IRIS_MID = hex_rgb("4B6BFB")
-IRIS_OUTER = hex_rgb("0d3b4f")
-GLOW_BLUE = hex_rgb("4B6BFB")
-
-R_PUPIL = 155
-R_IRIS_IN = 180
-R_IRIS_MID = 320
-R_IRIS_OUT = 460
+BEIGE = hex_rgb("F5F0E8")       # warm off-white background
+DARK = hex_rgb("2C3B2D")        # dark forest green (almost black)
+SAGE = hex_rgb("4A6741")        # sage green
 
 
-def lerp(c1, c2, f):
-    """Blend two RGB tuples/arrays by fraction f (0..1)."""
-    f = np.clip(f, 0.0, 1.0)
-    return [c1[i] + (c2[i] - c1[i]) * f for i in range(3)]
+def quad_bezier(p0, c, p2, steps=150):
+    """Points along a quadratic bezier from p0 to p2 with control c."""
+    pts = []
+    for i in range(steps + 1):
+        t = i / steps
+        mt = 1 - t
+        x = mt * mt * p0[0] + 2 * mt * t * c[0] + t * t * p2[0]
+        y = mt * mt * p0[1] + 2 * mt * t * c[1] + t * t * p2[1]
+        pts.append((x, y))
+    return pts
 
 
-# ---------------------------------------------------------------- base + body
-yy, xx = np.mgrid[0:SIZE, 0:SIZE].astype(np.float64)
-dx = xx - CX
-dy = yy - CY
-r = np.sqrt(dx * dx + dy * dy)
+img = Image.new("RGBA", (SIZE, SIZE), BEIGE + (255,))
+draw = ImageDraw.Draw(img)
 
-img = np.zeros((SIZE, SIZE, 3), dtype=np.float64)
+LEFT = (256, 512)
+RIGHT = (768, 512)
 
-# 1. BASE — black center to dark navy edge.
-base_f = np.clip(r / 724.0, 0, 1)
-for i in range(3):
-    img[:, :, i] = BLACK[i] + (NAVY_EDGE[i] - BLACK[i]) * base_f
+# 1. OUTER EYE SHAPE — two quadratic arcs meeting at the corners.
+#    Control-point y solved so the arcs peak at 380 (top) and 644 (bottom):
+#    midpoint_y = 256 + 0.5 * Cy  ->  Cy = 2 * (peak - 256)
+top_arc = quad_bezier(LEFT, (512, 248), RIGHT)     # peak at y=380
+bottom_arc = quad_bezier(LEFT, (512, 776), RIGHT)  # dip at y=644
+draw.line(top_arc, fill=DARK + (255,), width=8, joint="curve")
+draw.line(bottom_arc, fill=DARK + (255,), width=8, joint="curve")
 
-# 2. IRIS BODY — radial gradient across the ring.
-f1 = (r - R_IRIS_IN) / (R_IRIS_MID - R_IRIS_IN)   # inner -> mid
-f2 = (r - R_IRIS_MID) / (R_IRIS_OUT - R_IRIS_MID)  # mid -> out
-inner_mid = lerp(IRIS_INNER, IRIS_MID, f1)
-mid_out = lerp(IRIS_MID, IRIS_OUTER, f2)
+# 2. IRIS RING — sage circle, stroke only.
+draw.ellipse([CX - 88, CY - 88, CX + 88, CY + 88], outline=SAGE + (255,), width=5)
 
-seg1 = (r >= R_IRIS_IN) & (r < R_IRIS_MID)
-seg2 = (r >= R_IRIS_MID) & (r <= R_IRIS_OUT)
-for i in range(3):
-    img[:, :, i] = np.where(seg1, inner_mid[i], img[:, :, i])
-    img[:, :, i] = np.where(seg2, mid_out[i], img[:, :, i])
+# 3. PUPIL — filled dark circle.
+draw.ellipse([CX - 38, CY - 38, CX + 38, CY + 38], fill=DARK + (255,))
 
-# limbal ring — subtle deep-blue glow at the very outer edge
-limbal = np.clip(1 - np.abs(r - 455) / 22.0, 0, 1) * 0.35
-for i in range(3):
-    img[:, :, i] = np.clip(img[:, :, i] + GLOW_BLUE[i] * limbal, 0, 255)
+# 4. LASH MARKS — short strokes fanning up-right from the right corner (60% opacity).
+lashes = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+ld = ImageDraw.Draw(lashes)
+for i, angle in enumerate((310, 320, 330, 340, 350)):
+    length = 22 + i * 3
+    rad = math.radians(angle)
+    x2 = RIGHT[0] + length * math.cos(rad)
+    y2 = RIGHT[1] + length * math.sin(rad)
+    ld.line([RIGHT, (x2, y2)], fill=DARK + (153,), width=2)  # 153/255 ≈ 60%
+img = Image.alpha_composite(img, lashes)
+draw = ImageDraw.Draw(img)
 
-canvas = Image.fromarray(img.astype(np.uint8)).convert("RGBA")
+# 5. CORNER DOTS — calligraphic brush ends.
+for corner in (LEFT, RIGHT):
+    draw.ellipse([corner[0] - 4, corner[1] - 4, corner[0] + 4, corner[1] + 4], fill=SAGE + (255,))
 
-
-def composite(overlay):
-    global canvas
-    canvas = Image.alpha_composite(canvas, overlay)
-
-
-def new_overlay():
-    return Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-
-
-def polar(radius, angle_deg):
-    a = math.radians(angle_deg)
-    return CX + radius * math.cos(a), CY + radius * math.sin(a)
-
-
-# 3. IRIS TEXTURE — radial fibers
-ov = new_overlay()
-d = ImageDraw.Draw(ov)
-for _ in range(random.randint(180, 220)):
-    angle = random.uniform(0, 360)
-    wobble = random.uniform(-3, 3)
-    width = random.randint(1, 2)
-    alpha = int(255 * random.uniform(0.06, 0.12))
-    x1, y1 = polar(190, angle)
-    x2, y2 = polar(450, angle + wobble)
-    d.line([(x1, y1), (x2, y2)], fill=(255, 255, 255, alpha), width=width)
-composite(ov)
-
-# 4. COLLARETTE — jagged irregular ring near r=260
-ov = new_overlay()
-d = ImageDraw.Draw(ov)
-bbox = [CX - 260, CY - 260, CX + 260, CY + 260]
-for _ in range(random.randint(40, 50)):
-    start = random.uniform(0, 360)
-    end = start + random.uniform(3, 8)
-    d.arc(bbox, start, end, fill=(255, 255, 255, int(255 * 0.20)), width=4)
-composite(ov)
-
-# 5. CRYPTS — small dark irregular patches within the ring
-ov = new_overlay()
-d = ImageDraw.Draw(ov)
-for _ in range(random.randint(8, 12)):
-    rad = random.uniform(R_IRIS_IN + 20, R_IRIS_OUT - 30)
-    ang = random.uniform(0, 360)
-    px, py = polar(rad, ang)
-    w = random.uniform(5, 12)
-    h = random.uniform(5, 12)
-    d.ellipse([px - w, py - h, px + w, py + h], fill=(0, 0, 0, int(255 * 0.40)))
-composite(ov)
-
-# 6. PUPIL — solid black circle
-ov = new_overlay()
-d = ImageDraw.Draw(ov)
-d.ellipse([CX - R_PUPIL, CY - R_PUPIL, CX + R_PUPIL, CY + R_PUPIL], fill=(0, 0, 0, 255))
-composite(ov)
-
-# 7. PUPIL GLOW — blue ring around the pupil edge (peak alpha at r=185)
-glow = np.zeros((SIZE, SIZE, 4), dtype=np.float64)
-peak = np.zeros_like(r)
-rising = (r >= R_PUPIL) & (r < 185)
-falling = (r >= 185) & (r <= 210)
-peak = np.where(rising, (r - R_PUPIL) / (185 - R_PUPIL), peak)
-peak = np.where(falling, 1 - (r - 185) / (210 - 185), peak)
-alpha = np.clip(peak, 0, 1) * (255 * 0.30)
-for i in range(3):
-    glow[:, :, i] = GLOW_BLUE[i]
-glow[:, :, 3] = alpha
-composite(Image.fromarray(glow.astype(np.uint8)))
-
-# 8. SPECULAR HIGHLIGHTS
-ov = new_overlay()
-d = ImageDraw.Draw(ov)
-d.ellipse([580 - 18, 400 - 12, 580 + 18, 400 + 12], fill=(255, 255, 255, int(255 * 0.80)))
-d.ellipse([445 - 8, 430 - 5, 445 + 8, 430 + 5], fill=(255, 255, 255, int(255 * 0.40)))
-composite(ov)
-
-# 9. OUTER VIGNETTE — darken the outer edge (r=430 unchanged .. r=500 black)
-arr = np.array(canvas).astype(np.float64)
-vig = np.clip((500 - r) / (500 - 430), 0, 1)   # 1 inside, 0 at/after 500
-for i in range(3):
-    arr[:, :, i] *= vig
-canvas = Image.fromarray(arr.astype(np.uint8))
-
-canvas.convert("RGB").save(OUT)
+img.convert("RGB").save(OUT)
 print("wrote", OUT)
