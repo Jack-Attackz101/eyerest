@@ -48,13 +48,14 @@ def key_white(im, thr=245):
 # ---- backdrop ----
 bg = Image.open(os.path.join(A, "dmg-reference.jpg")).convert("RGBA").resize((W, H), Image.LANCZOS)
 
-# ---- chalk arrow: resize 55x70, centered at (190,210) ----
+# ---- chalk arrow: rotated 90° left (CCW) to lie horizontal, centered at (190,100) ----
 arrow = key_white(Image.open(os.path.join(A, "arrow.png"))).resize((55, 70), Image.LANCZOS)
-bg.alpha_composite(arrow, (CX - 55 // 2, 170 - 70 // 2))
+arrow = arrow.rotate(90, expand=True)          # 90° left → points horizontally
+bg.alpha_composite(arrow, (CX - arrow.width // 2, 100 - arrow.height // 2))
 
 # ---- pointing hand: clean transparent PNG — load as-is, no keying, 150x100 ----
 finger = Image.open(os.path.join(A, "point.png")).convert("RGBA").resize((150, 100), Image.LANCZOS)
-bg.alpha_composite(finger, (-20, 320))
+bg.alpha_composite(finger, (-20, 285))
 
 # ---- DOWNLOAD INSTRUCTIONS pill on an RGBA overlay (for 60% border alpha) ----
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
