@@ -153,8 +153,8 @@ centered(draw, 405, 205, "Applications", load_serif(15), hx("c8dcc8"))
 centered(draw, 270, 300, "Drag Iris to Applications to install", load_serif(12), hx("5a8a5a"))
 
 # First-launch (Gatekeeper) instructions.
-centered(draw, 270, 322, "First launch: right-click Iris → Open → Open", load_serif(12), hx("8ab88a"))
-centered(draw, 270, 338, "macOS will ask to verify the app on first open only", load_serif(10), hx("5a7a5a"))
+centered(draw, 270, 322, "Blocked? Go to System Settings → Privacy & Security → Open Anyway", load_serif(12), hx("8ab88a"))
+centered(draw, 270, 338, "Apple blocks unverified apps by default — this is normal and safe to override", load_serif(10), hx("5a7a5a"))
 
 img.convert("RGB").save(OUT)
 print("wrote", OUT)
