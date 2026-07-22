@@ -99,8 +99,14 @@ struct MainView: View {
 
     private var controls: some View {
         HStack(spacing: 10) {
-            Button(engine.isPaused ? "Resume" : "Pause") { engine.togglePause() }
-                .buttonStyle(FrostedPillStyle())
+            if engine.isCallPaused {
+                // Override the auto-pause and keep running for this call.
+                Button("Resume") { engine.resumeDuringCall() }
+                    .buttonStyle(AmberPillStyle())
+            } else {
+                Button(engine.isPaused ? "Resume" : "Pause") { engine.togglePause() }
+                    .buttonStyle(FrostedPillStyle())
+            }
             Button("Rest Now") { engine.restNow() }
                 .buttonStyle(SolidPillStyle())
         }
@@ -140,8 +146,13 @@ struct MainView: View {
         switch engine.popoverStatus {
         case .scheduled(let label, _):
             return .init(color: .gray, text: label, pulsing: false)
-        case .callDetected:
-            return .init(color: .orange, text: "Call detected", pulsing: false)
+        case .callPaused:
+            return .init(color: .orange, text: "Paused — call detected",
+                         subtitle: "tap Resume to keep going", pulsing: false)
+        case .callRunning:
+            return .init(color: .orange,
+                         text: engine.autoPauseDuringCalls ? "Active during call" : "Call detected",
+                         pulsing: false)
         case .quietHours:
             return .init(color: .gray, text: "Quiet hours", pulsing: false)
         case .userPaused:
@@ -158,6 +169,7 @@ struct StatusPill: View {
     struct Descriptor {
         let color: Color
         let text: String
+        var subtitle: String? = nil
         let pulsing: Bool
     }
 
@@ -165,24 +177,34 @@ struct StatusPill: View {
     @State private var pulse = false
 
     var body: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(descriptor.color)
-                .frame(width: 6, height: 6)
-                .opacity(descriptor.pulsing && pulse ? 0.3 : 1)
-                .onAppear {
-                    guard descriptor.pulsing else { return }
-                    withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-                        pulse = true
+        VStack(alignment: .trailing, spacing: 3) {
+            HStack(spacing: 5) {
+                Circle()
+                    .fill(descriptor.color)
+                    .frame(width: 6, height: 6)
+                    .opacity(descriptor.pulsing && pulse ? 0.3 : 1)
+                    .onAppear {
+                        guard descriptor.pulsing else { return }
+                        withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                            pulse = true
+                        }
                     }
-                }
-            Text(descriptor.text)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.white)
+                Text(descriptor.text)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(Color.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+
+            if let subtitle = descriptor.subtitle {
+                // #888 per spec, lifted to stay legible over the video.
+                Text(subtitle)
+                    .font(.system(size: 10, weight: .light))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .shadow(color: .black.opacity(0.4), radius: 3)
+            }
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
-        .background(Color.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -212,6 +234,22 @@ struct SolidPillStyle: ButtonStyle {
             .foregroundStyle(.black)
             .frame(width: 110, height: 36)
             .background(Color.white.opacity(0.9), in: Capsule())
+            .opacity(configuration.isPressed ? 0.75 : 1)
+    }
+}
+
+/// Amber pill — the "Resume during call" override.
+struct AmberPillStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 110, height: 36)
+            .background {
+                Capsule().fill(.ultraThinMaterial)
+                Capsule().fill(Color.orange.opacity(0.55))
+            }
+            .overlay(Capsule().stroke(Color.orange.opacity(0.9), lineWidth: 1))
             .opacity(configuration.isPressed ? 0.75 : 1)
     }
 }

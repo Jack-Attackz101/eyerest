@@ -31,7 +31,8 @@ final class TimerEngine: ObservableObject {
     enum PopoverStatus: Equatable {
         case counting
         case userPaused
-        case callDetected
+        case callPaused          // auto-paused by a detected call; Resume override available
+        case callRunning         // a call is active but Iris keeps running (resumed, or auto-pause off)
         case quietHours
         case scheduled(label: String, endsAt: Date)
     }
@@ -44,6 +45,9 @@ final class TimerEngine: ObservableObject {
     @Published private(set) var isPaused: Bool = false
 
     @Published private(set) var isCallActive: Bool = false
+    /// The user explicitly chose to keep Iris running during the current call.
+    /// Reset automatically when the call ends.
+    @Published private(set) var userResumedDuringCall: Bool = false
     @Published private(set) var isInQuietHours: Bool = false
     @Published private(set) var activeScheduleBlock: ScheduleBlock?
 
@@ -210,12 +214,18 @@ final class TimerEngine: ObservableObject {
         }
     }
 
+    /// A detected call is currently auto-pausing Iris (i.e. auto-pause is on, a
+    /// call is active, and the user hasn't chosen to keep running).
+    var isCallPaused: Bool {
+        autoPauseDuringCalls && isCallActive && !userResumedDuringCall
+    }
+
     /// True when the countdown must not advance for any reason.
     var isSuspended: Bool {
         isPaused
             || timerState == .scheduledPause
             || isInQuietHours
-            || (autoPauseDuringCalls && isCallActive)
+            || isCallPaused
     }
 
     // MARK: - Transitions
@@ -255,9 +265,20 @@ final class TimerEngine: ObservableObject {
     func setCallActive(_ active: Bool) {
         guard isCallActive != active else { return }
         isCallActive = active
-        if active, autoPauseDuringCalls, timerState == .warning {
-            timerState = .counting
+        if active {
+            // Auto-pausing mid-warning should retract the pill.
+            if isCallPaused, timerState == .warning { timerState = .counting }
+        } else {
+            // Call ended → forget the override so the next call auto-pauses again.
+            // The timer resumes on its own since the call suspension has cleared.
+            userResumedDuringCall = false
         }
+    }
+
+    /// User chose to keep Iris running for the rest of this call session.
+    func resumeDuringCall() {
+        guard isCallActive else { return }
+        userResumedDuringCall = true
     }
 
     private func updateSuspensionStates() {
@@ -285,7 +306,7 @@ final class TimerEngine: ObservableObject {
         if quiet != isInQuietHours { isInQuietHours = quiet }
 
         // A soft suspension arriving mid-warning should retract the pill.
-        if timerState == .warning, isInQuietHours || (autoPauseDuringCalls && isCallActive) {
+        if timerState == .warning, isInQuietHours || isCallPaused {
             timerState = .counting
         }
     }
@@ -330,7 +351,7 @@ final class TimerEngine: ObservableObject {
             return .scheduled(label: block.label, endsAt: end)
         }
         if isInQuietHours { return .quietHours }
-        if autoPauseDuringCalls && isCallActive { return .callDetected }
+        if isCallActive { return isCallPaused ? .callPaused : .callRunning }
         if isPaused { return .userPaused }
         return .counting
     }
