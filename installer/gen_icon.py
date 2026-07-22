@@ -16,7 +16,7 @@ LOGO = os.path.join(HERE, "assets", "iris-logo-white.png")
 OUT = os.path.join(HERE, "icon_1024.png")
 
 SIZE = 1024
-BOX = 700          # target region for the logo
+BOX = 680          # target region for the logo
 RADIUS = 224       # Apple-standard corner radius
 
 canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 255))
