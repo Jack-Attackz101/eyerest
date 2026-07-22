@@ -17,7 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 A = os.path.join(HERE, "assets")
 OUT = os.path.join(HERE, "dmg_background.png")
 
-W, H = 380, 460
+W, H = 380, 500
 CX = 190
 
 
@@ -50,19 +50,19 @@ bg = Image.open(os.path.join(A, "dmg-reference.jpg")).convert("RGBA").resize((W,
 
 # ---- chalk arrow: resize 55x70, centered at (190,210) ----
 arrow = key_white(Image.open(os.path.join(A, "arrow.png"))).resize((55, 70), Image.LANCZOS)
-bg.alpha_composite(arrow, (CX - 55 // 2, 210 - 70 // 2))
+bg.alpha_composite(arrow, (CX - 55 // 2, 170 - 70 // 2))
 
 # ---- pointing hand: fit within 150x100 (aspect kept), paste at (-20,380) ----
 finger = key_white(Image.open(os.path.join(A, "point.png")))
 fw, fh = finger.size
 s = min(150 / fw, 100 / fh)
 finger = finger.resize((round(fw * s), round(fh * s)), Image.LANCZOS)
-bg.alpha_composite(finger, (-20, 380))
+bg.alpha_composite(finger, (-20, 360))
 
 # ---- DOWNLOAD INSTRUCTIONS pill on an RGBA overlay (for 60% border alpha) ----
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od = ImageDraw.Draw(overlay)
-pw, ph, py = 240, 32, 435
+pw, ph, py = 240, 32, 455
 x0, y0 = CX - pw // 2, py - ph // 2
 od.rounded_rectangle([x0, y0, x0 + pw, y0 + ph], radius=16,
                      fill=hx("0a0a0a") + (255,),
