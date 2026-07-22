@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 random.seed(11)
 np.random.seed(11)
 
-W, H = 540, 340
+W, H = 540, 360   # 20px taller than the 540x340 window to fit the first-launch note
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "dmg_background.png")
 GROUND = 214
@@ -34,8 +34,9 @@ LEAF_COLORS = [hx("1a3d1a"), hx("2d5c2d"), hx("3a6e3a"), hx("4a8a4a")]
 
 
 def load_serif(size):
-    for path in ("/System/Library/Fonts/Times.ttc",
-                 "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+    # Times New Roman first — it carries the → glyph that Times.ttc lacks.
+    for path in ("/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+                 "/System/Library/Fonts/Times.ttc",
                  "/System/Library/Fonts/Georgia.ttf"):
         try:
             return ImageFont.truetype(path, size)
@@ -149,7 +150,11 @@ centered(draw, 270, 28, "iris", load_serif(15), hx("4a7a4a"))
 centered(draw, 135, 205, "Iris", load_serif(15), hx("c8dcc8"))
 centered(draw, 135, 224, "Version 2.0", load_serif(11), hx("5a7a5a"))
 centered(draw, 405, 205, "Applications", load_serif(15), hx("c8dcc8"))
-centered(draw, 270, 318, "Drag Iris to Applications to install", load_serif(12), hx("5a8a5a"))
+centered(draw, 270, 300, "Drag Iris to Applications to install", load_serif(12), hx("5a8a5a"))
+
+# First-launch (Gatekeeper) instructions.
+centered(draw, 270, 322, "First launch: right-click Iris → Open → Open", load_serif(12), hx("8ab88a"))
+centered(draw, 270, 338, "macOS will ask to verify the app on first open only", load_serif(10), hx("5a7a5a"))
 
 img.convert("RGB").save(OUT)
 print("wrote", OUT)
