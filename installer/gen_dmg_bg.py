@@ -48,10 +48,9 @@ def key_white(im, thr=245):
 # ---- backdrop ----
 bg = Image.open(os.path.join(A, "dmg-reference.jpg")).convert("RGBA").resize((W, H), Image.LANCZOS)
 
-# ---- chalk arrow: rotated 90° left (CCW) to lie horizontal, centered at (190,100) ----
+# ---- chalk arrow: vertical (points up), centered at (190,170) ----
 arrow = key_white(Image.open(os.path.join(A, "arrow.png"))).resize((55, 70), Image.LANCZOS)
-arrow = arrow.rotate(90, expand=True)          # 90° left → points horizontally
-bg.alpha_composite(arrow, (CX - arrow.width // 2, 100 - arrow.height // 2))
+bg.alpha_composite(arrow, (CX - arrow.width // 2, 170 - 70 // 2))
 
 # ---- pointing hand: clean transparent PNG — load as-is, no keying, 150x100 ----
 finger = Image.open(os.path.join(A, "point.png")).convert("RGBA").resize((150, 100), Image.LANCZOS)
