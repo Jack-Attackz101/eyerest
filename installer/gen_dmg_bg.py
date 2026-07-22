@@ -52,17 +52,14 @@ bg = Image.open(os.path.join(A, "dmg-reference.jpg")).convert("RGBA").resize((W,
 arrow = key_white(Image.open(os.path.join(A, "arrow.png"))).resize((55, 70), Image.LANCZOS)
 bg.alpha_composite(arrow, (CX - 55 // 2, 170 - 70 // 2))
 
-# ---- pointing hand: fit within 150x100 (aspect kept), paste at (-20,380) ----
-finger = key_white(Image.open(os.path.join(A, "point.png")))
-fw, fh = finger.size
-s = min(150 / fw, 100 / fh)
-finger = finger.resize((round(fw * s), round(fh * s)), Image.LANCZOS)
-bg.alpha_composite(finger, (-20, 360))
+# ---- pointing hand: clean transparent PNG — load as-is, no keying, 150x100 ----
+finger = Image.open(os.path.join(A, "point.png")).convert("RGBA").resize((150, 100), Image.LANCZOS)
+bg.alpha_composite(finger, (-20, 320))
 
 # ---- DOWNLOAD INSTRUCTIONS pill on an RGBA overlay (for 60% border alpha) ----
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od = ImageDraw.Draw(overlay)
-pw, ph, py = 240, 32, 455
+pw, ph, py = 240, 32, 415
 x0, y0 = CX - pw // 2, py - ph // 2
 od.rounded_rectangle([x0, y0, x0 + pw, y0 + ph], radius=16,
                      fill=hx("0a0a0a") + (255,),
