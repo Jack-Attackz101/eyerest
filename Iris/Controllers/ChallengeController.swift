@@ -3,13 +3,14 @@
 //  Iris
 //
 //  Presents the physical-challenge overlay on all displays after the screen
-//  wakes from lock (Feature 7), honoring the trigger mode and once-per-day gate.
+//  wakes from lock, gated to the user's wake window and once per day.
+//  The overlay cannot be force-dismissed — the Done button appears only after
+//  the exercise's hold duration elapses.
 //
 
 import AppKit
 import SwiftUI
 
-/// A borderless panel that can become key so the "Done" button is clickable.
 private final class ChallengePanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
@@ -18,13 +19,14 @@ private final class ChallengePanel: NSPanel {
 final class ChallengeController {
 
     private let engine: TimerEngine
-    private let model = ChallengeModel()
+    private var model: ChallengeModel?
     private var panels: [NSPanel] = []
     private var countdownTimer: Timer?
+    private var keyboardMonitor: Any?
     private var isShowing = false
 
     private let defaults = UserDefaults.standard
-    private let lastShownKey = "iris.lastChallengeDateShown"
+    private let lastChallengeKey = "iris.lastChallengeDate"
 
     private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -35,7 +37,6 @@ final class ChallengeController {
 
     init(engine: TimerEngine) {
         self.engine = engine
-        model.onDone = { [weak self] in self?.dismiss() }
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
             selector: #selector(screensDidWake),
@@ -48,42 +49,42 @@ final class ChallengeController {
 
     @objc private func screensDidWake() {
         guard shouldPresentNow() else { return }
-        // Let the login screen fully dismiss first.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.present()
         }
     }
+
+    // MARK: - Gate logic
 
     private func shouldPresentNow() -> Bool {
         let challenge = engine.challenge
         guard challenge.isEnabled, !isShowing else { return false }
 
         let now = Date()
-        let hour = Calendar.current.component(.hour, from: now)
         let today = Self.dayFormatter.string(from: now)
+        guard defaults.string(forKey: lastChallengeKey) != today else { return false }
+        guard isWithinWakeWindow(now: now, challenge: challenge) else { return false }
 
-        switch challenge.triggerMode {
-        case .everyUnlock:
-            return true
+        defaults.set(today, forKey: lastChallengeKey)
+        return true
+    }
 
-        case .morningOnly:
-            guard hour >= challenge.morningStartHour else { return false }
-            guard defaults.string(forKey: lastShownKey) != today else { return false }
-            defaults.set(today, forKey: lastShownKey)
-            return true
+    private func isWithinWakeWindow(now: Date, challenge: Challenge) -> Bool {
+        let cal = Calendar.current
+        let nowMin  = cal.component(.hour, from: now)       * 60 + cal.component(.minute, from: now)
+        let wakeMin = cal.component(.hour, from: challenge.wakeTime)  * 60 + cal.component(.minute, from: challenge.wakeTime)
+        let bedMin  = cal.component(.hour, from: challenge.bedtime)   * 60 + cal.component(.minute, from: challenge.bedtime)
 
-        case .both:
-            // Fires every unlock; also record the morning occurrence for the day.
-            if hour >= challenge.morningStartHour, defaults.string(forKey: lastShownKey) != today {
-                defaults.set(today, forKey: lastShownKey)
-            }
-            return true
+        if wakeMin <= bedMin {
+            return nowMin >= wakeMin && nowMin < bedMin
+        } else {
+            // Window crosses midnight (e.g. wake 22:00, bed 06:00).
+            return nowMin >= wakeMin || nowMin < bedMin
         }
     }
 
     // MARK: - Present / dismiss
 
-    /// Exposed so the app can trigger a challenge on first launch if appropriate.
     func presentIfDue() {
         guard shouldPresentNow() else { return }
         present()
@@ -93,51 +94,79 @@ final class ChallengeController {
         guard !isShowing else { return }
         isShowing = true
 
-        model.visible = false
-        model.secondsUntilEnabled = 5
-        buildPanels()
+        let exercise = engine.challenge.resolvedExercise()
+        let m = ChallengeModel()
+        m.secondsRemaining = exercise.holdDuration
+        m.streak = StatsEngine.shared.challengeStreak
+        m.onDone = { [weak self] in
+            StatsEngine.shared.recordChallengeComplete()
+            self?.dismiss()
+        }
+        m.onSkip = { [weak self] in
+            StatsEngine.shared.recordChallengeSkipped()
+            self?.dismiss()
+        }
+        model = m
 
+        buildPanels(model: m, exercise: exercise)
         for panel in panels { panel.orderFrontRegardless() }
         panels.first?.makeKeyAndOrderFront(nil)
+        startKeyboardSwallow()
 
-        DispatchQueue.main.async { [weak self] in self?.model.visible = true }
-        startCountdown()
+        DispatchQueue.main.async { m.visible = true }
+        startCountdown(model: m, exercise: exercise)
     }
 
     private func dismiss() {
         countdownTimer?.invalidate()
         countdownTimer = nil
-        model.visible = false
+        stopKeyboardSwallow()
+        model?.visible = false
         let closing = panels
         panels = []
         isShowing = false
+        model = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             closing.forEach { $0.orderOut(nil) }
         }
     }
 
-    private func startCountdown() {
+    // MARK: - Countdown
+
+    private func startCountdown(model: ChallengeModel, exercise: Exercise) {
         countdownTimer?.invalidate()
-        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] t in
-            guard let self else { t.invalidate(); return }
-            if self.model.secondsUntilEnabled > 0 {
-                self.model.secondsUntilEnabled -= 1
+        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak model] t in
+            guard let model else { t.invalidate(); return }
+            if model.secondsRemaining > 0 {
+                model.secondsRemaining -= 1
             } else {
                 t.invalidate()
+                withAnimation(.easeInOut(duration: 0.4)) { model.doneEnabled = true }
             }
         }
         RunLoop.main.add(timer, forMode: .common)
         countdownTimer = timer
     }
 
-    // MARK: - Panels
+    // MARK: - Input swallowing (keyboard only; mouse reaches SwiftUI buttons)
 
-    private func buildPanels() {
-        panels.forEach { $0.orderOut(nil) }
-        panels = NSScreen.screens.map { makePanel(for: $0) }
+    private func startKeyboardSwallow() {
+        guard keyboardMonitor == nil else { return }
+        keyboardMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .keyUp, .flagsChanged]) { _ in nil }
     }
 
-    private func makePanel(for screen: NSScreen) -> NSPanel {
+    private func stopKeyboardSwallow() {
+        if let m = keyboardMonitor { NSEvent.removeMonitor(m); keyboardMonitor = nil }
+    }
+
+    // MARK: - Panels
+
+    private func buildPanels(model: ChallengeModel, exercise: Exercise) {
+        panels.forEach { $0.orderOut(nil) }
+        panels = NSScreen.screens.map { makePanel(for: $0, model: model, exercise: exercise) }
+    }
+
+    private func makePanel(for screen: NSScreen, model: ChallengeModel, exercise: Exercise) -> NSPanel {
         let panel = ChallengePanel(
             contentRect: screen.frame,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -151,7 +180,7 @@ final class ChallengeController {
         panel.hasShadow = false
         panel.hidesOnDeactivate = false
 
-        let host = NSHostingView(rootView: ChallengeView(model: model, challenge: engine.challenge))
+        let host = NSHostingView(rootView: ChallengeView(model: model, exercise: exercise))
         host.frame = NSRect(origin: .zero, size: screen.frame.size)
         panel.contentView = host
         panel.setFrame(screen.frame, display: true)

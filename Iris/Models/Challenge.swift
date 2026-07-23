@@ -2,82 +2,114 @@
 //  Challenge.swift
 //  Iris
 //
-//  A physical challenge the user must complete after unlocking (Feature 7).
+//  The morning physical challenge (Feature 7). Each exercise carries its own
+//  reps label and a required hold duration — the Done button can't appear until
+//  the hold completes.
 //
 
 import Foundation
 
+// MARK: - Challenge
+
 struct Challenge: Codable, Equatable {
-    var exercise: String
-    var reps: Int
+    /// Raw value of Exercise, or Challenge.surpriseMeID for a random pick each morning.
+    var exerciseID: String
     var isEnabled: Bool
-    var triggerMode: TriggerMode
-    var morningStartHour: Int
+    var wakeTime: Date   // Only the time-of-day components are used.
+    var bedtime: Date    // Only the time-of-day components are used.
 
-    enum TriggerMode: String, Codable, CaseIterable, Identifiable {
-        case morningOnly
-        case everyUnlock
-        case both
+    static let surpriseMeID = "surpriseMe"
 
-        var id: String { rawValue }
+    var isSurpriseMe: Bool { exerciseID == Self.surpriseMeID }
 
-        var displayName: String {
-            switch self {
-            case .morningOnly: return "Morning only"
-            case .everyUnlock: return "Every unlock"
-            case .both: return "Both"
-            }
-        }
-
-        /// Whether this trigger involves the morning-time gate.
-        var usesMorningTime: Bool { self != .everyUnlock }
+    /// Resolves to a concrete exercise; random for "Surprise me".
+    func resolvedExercise() -> Exercise {
+        if isSurpriseMe { return Exercise.allCases.randomElement() ?? .jumpingJacks }
+        return Exercise(rawValue: exerciseID) ?? .jumpingJacks
     }
 
-    static let `default` = Challenge(
-        exercise: Exercise.pushUps.rawValue,
-        reps: 10,
-        isEnabled: false,
-        triggerMode: .morningOnly,
-        morningStartHour: 6
-    )
+    static var `default`: Challenge {
+        Challenge(
+            exerciseID: Exercise.jumpingJacks.rawValue,
+            isEnabled: false,
+            wakeTime: tod(hour: 6, minute: 30),
+            bedtime: tod(hour: 22, minute: 30)
+        )
+    }
+
+    private static func tod(hour: Int, minute: Int) -> Date {
+        Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: Date()) ?? Date()
+    }
 }
 
-/// The fixed set of exercises the user can choose from (no custom text).
+// MARK: - Exercise
+
 enum Exercise: String, CaseIterable, Identifiable {
-    case pushUps = "Push-ups"
-    case sitUps = "Sit-ups"
-    case squats = "Squats"
-    case jumpingJacks = "Jumping Jacks"
-    case burpees = "Burpees"
-    case wallSit = "Wall Sit"
-    case deepBreaths = "Deep Breaths"
+    case jumpingJacks    = "Jumping Jacks"
+    case squats          = "Squats"
+    case deskPushUps     = "Desk Push-ups"
+    case highKnees       = "High Knees"
+    case wallSit         = "Wall Sit"
+    case calfRaises      = "Calf Raises"
+    case standingStretch = "Standing Stretch"
 
     var id: String { rawValue }
 
-    /// Closest available SF Symbol for each exercise.
+    /// Hold duration in seconds — the minimum time before Done appears.
+    var holdDuration: Int {
+        switch self {
+        case .jumpingJacks:    return 20
+        case .squats:          return 30
+        case .deskPushUps:     return 25
+        case .highKnees:       return 20
+        case .wallSit:         return 30
+        case .calfRaises:      return 25
+        case .standingStretch: return 20
+        }
+    }
+
+    /// Short reps text shown on the challenge screen below the name.
+    var repsDisplay: String {
+        switch self {
+        case .jumpingJacks:    return "× 10"
+        case .squats:          return "× 10"
+        case .deskPushUps:     return "× 10"
+        case .highKnees:       return "× 20"
+        case .wallSit:         return "hold"
+        case .calfRaises:      return "× 15"
+        case .standingStretch: return "hold"
+        }
+    }
+
+    /// Human-readable reps label for the settings picker.
+    var repsDescription: String {
+        switch self {
+        case .jumpingJacks:    return "10 reps"
+        case .squats:          return "10 reps"
+        case .deskPushUps:     return "10 reps"
+        case .highKnees:       return "20 reps"
+        case .wallSit:         return "hold"
+        case .calfRaises:      return "15 reps"
+        case .standingStretch: return "hold"
+        }
+    }
+
+    /// "Jumping Jacks · 10 reps · 20s" label for the exercise picker.
+    var pickerLabel: String { "\(rawValue) · \(repsDescription) · \(holdDuration)s" }
+
     var symbolName: String {
         switch self {
-        case .pushUps: return "figure.strengthtraining.traditional"
-        case .sitUps: return "figure.core.training"
-        case .squats: return "figure.squat"
-        case .jumpingJacks: return "figure.jumprope"
-        case .burpees: return "figure.highintensity.intervaltraining"
-        case .wallSit: return "figure.stand"
-        case .deepBreaths: return "wind"
+        case .jumpingJacks:    return "figure.jumprope"
+        case .squats:          return "figure.squat"
+        case .deskPushUps:     return "figure.strengthtraining.traditional"
+        case .highKnees:       return "figure.run"
+        case .wallSit:         return "figure.stand"
+        case .calfRaises:      return "figure.walk"
+        case .standingStretch: return "figure.cooldown"
         }
     }
 
-    /// The unit for the rep count. Wall Sit / Deep Breaths aren't literal "reps".
-    var repUnit: String {
-        switch self {
-        case .wallSit: return "seconds"
-        case .deepBreaths: return "breaths"
-        default: return "reps"
-        }
-    }
-
-    /// Resolve an exercise from a stored raw string, defaulting to push-ups.
     static func from(_ raw: String) -> Exercise {
-        Exercise(rawValue: raw) ?? .pushUps
+        Exercise(rawValue: raw) ?? .jumpingJacks
     }
 }

@@ -2,7 +2,8 @@
 //  ChallengeSettingsSection.swift
 //  Iris
 //
-//  Morning / unlock physical-challenge settings (Feature 7), shown inline.
+//  Morning physical-challenge settings: exercise picker (with "Surprise me"),
+//  wake-up time, bedtime, and a live preview of the full flow.
 //
 
 import SwiftUI
@@ -10,24 +11,14 @@ import SwiftUI
 struct ChallengeSettingsSection: View {
     @EnvironmentObject private var engine: TimerEngine
 
-    private static let hourFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.timeStyle = .short
-        return f
-    }()
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             SettingToggleRow(label: "Physical challenge", isOn: $engine.challenge.isEnabled)
 
             if engine.challenge.isEnabled {
                 exercisePicker
-                repsStepper
-                triggerControl
-
-                if engine.challenge.triggerMode.usesMorningTime {
-                    morningTimePicker
-                }
+                wakeTimePicker
+                bedtimePicker
 
                 Text(previewText)
                     .font(.system(size: 11))
@@ -42,92 +33,68 @@ struct ChallengeSettingsSection: View {
 
     private var exercisePicker: some View {
         HStack {
-            Text("Exercise").font(.system(size: 13)).foregroundStyle(Color.irisSecondary)
+            Text("Exercise")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.irisSecondary)
             Spacer()
-            Picker("", selection: exerciseBinding) {
-                ForEach(Exercise.allCases) { ex in Text(ex.rawValue).tag(ex) }
+            Picker("", selection: $engine.challenge.exerciseID) {
+                Text("Surprise me").tag(Challenge.surpriseMeID)
+                ForEach(Exercise.allCases) { ex in
+                    Text(ex.pickerLabel).tag(ex.rawValue)
+                }
             }
-            .labelsHidden().fixedSize().tint(Color.irisSecondary)
+            .labelsHidden()
+            .fixedSize()
+            .tint(Color.irisSecondary)
         }
         .frame(height: 36)
     }
 
-    private var repsStepper: some View {
+    private var wakeTimePicker: some View {
         HStack {
-            Text("Reps").font(.system(size: 13)).foregroundStyle(Color.irisSecondary)
+            Text("Wake-up time")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.irisSecondary)
             Spacer()
-            Text("\(engine.challenge.reps) \(currentExercise.repUnit)")
-                .font(.system(size: 13)).foregroundStyle(.white)
-            Stepper("", value: $engine.challenge.reps, in: 1...50, step: 1).labelsHidden()
+            DatePicker("", selection: $engine.challenge.wakeTime, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .datePickerStyle(.stepperField)
+                .fixedSize()
         }
         .frame(height: 36)
     }
 
-    private var triggerControl: some View {
-        Picker("", selection: $engine.challenge.triggerMode) {
-            ForEach(Challenge.TriggerMode.allCases) { mode in
-                Text(shortLabel(mode)).tag(mode)
-            }
-        }
-        .labelsHidden()
-        .pickerStyle(.segmented)
-    }
-
-    private var morningTimePicker: some View {
+    private var bedtimePicker: some View {
         HStack {
-            Text("After").font(.system(size: 13)).foregroundStyle(Color.irisSecondary)
+            Text("Bedtime")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.irisSecondary)
             Spacer()
-            DatePicker("", selection: morningTimeBinding, displayedComponents: .hourAndMinute)
-                .labelsHidden().datePickerStyle(.stepperField).fixedSize()
+            DatePicker("", selection: $engine.challenge.bedtime, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .datePickerStyle(.stepperField)
+                .fixedSize()
         }
         .frame(height: 36)
     }
 
-    // MARK: - Bindings / helpers
-
-    private var currentExercise: Exercise { Exercise.from(engine.challenge.exercise) }
-
-    private func shortLabel(_ mode: Challenge.TriggerMode) -> String {
-        switch mode {
-        case .morningOnly: return "Morning"
-        case .everyUnlock: return "Every unlock"
-        case .both: return "Both"
-        }
-    }
-
-    private var exerciseBinding: Binding<Exercise> {
-        Binding(
-            get: { Exercise.from(engine.challenge.exercise) },
-            set: { engine.challenge.exercise = $0.rawValue }
-        )
-    }
-
-    /// Maps the morning start *hour* to/from a Date for the time picker.
-    private var morningTimeBinding: Binding<Date> {
-        Binding(
-            get: {
-                Calendar.current.date(
-                    bySettingHour: engine.challenge.morningStartHour, minute: 0, second: 0, of: Date()
-                ) ?? Date()
-            },
-            set: { engine.challenge.morningStartHour = Calendar.current.component(.hour, from: $0) }
-        )
-    }
+    // MARK: - Preview text
 
     private var previewText: String {
         let c = engine.challenge
-        let name = Exercise.from(c.exercise).rawValue.lowercased()
-        let amount = "\(c.reps) \(name)"
-        let timeString = Self.hourFormatter.string(
-            from: Calendar.current.date(bySettingHour: c.morningStartHour, minute: 0, second: 0, of: Date()) ?? Date()
-        )
-        switch c.triggerMode {
-        case .morningOnly:
-            return "Iris will ask for \(amount) every morning after \(timeString)."
-        case .everyUnlock:
-            return "Iris will ask for \(amount) every time you unlock your Mac."
-        case .both:
-            return "Iris will ask for \(amount) on every unlock, and each morning after \(timeString)."
+        let wakeStr = formatted(c.wakeTime)
+
+        if c.isSurpriseMe {
+            return "Every morning after \(wakeStr) and before \(formatted(c.bedtime)): a random desk-friendly exercise."
         }
+
+        let ex = Exercise.from(c.exerciseID)
+        return "Every morning after \(wakeStr): \(ex.repsDescription) \(ex.rawValue.lowercased()) (\(ex.holdDuration) second timer)"
+    }
+
+    private func formatted(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f.string(from: date)
     }
 }

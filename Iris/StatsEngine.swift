@@ -19,6 +19,7 @@ final class StatsEngine: ObservableObject {
     @Published private(set) var longestStreak: Int
     @Published private(set) var breaksToday: Int
     @Published private(set) var totalBreaksAllTime: Int
+    @Published private(set) var challengeStreak: Int
     /// Resets on every app launch (not persisted).
     @Published private(set) var breaksThisSession: Int = 0
 
@@ -32,6 +33,7 @@ final class StatsEngine: ObservableObject {
         static let breaksYesterday = "iris.breaksYesterday"
         static let lastStreakCheckDate = "iris.lastStreakCheckDate"
         static let totalBreaks = "iris.totalBreaksAllTime"
+        static let challengeStreak = "iris.challengeStreak"
     }
 
     private static let dayFormatter: DateFormatter = {
@@ -47,6 +49,7 @@ final class StatsEngine: ObservableObject {
         longestStreak = defaults.integer(forKey: Keys.longestStreak)
         breaksToday = defaults.integer(forKey: Keys.breaksToday)
         totalBreaksAllTime = defaults.integer(forKey: Keys.totalBreaks)
+        challengeStreak = defaults.integer(forKey: Keys.challengeStreak)
 
         refreshForToday()
 
@@ -68,6 +71,18 @@ final class StatsEngine: ObservableObject {
         totalBreaksAllTime += 1
         defaults.set(breaksToday, forKey: Keys.breaksToday)
         defaults.set(totalBreaksAllTime, forKey: Keys.totalBreaks)
+    }
+
+    // MARK: - Challenge streak
+
+    func recordChallengeComplete() {
+        challengeStreak += 1
+        defaults.set(challengeStreak, forKey: Keys.challengeStreak)
+    }
+
+    func recordChallengeSkipped() {
+        challengeStreak = 0
+        defaults.set(challengeStreak, forKey: Keys.challengeStreak)
     }
 
     // MARK: - Daily bookkeeping

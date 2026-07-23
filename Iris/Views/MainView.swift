@@ -41,7 +41,7 @@ struct MainView: View {
             Spacer()
             Spacer()
 
-            if stats.breaksToday > 0 {
+            if stats.breaksToday > 0 || stats.challengeStreak > 0 {
                 statsLine.padding(.bottom, 10)
             }
             controls.padding(.bottom, 20)
@@ -90,9 +90,14 @@ struct MainView: View {
     // MARK: - Stats line
 
     private var statsLine: some View {
-        Text("🔥 \(stats.currentStreak) day streak  ·  \(stats.breaksToday) today")
-            .font(.system(size: 11, weight: .light))
-            .foregroundStyle(.white.opacity(0.5))
+        HStack(spacing: 0) {
+            if stats.challengeStreak > 0 {
+                Text("💪 \(stats.challengeStreak)  ·  ")
+            }
+            Text("🔥 \(stats.currentStreak) day streak  ·  \(stats.breaksToday) today")
+        }
+        .font(.system(size: 11, weight: .light))
+        .foregroundStyle(.white.opacity(0.5))
     }
 
     // MARK: - Layer 5: controls
