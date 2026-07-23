@@ -73,12 +73,12 @@ bg.alpha_composite(arrow, (CX - arrow.width // 2, 140 - arrow.height // 2))
 # ---- pointing hand: lower-left, fingertip toward the pill ----
 finger = Image.open(os.path.join(A, "point.png")).convert("RGBA")
 finger = contain(finger, 135, 90)
-bg.alpha_composite(finger, (-15, 310))
+bg.alpha_composite(finger, (-15, 270))
 
-# ---- DOWNLOAD INSTRUCTIONS pill, center (190,360) ----
+# ---- DOWNLOAD INSTRUCTIONS pill, center (190,390) ----
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od = ImageDraw.Draw(overlay)
-pw, ph, py = 220, 32, 360
+pw, ph, py = 220, 32, 390
 x0, y0 = CX - pw // 2, py - ph // 2
 od.rounded_rectangle([x0, y0, x0 + pw, y0 + ph], radius=16,
                      fill=hx("0a0a0a") + (255,),
