@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Generate the Iris DMG background (380x620).
 
-Layout with icon-size 112 (1.5× the old 75):
-  Applications   (190,  65)  — create-dmg (moved down so 112px icon isn't clipped)
-  arrow          (190, 138)  — background art (midpoint of 65 and 210)
-  Iris.app       (190, 210)  — create-dmg
-  pointing hand  (-15, 310)  — background art (finger tip at y≈373, 77px above video)
-  video art      (190, 450)  — 320x160 thumbnail drawn on background
-  Download Instructions.mp4 (190, 450) with transparent icon — create-dmg
+Layout with icon-size 140:
+  Applications   (190,  65)  — create-dmg (5px clip at top; clearly visible)
+  arrow          (190, 175)  — background art (midpoint of 65 and 285)
+  Iris.app       (190, 285)  — create-dmg (moved down from 210)
+  pointing hand  (-15, 110)  — background art (finger tip at y≈173, well above video)
+  video art      (190, 450)  — 370x215 thumbnail drawn on background
+  Download Instructions.mp4 (190, 450) — create-dmg
 """
 import glob
 import os
@@ -59,18 +59,18 @@ def video_thumb(mp4_path, w, h):
 # ── backdrop ──────────────────────────────────────────────────────────────────
 bg = Image.open(os.path.join(A, 'dmg-reference.jpg')).convert('RGBA').resize((W, H), Image.LANCZOS)
 
-# ── chalk arrow (between Applications y=65 and Iris y=210, midpoint=138) ─────
+# ── chalk arrow (between Applications y=65 and Iris y=285, midpoint=175) ─────
 arrow = key_white(Image.open(os.path.join(A, 'arrow.png')))
 arrow = contain(arrow, 45, 58)
-bg.alpha_composite(arrow, (CX - arrow.width // 2, 138 - arrow.height // 2))
+bg.alpha_composite(arrow, (CX - arrow.width // 2, 175 - arrow.height // 2))
 
-# ── pointing hand (finger tip at y≈373, aimed at the video's top edge) ───────
+# ── pointing hand (finger tip at y≈173, pointing down toward the video) ──────
 finger = Image.open(os.path.join(A, 'point.png')).convert('RGBA')
 finger = contain(finger, 160, 107)
-bg.alpha_composite(finger, (-15, 310))
+bg.alpha_composite(finger, (-15, 110))
 
-# ── large video thumbnail (320×160, centered at 190,450) ─────────────────────
-VW, VH = 320, 160
+# ── large video thumbnail (370×215, centered at 190,450) ─────────────────────
+VW, VH = 370, 215
 VCX, VCY = CX, 450
 vx0, vy0 = VCX - VW // 2, VCY - VH // 2   # 30, 370
 vx1, vy1 = vx0 + VW, vy0 + VH              # 350, 530
