@@ -24,6 +24,7 @@ final class ChallengeController {
     private var countdownTimer: Timer?
     private var keyboardMonitor: Any?
     private var isShowing = false
+    var isPresenting: Bool { isShowing }
 
     private let defaults = UserDefaults.standard
     private let lastChallengeKey = "iris.lastChallengeDate"

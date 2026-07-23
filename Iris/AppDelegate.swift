@@ -26,6 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var warningController: WarningPillController!
     private var blackoutController: BlackoutController!
     private var challengeController: ChallengeController!
+    private var blockerController: BlockerController!
+    private var focusBlockerEngine: FocusBlockerEngine!
     private var onboarding: OnboardingWindowController?
 
     private var cancellables = Set<AnyCancellable>()
@@ -64,6 +66,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         warningController = WarningPillController(engine: engine)
         blackoutController = BlackoutController(engine: engine)
         challengeController = ChallengeController(engine: engine)
+        blockerController = BlockerController()
+        focusBlockerEngine = FocusBlockerEngine(engine: engine, blocker: blockerController)
 
         observeState()
 
@@ -90,6 +94,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         nudgeEngine.onShow = { [weak self] text in self?.beginNudge(text) }
         nudgeEngine.onHide = { [weak self] in self?.endNudge(animated: true) }
         nudgeEngine.start()
+
+        focusBlockerEngine.shouldSuppress = { [weak self] in
+            guard let self else { return false }
+            return challengeController.isPresenting || engine.timerState == .resting
+        }
+        focusBlockerEngine.start()
     }
 
     // MARK: - Onboarding

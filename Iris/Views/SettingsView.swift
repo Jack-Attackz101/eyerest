@@ -21,6 +21,7 @@ struct SettingsView: View {
                     timerSection
                     soundSection
                     scheduleSection
+                    focusSection
                     wellnessSection
                     systemSection
                     quitButton
@@ -81,6 +82,10 @@ struct SettingsView: View {
             SectionHeader(title: "Schedule")
             ScheduleSettingsSection()
         }
+    }
+
+    private var focusSection: some View {
+        FocusSettingsSection(engine: engine)
     }
 
     private var wellnessSection: some View {

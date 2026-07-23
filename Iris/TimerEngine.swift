@@ -101,6 +101,12 @@ final class TimerEngine: ObservableObject {
     @Published var challenge: Challenge {
         didSet { saveChallenge() }
     }
+    @Published var focusBlockerEnabled: Bool {
+        didSet { defaults.set(focusBlockerEnabled, forKey: Keys.focusBlocker) }
+    }
+    @Published var blockedItems: [BlockedItem] {
+        didSet { saveBlockedItems() }
+    }
 
     // MARK: - Private
 
@@ -140,6 +146,8 @@ final class TimerEngine: ObservableObject {
         static let challenge = "iris.challenge"
         static let promptIndex = "iris.currentPromptIndex"
         static let nudgeFrequency = "iris.nudgeFrequency"
+        static let focusBlocker = "iris.focusBlockerEnabled"
+        static let blockedItems = "iris.blockedItems"
     }
 
     private init() {
@@ -174,6 +182,8 @@ final class TimerEngine: ObservableObject {
             ?? Self.time(hour: 8, minute: 0)
         scheduleBlocks = Self.loadScheduleBlocks(from: defaults, key: Keys.scheduleBlocks)
         challenge = Self.loadChallenge(from: defaults, key: Keys.challenge)
+        focusBlockerEnabled = defaults.bool(forKey: Keys.focusBlocker)
+        blockedItems = Self.loadBlockedItems(from: defaults, key: Keys.blockedItems)
 
         syncLoginItemStateFromSystem()
         registerSleepWakeObservers()
@@ -459,6 +469,18 @@ final class TimerEngine: ObservableObject {
         guard let data = defaults.data(forKey: key),
               let challenge = try? JSONDecoder().decode(Challenge.self, from: data) else { return .default }
         return challenge
+    }
+
+    private func saveBlockedItems() {
+        if let data = try? JSONEncoder().encode(blockedItems) {
+            defaults.set(data, forKey: Keys.blockedItems)
+        }
+    }
+
+    private static func loadBlockedItems(from defaults: UserDefaults, key: String) -> [BlockedItem] {
+        guard let data = defaults.data(forKey: key),
+              let items = try? JSONDecoder().decode([BlockedItem].self, from: data) else { return [] }
+        return items
     }
 
     // MARK: - Time utilities
