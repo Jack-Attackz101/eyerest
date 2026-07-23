@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Generate the Iris DMG background (380x600).
+"""Generate the Iris DMG background (380x620).
 
-Layout with icon-size 75 (all Finder icons small):
-  Applications   (190,  45)  — create-dmg
-  arrow          (190, 136)  — background art
+Layout with icon-size 112 (1.5× the old 75):
+  Applications   (190,  65)  — create-dmg (moved down so 112px icon isn't clipped)
+  arrow          (190, 138)  — background art (midpoint of 65 and 210)
   Iris.app       (190, 210)  — create-dmg
-  pointing hand  (-15, 390)  — background art
+  pointing hand  (-15, 310)  — background art (finger tip at y≈373, 77px above video)
   video art      (190, 450)  — 320x160 thumbnail drawn on background
   Download Instructions.mp4 (190, 450) with transparent icon — create-dmg
 """
@@ -59,15 +59,15 @@ def video_thumb(mp4_path, w, h):
 # ── backdrop ──────────────────────────────────────────────────────────────────
 bg = Image.open(os.path.join(A, 'dmg-reference.jpg')).convert('RGBA').resize((W, H), Image.LANCZOS)
 
-# ── chalk arrow (between Applications y=45 and Iris y=210) ───────────────────
+# ── chalk arrow (between Applications y=65 and Iris y=210, midpoint=138) ─────
 arrow = key_white(Image.open(os.path.join(A, 'arrow.png')))
 arrow = contain(arrow, 45, 58)
-bg.alpha_composite(arrow, (CX - arrow.width // 2, 136 - arrow.height // 2))
+bg.alpha_composite(arrow, (CX - arrow.width // 2, 138 - arrow.height // 2))
 
-# ── pointing hand ─────────────────────────────────────────────────────────────
+# ── pointing hand (finger tip at y≈373, aimed at the video's top edge) ───────
 finger = Image.open(os.path.join(A, 'point.png')).convert('RGBA')
 finger = contain(finger, 160, 107)
-bg.alpha_composite(finger, (-15, 390))
+bg.alpha_composite(finger, (-15, 310))
 
 # ── large video thumbnail (320×160, centered at 190,450) ─────────────────────
 VW, VH = 320, 160
