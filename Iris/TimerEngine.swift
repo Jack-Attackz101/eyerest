@@ -83,6 +83,9 @@ final class TimerEngine: ObservableObject {
     @Published var postureNudgesEnabled: Bool {
         didSet { defaults.set(postureNudgesEnabled, forKey: Keys.postureNudges) }
     }
+    @Published var nudgeFrequency: NudgeFrequency {
+        didSet { defaults.set(nudgeFrequency.rawValue, forKey: Keys.nudgeFrequency) }
+    }
     @Published var quietHoursEnabled: Bool {
         didSet { defaults.set(quietHoursEnabled, forKey: Keys.quietEnabled) }
     }
@@ -136,6 +139,7 @@ final class TimerEngine: ObservableObject {
         static let scheduleBlocks = "iris.scheduleBlocks"
         static let challenge = "iris.challenge"
         static let promptIndex = "iris.currentPromptIndex"
+        static let nudgeFrequency = "iris.nudgeFrequency"
     }
 
     private init() {
@@ -148,6 +152,7 @@ final class TimerEngine: ObservableObject {
             Keys.ambient: true,
             Keys.autoPauseCalls: true,
             Keys.postureNudges: true,
+            Keys.nudgeFrequency: NudgeFrequency.regularly.rawValue,
             Keys.quietEnabled: false,
         ])
 
@@ -160,6 +165,8 @@ final class TimerEngine: ObservableObject {
         ambientSoundEnabled = defaults.bool(forKey: Keys.ambient)
         autoPauseDuringCalls = defaults.bool(forKey: Keys.autoPauseCalls)
         postureNudgesEnabled = defaults.bool(forKey: Keys.postureNudges)
+        let rawFreq = defaults.string(forKey: Keys.nudgeFrequency) ?? NudgeFrequency.regularly.rawValue
+        nudgeFrequency = NudgeFrequency(rawValue: rawFreq) ?? .regularly
         quietHoursEnabled = defaults.bool(forKey: Keys.quietEnabled)
         quietHoursStart = (defaults.object(forKey: Keys.quietStart) as? Date)
             ?? Self.time(hour: 21, minute: 0)

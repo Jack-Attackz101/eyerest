@@ -87,6 +87,22 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(title: "Wellness")
             SettingToggleRow(label: "Posture nudges", isOn: $engine.postureNudgesEnabled)
+            if engine.postureNudgesEnabled {
+                SettingRow {
+                    Text("Frequency")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.irisSecondary)
+                    Spacer()
+                    Picker("", selection: $engine.nudgeFrequency) {
+                        ForEach(NudgeFrequency.allCases) { freq in
+                            Text(freq.label).tag(freq)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                }
+            }
             ChallengeSettingsSection()
         }
     }

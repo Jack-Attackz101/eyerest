@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let ambient = AmbientPlayer()
     private let callDetector = CallDetector()
     private let dashboard = DashboardState()
+    private let nudgeEngine = NudgeEngine()
 
     private var statusItem: NSStatusItem!
     private var dashboardPanel: DashboardPanelController!
@@ -29,6 +30,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var cancellables = Set<AnyCancellable>()
     private var previousState: TimerEngine.TimerState = .idle
+
+    // Tracks whether the status item is currently displaying nudge text.
+    private var isShowingNudge = false
+    // Generation counter — invalidates in-flight completion handlers when a
+    // new nudge or revert animation starts before the previous one finishes.
+    private var nudgeAnimGen = 0
 
     private enum OnboardingKeys {
         static let hasCompleted = "iris.hasCompletedOnboarding"
@@ -44,7 +51,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             try performLaunch()
         } catch {
-            // Only ever logged on an actual launch failure, not during normal runs.
             FileHandle.standardError.write(Data("Iris: launch failed: \(error)\n".utf8))
         }
     }
@@ -61,8 +67,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         observeState()
 
-        // First launch ever: walk the user through onboarding before the timer
-        // starts. Every launch after: silent, timer starts immediately.
         if UserDefaults.standard.bool(forKey: OnboardingKeys.hasCompleted) {
             completeLaunchSequence()
         } else {
@@ -70,24 +74,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Everything that happens once the timer is actually allowed to run —
-    /// either right away (onboarding already completed on a prior launch) or
-    /// once the first-launch welcome flow finishes.
     private func completeLaunchSequence() {
         engine.start()
 
-        // Daily rollover / streak check, plus a morning challenge if due.
         stats.refreshForToday()
         challengeController.presentIfDue()
 
-        // Start call detection off the launch path so the menu bar icon always
-        // appears first and detection can never block startup.
         callDetector.onChange = { [weak self] inCall in
             self?.engine.setCallActive(inCall)
         }
         DispatchQueue.main.async { [weak self] in
             self?.callDetector.start()
         }
+
+        nudgeEngine.onShow = { [weak self] text in self?.beginNudge(text) }
+        nudgeEngine.onHide = { [weak self] in self?.endNudge(animated: true) }
+        nudgeEngine.start()
     }
 
     // MARK: - Onboarding
@@ -107,9 +109,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.show()
     }
 
-    /// Testing/debug re-entry point (Option-click the menu bar icon). Purely
-    /// cosmetic — the app is already running, so completion just closes the
-    /// window; it does not touch the onboarding flag or restart anything.
     private func showWelcomeGuideAgain() {
         let controller = OnboardingWindowController(engine: engine)
         controller.onComplete = { [weak self] _ in
@@ -124,8 +123,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         guard let button = statusItem.button else { return }
-        // Always an SF Symbol template — never the AppIcon — so it renders as a
-        // crisp, correctly-sized, light/dark-adaptive menu bar glyph.
         button.image = Self.symbol("eye")
         button.wantsLayer = true
         button.target = self
@@ -141,12 +138,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return image
     }
 
-    // MARK: - Popover (cinematic dashboard panel)
+    // MARK: - Popover
 
     @objc private func togglePopover() {
         guard let button = statusItem.button else {
             FileHandle.standardError.write(Data("Iris: status item button unavailable\n".utf8))
             return
+        }
+        if isShowingNudge {
+            nudgeEngine.skipCurrentNudge()
+            endNudge(animated: false)
         }
         if NSEvent.modifierFlags.contains(.option) {
             showDebugMenu(from: button)
@@ -155,8 +156,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dashboardPanel.toggle(from: button)
     }
 
-    /// Hidden testing entry point: Option-click the menu bar icon to re-show
-    /// the welcome flow without affecting the persisted onboarding flag.
     private func showDebugMenu(from button: NSStatusBarButton) {
         let menu = NSMenu()
         let item = NSMenuItem(title: "Show Welcome Guide", action: #selector(showWelcomeGuideAgainAction), keyEquivalent: "")
@@ -182,6 +181,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func handleStateChange(to state: TimerEngine.TimerState) {
         let previous = previousState
+
+        // A nudge may only display during .counting. Cancel immediately for any
+        // other state so the correct icon is shown without obstruction.
+        if isShowingNudge, state != .counting {
+            nudgeEngine.skipCurrentNudge()
+            endNudge(animated: false)
+        }
 
         // --- Entering a state ---
         switch state {
@@ -225,6 +231,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Menu bar icon
 
     private func updateIcon(symbol name: String, pulsing: Bool) {
+        guard !isShowingNudge else { return }
         statusItem.button?.image = Self.symbol(name)
         if pulsing { startPulse() } else { stopPulse() }
     }
@@ -243,5 +250,68 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func stopPulse() {
         statusItem.button?.layer?.removeAnimation(forKey: "pulse")
+    }
+
+    // MARK: - Menu bar nudge display
+
+    private func beginNudge(_ text: String) {
+        guard let button = statusItem.button else { return }
+        isShowingNudge = true
+        stopPulse()
+        nudgeAnimGen += 1
+        let gen = nudgeAnimGen
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.2
+            button.animator().alphaValue = 0
+        }, completionHandler: { [weak self, weak button] in
+            guard let self, let button, self.nudgeAnimGen == gen else { return }
+            button.image = nil
+            button.title = ""
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.menuBarFont(ofSize: 0),
+                .foregroundColor: NSColor.labelColor,
+            ]
+            button.attributedTitle = NSAttributedString(string: String(text.prefix(22)), attributes: attrs)
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.2
+                button.animator().alphaValue = 1
+            }
+        })
+    }
+
+    private func endNudge(animated: Bool) {
+        guard isShowingNudge else { return }
+        isShowingNudge = false
+        nudgeAnimGen += 1
+        guard let button = statusItem.button else { return }
+
+        let gen = nudgeAnimGen
+        let restore: () -> Void = { [weak self, weak button] in
+            guard let self, let button else { return }
+            button.attributedTitle = NSAttributedString(string: "")
+            button.title = ""
+            let name = self.engine.timerState == .resting ? "eye.slash" : "eye"
+            button.image = Self.symbol(name)
+            let shouldPulse = self.engine.timerState == .warning
+            if shouldPulse { self.startPulse() } else { self.stopPulse() }
+        }
+
+        if animated {
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.2
+                button.animator().alphaValue = 0
+            }, completionHandler: { [weak self, weak button] in
+                guard let self, let button, self.nudgeAnimGen == gen else { return }
+                restore()
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.2
+                    button.animator().alphaValue = 1
+                }
+            })
+        } else {
+            button.layer?.removeAllAnimations()
+            button.alphaValue = 1
+            restore()
+        }
     }
 }
