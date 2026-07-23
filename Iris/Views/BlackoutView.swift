@@ -45,9 +45,8 @@ struct BlackoutView: View {
 
                 if !model.promptText.isEmpty {
                     Text(model.promptText)
-                        .font(.system(size: 15, weight: .light))
-                        .italic()
-                        .foregroundStyle(.white.opacity(0.35))
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 280)
                         .padding(.top, 12)
