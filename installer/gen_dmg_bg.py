@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Generate the Iris DMG background (380x440) — tight spacing grid.
+"""Generate the Iris DMG background (380x460) — tight spacing grid.
 
 Composition (top to bottom), matching the create-dmg icon/link positions:
-  Applications (190,55) -> arrow (190,150) -> Iris.app (190,235)
-  -> pointing hand, lower-left -> DOWNLOAD INSTRUCTIONS pill (190,395)
+  Applications (190,55) -> arrow (190,140) -> Iris.app (190,225)
+  -> pointing hand, lower-left -> DOWNLOAD INSTRUCTIONS pill (190,360)
+  -> ~80px clear margin below the pill to the window bottom (460)
 
 This reverts to a purely decorative pill (no clickable overlay, no add-file)
 — a compact, no-dead-space window doesn't have room for the oversized
@@ -26,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 A = os.path.join(HERE, "assets")
 OUT = os.path.join(HERE, "dmg_background.png")
 
-W, H = 380, 440
+W, H = 380, 460
 CX = 190
 
 
@@ -64,20 +65,20 @@ def contain(im, box_w, box_h):
 # ---- backdrop ----
 bg = Image.open(os.path.join(A, "dmg-reference.jpg")).convert("RGBA").resize((W, H), Image.LANCZOS)
 
-# ---- chalk arrow: points up, centered between Applications (55) and Iris (235) ----
+# ---- chalk arrow: points up, centered between Applications (55) and Iris (225) ----
 arrow = key_white(Image.open(os.path.join(A, "arrow.png")))
 arrow = contain(arrow, 45, 58)
-bg.alpha_composite(arrow, (CX - arrow.width // 2, 150 - arrow.height // 2))
+bg.alpha_composite(arrow, (CX - arrow.width // 2, 140 - arrow.height // 2))
 
 # ---- pointing hand: lower-left, fingertip toward the pill ----
 finger = Image.open(os.path.join(A, "point.png")).convert("RGBA")
 finger = contain(finger, 135, 90)
-bg.alpha_composite(finger, (-15, 350))
+bg.alpha_composite(finger, (-15, 310))
 
-# ---- DOWNLOAD INSTRUCTIONS pill, center (190,395) ----
+# ---- DOWNLOAD INSTRUCTIONS pill, center (190,360) ----
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od = ImageDraw.Draw(overlay)
-pw, ph, py = 220, 32, 395
+pw, ph, py = 220, 32, 360
 x0, y0 = CX - pw // 2, py - ph // 2
 od.rounded_rectangle([x0, y0, x0 + pw, y0 + ph], radius=16,
                      fill=hx("0a0a0a") + (255,),
