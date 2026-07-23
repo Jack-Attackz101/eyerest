@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Generate the Iris DMG background (380x620).
+"""Generate the Iris DMG background (380x720).
 
-Layout with icon-size 140:
-  Applications   (190,  65)  — create-dmg (5px clip at top; clearly visible)
-  arrow          (190, 175)  — background art (midpoint of 65 and 285)
-  Iris.app       (190, 285)  — create-dmg (moved down from 210)
-  pointing hand  (-15, 110)  — background art (finger tip at y≈173, well above video)
-  video art      (190, 450)  — 370x215 thumbnail drawn on background
-  Download Instructions.mp4 (190, 450) — create-dmg
+Layout with icon-size 215 (matches video thumbnail height exactly):
+  Applications   (190,  65)  — create-dmg (42px clip at top; folder clearly visible)
+  arrow UP       (190, 205)  — background art (midpoint of 65 and 345, rotated UP)
+  Iris.app       (190, 345)  — create-dmg
+  pointing hand  (-15, 100)  — background art (finger tip at y≈163, 300px above video)
+  video art      (190, 575)  — 370x215 thumbnail (same height as 215px icon)
+  Download Instructions.mp4 (190, 575) — create-dmg
 """
 import glob
 import os
@@ -21,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 A = os.path.join(HERE, "assets")
 OUT = os.path.join(HERE, "dmg_background.png")
 
-W, H = 380, 620
+W, H = 380, 720
 CX = 190
 
 
@@ -59,19 +59,22 @@ def video_thumb(mp4_path, w, h):
 # ── backdrop ──────────────────────────────────────────────────────────────────
 bg = Image.open(os.path.join(A, 'dmg-reference.jpg')).convert('RGBA').resize((W, H), Image.LANCZOS)
 
-# ── chalk arrow (between Applications y=65 and Iris y=285, midpoint=175) ─────
+# ── chalk arrow (between Applications y=65 and Iris y=345, midpoint=205) ─────
+# Rotated 180° so it points UP — indicating drag from Iris.app toward Applications.
 arrow = key_white(Image.open(os.path.join(A, 'arrow.png')))
 arrow = contain(arrow, 45, 58)
-bg.alpha_composite(arrow, (CX - arrow.width // 2, 175 - arrow.height // 2))
+arrow = arrow.rotate(180)
+bg.alpha_composite(arrow, (CX - arrow.width // 2, 205 - arrow.height // 2))
 
-# ── pointing hand (finger tip at y≈173, pointing down toward the video) ──────
+# ── pointing hand (finger tip at y≈163, 300px above video top) ───────────────
 finger = Image.open(os.path.join(A, 'point.png')).convert('RGBA')
 finger = contain(finger, 160, 107)
-bg.alpha_composite(finger, (-15, 110))
+bg.alpha_composite(finger, (-15, 100))
 
-# ── large video thumbnail (370×215, centered at 190,450) ─────────────────────
+# ── large video thumbnail (370×215, centered at 190,575) ─────────────────────
+# VH=215 matches icon-size=215 exactly — thumbnail and clickable icon same height.
 VW, VH = 370, 215
-VCX, VCY = CX, 450
+VCX, VCY = CX, 575
 vx0, vy0 = VCX - VW // 2, VCY - VH // 2   # 30, 370
 vx1, vy1 = vx0 + VW, vy0 + VH              # 350, 530
 R = 14  # corner radius
