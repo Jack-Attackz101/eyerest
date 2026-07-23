@@ -83,8 +83,8 @@ final class WarningPillController {
 
     private var panelSize: NSSize {
         model.hasNotch
-            ? NSSize(width: model.notchWidth + 160, height: 120)
-            : NSSize(width: 360, height: 140)
+            ? NSSize(width: model.notchWidth + 110, height: 44)
+            : NSSize(width: 260, height: 56)  // 56 = 8pt gap + 44pt pill + 4pt margin
     }
 
     private func detectGeometry() {
