@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Generate the Iris DMG background (380x460) — final clean layout.
+"""Generate the Iris DMG background — premium, spacious layout (440x720).
+
+Composition (top to bottom), matching the create-dmg icon/link positions:
+  Applications (220,160) -> arrow (220,325) -> Iris.app (220,460)
+  -> pointing hand, lower-left -> DOWNLOAD INSTRUCTIONS pill (220,660)
 
 Just the backdrop plus three pasted elements: the chalk arrow, the pointing
-hand, and the DOWNLOAD INSTRUCTIONS pill. No text labels, no dark plates —
-Finder draws the Applications/Iris labels itself.
+hand, and the pill. No text labels, no dark plates — Finder draws the
+Applications/Iris labels itself (see create-dmg call for --text-size / hide
+tricks used to keep those unobtrusive).
 
 The app icon and Applications alias are placed by create-dmg, NOT drawn here.
 Outputs installer/dmg_background.png.
@@ -17,8 +22,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 A = os.path.join(HERE, "assets")
 OUT = os.path.join(HERE, "dmg_background.png")
 
-W, H = 380, 500
-CX = 190
+W, H = 440, 720
+CX = 220
 
 
 def hx(h):
@@ -45,26 +50,35 @@ def key_white(im, thr=245):
     return Image.fromarray(a)
 
 
+def contain(im, box_w, box_h):
+    """Resize preserving aspect ratio to fit within box_w x box_h."""
+    w, h = im.size
+    s = min(box_w / w, box_h / h)
+    return im.resize((round(w * s), round(h * s)), Image.LANCZOS)
+
+
 # ---- backdrop ----
 bg = Image.open(os.path.join(A, "dmg-reference.jpg")).convert("RGBA").resize((W, H), Image.LANCZOS)
 
-# ---- chalk arrow: vertical (points up), centered at (190,170) ----
-arrow = key_white(Image.open(os.path.join(A, "arrow.png"))).resize((55, 70), Image.LANCZOS)
-bg.alpha_composite(arrow, (CX - arrow.width // 2, 170 - 70 // 2))
+# ---- chalk arrow: centered between the two icon slots, y=325 ----
+arrow = key_white(Image.open(os.path.join(A, "arrow.png")))
+arrow = contain(arrow, 70, 130)
+bg.alpha_composite(arrow, (CX - arrow.width // 2, 325 - arrow.height // 2))
 
-# ---- pointing hand: clean transparent PNG — load as-is, no keying, 150x100 ----
-finger = Image.open(os.path.join(A, "point.png")).convert("RGBA").resize((150, 100), Image.LANCZOS)
-bg.alpha_composite(finger, (-20, 285))
+# ---- pointing hand: lower-left, pointing right toward the pill ----
+finger = Image.open(os.path.join(A, "point.png")).convert("RGBA")
+finger = contain(finger, 175, 118)
+bg.alpha_composite(finger, (-25, 555))
 
-# ---- DOWNLOAD INSTRUCTIONS pill on an RGBA overlay (for 60% border alpha) ----
+# ---- DOWNLOAD INSTRUCTIONS pill, center (220,660), larger + breathing room below ----
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od = ImageDraw.Draw(overlay)
-pw, ph, py = 240, 32, 415
+pw, ph, py = 300, 46, 660
 x0, y0 = CX - pw // 2, py - ph // 2
-od.rounded_rectangle([x0, y0, x0 + pw, y0 + ph], radius=16,
+od.rounded_rectangle([x0, y0, x0 + pw, y0 + ph], radius=23,
                      fill=hx("0a0a0a") + (255,),
                      outline=(255, 255, 255, 153), width=1)
-f = font(10)
+f = font(11)
 box = od.textbbox((0, 0), "DOWNLOAD INSTRUCTIONS", font=f)
 od.text((CX - (box[2] - box[0]) / 2, py - (box[3] - box[1]) / 2 - box[1]),
         "DOWNLOAD INSTRUCTIONS", font=f, fill=(255, 255, 255, 255))
