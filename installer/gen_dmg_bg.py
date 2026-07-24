@@ -1,26 +1,33 @@
 #!/usr/bin/env python3
-"""Generate the Iris DMG background (1080x1000).
+"""Generate the Iris DMG background (600x800).
 
-Window is 2x the original 540x500. App icons stay at icon-size 85;
-background art and video scale up 2x.
+No logo, no drawn video. icon-size=170 makes the mp4 file icon 2x the
+previous 85px. All drawn elements verified clear of real Finder icons.
 
-Top-to-bottom layout (background art only — real icons placed by create-dmg):
-  Iris logo    160x160, center (540, 80)
-  [Applications folder at y=280 — real icon]
-  Arrow        130x160, center (540, 420)
-  [Iris.app at y=620 — real icon]
-  Video frame  760x260, center (540, 810)
-  Hand         contain(280,200), top-left (0, 770)
-  Instruction  22pt white, center (540, 960)
+Background art (drawn only):
+  Arrow  80x100, center (300, 250) — clear of Apps label (+10px) and Iris icon top (+15px)
+  Hand   point.png as-is (RGBA, no bg removal), contain(180,117), top-left (0, 570)
+  Text   12pt white, center (300, 770)
+
+Real icons placed by create-dmg (icon-size 170):
+  app-drop-link at (300, 85)    top=0, bottom=170, label≈190
+  Iris.app      at (300, 400)   top=315, bottom=485, label≈505
+  mp4           at (300, 630)   top=545, bottom=715, label≈735  bottom gap 65px
 """
-import os, subprocess, tempfile
+import os
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 A    = os.path.join(HERE, "assets")
 OUT  = os.path.join(HERE, "dmg_background.png")
-W, H = 1080, 1000
+W, H = 600, 800
+
+
+def contain(im, box_w, box_h):
+    w, h = im.size
+    s = min(box_w / w, box_h / h)
+    return im.resize((round(w * s), round(h * s)), Image.LANCZOS)
 
 
 def remove_white_bg(im, thr=245):
@@ -29,12 +36,6 @@ def remove_white_bg(im, thr=245):
     mask = (a[:, :, 0] > thr) & (a[:, :, 1] > thr) & (a[:, :, 2] > thr)
     a[mask, 3] = 0
     return Image.fromarray(a)
-
-
-def contain(im, box_w, box_h):
-    w, h = im.size
-    s = min(box_w / w, box_h / h)
-    return im.resize((round(w * s), round(h * s)), Image.LANCZOS)
 
 
 def load_font(size):
@@ -58,56 +59,29 @@ def draw_centered(draw, text, cx, cy, font, fill):
     draw.text((cx - tw // 2, cy - th // 2), text, font=font, fill=fill)
 
 
-# ── 1. Background: willow canopy, scale to 1080 wide, crop top 1000px ─────────
+# ── 1. Background: willow canopy, 600x800 ─────────────────────────────────────
 src = Image.open(os.path.join(A, "dmg-reference.jpg"))
-sw, sh = src.size                        # 736 x 1308
+sw, sh = src.size                                     # 736 × 1308
 src = src.resize((W, round(sh * W / sw)), Image.LANCZOS)
 bg  = src.crop((0, 0, W, H)).convert("RGBA")
 
-# ── 2. Iris logo: 160x160, center (540, 80) ───────────────────────────────────
-logo = Image.open(os.path.join(A, "iris-logo-white-transparent.png")).convert("RGBA")
-logo = logo.resize((160, 160), Image.LANCZOS)
-bg.alpha_composite(logo, (540 - 80, 80 - 80))   # top-left (460, 0)
-
-# ── 3. Arrow: 130x160, center (540, 420) ─────────────────────────────────────
+# ── 2. Arrow: 80x100, center (300, 250) ──────────────────────────────────────
+#    top=200  clear of Apps label bottom (~190) by 10px
+#    bottom=300  clear of Iris icon top (315) by 15px
 arrow = remove_white_bg(Image.open(os.path.join(A, "arrow.png")))
-arrow = arrow.resize((130, 160), Image.LANCZOS)
-bg.alpha_composite(arrow, (540 - 65, 420 - 80))  # top-left (475, 340)
+arrow = arrow.resize((80, 100), Image.LANCZOS)
+bg.alpha_composite(arrow, (300 - 40, 250 - 50))      # top-left (260, 200)
 
-# ── 4. Video thumbnail: 760x260, center (540, 810) ───────────────────────────
-VW, VH = 760, 260
-with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
-    frame_path = f.name
-subprocess.run(
-    ["ffmpeg", "-y", "-ss", "1", "-i",
-     os.path.join(A, "How to Install Iris.mp4"),
-     "-vframes", "1", "-q:v", "2", frame_path],
-    capture_output=True,
-)
-frame = Image.open(frame_path).convert("RGB")
-os.unlink(frame_path)
-# Scale to VW wide, then center-crop to VH tall
-fw, fh = frame.size
-frame = frame.resize((VW, round(fh * VW / fw)), Image.LANCZOS)
-crop_top = (frame.height - VH) // 2
-frame = frame.crop((0, crop_top, VW, crop_top + VH))
-# 2px black border
-framed = Image.new("RGBA", (VW + 4, VH + 4), (0, 0, 0, 255))
-framed.paste(frame, (2, 2))
-vx = 540 - (VW + 4) // 2  # = 158
-vy = 810 - (VH + 4) // 2  # = 678
-bg.alpha_composite(framed, (vx, vy))
+# ── 3. Pointing hand: point.png (already RGBA), tip at x≈180, mp4 left=215 (+35px gap)
+finger = Image.open(os.path.join(A, "point.png")).convert("RGBA")
+finger = contain(finger, 180, 117)
+bg.alpha_composite(finger, (0, 570))
 
-# ── 5. Pointing hand: contain(280,200), top-left (0, 770) ────────────────────
-finger = remove_white_bg(Image.open(os.path.join(A, "point.png")))
-finger = contain(finger, 280, 200)
-bg.alpha_composite(finger, (0, 770))
-
-# ── 6. Instruction text: centered at (540, 960) ───────────────────────────────
+# ── 4. Instruction text ────────────────────────────────────────────────────────
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od      = ImageDraw.Draw(overlay)
-font22  = load_font(22)
-draw_centered(od, "Drag Iris to Applications to install", 540, 960, font22, (255, 255, 255, 255))
+font12  = load_font(12)
+draw_centered(od, "Drag Iris to Applications to install", 300, 770, font12, (255, 255, 255, 255))
 bg = Image.alpha_composite(bg, overlay)
 
 bg.convert("RGB").save(OUT)
