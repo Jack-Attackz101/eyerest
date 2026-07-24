@@ -1,23 +1,34 @@
 #!/usr/bin/env python3
-"""Generate the Iris DMG background (540x540).
+"""Generate the Iris DMG background (540×725).
 
-icon-size=60 (half=30) — compact app icons, large 500x220 video player frame.
-  Iris logo    80x80   centered at (270, 40)   top=0  bottom=80
-  app-drop-link y=150  icon top=120 bottom=180  label≈198
-  Arrow        45x55   centered at (270, 190)   top=163  bottom=218
-  Iris.app     y=260   icon top=230 bottom=290  label≈308
-  Video frame  500x220 (20,300)→(520,520)
-  Hand         140x91  top-left (10, 395)  tip x≈150
-  Text         centered at (270, 530)  window=540  margin 10px
+Video 1108×720  →  placeholder 500×325, canvas 540×725
+  scaled_h = round((720/1108)*500) = 325
+  H = 380 + 325 + 20 = 725
+
+Layout (icon-size=60 in Finder, half=30):
+  Iris logo      80×80   centered (270, 40)
+  app-drop-link  y=150   Finder icon top=120 bottom=180 label≈198
+  Arrow          45×55   centered (270, 190)  top=163
+  Iris.app       y=260   Finder icon top=230 bottom=290 label≈308
+  Video rect     500×325 at (20, 380) → (520, 705)
+  mp4 Finder icon        center (270, 655)  — set by create-dmg
+  Hand           140×91  top-left (10, 512) tip≈x150  video cx≈x270
+  Text           11pt #CCC  centered (270, 710)
 """
-import os
+import os, json, subprocess
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 A    = os.path.join(HERE, "assets")
 OUT  = os.path.join(HERE, "dmg_background.png")
-W, H = 540, 540
+
+W          = 540
+SCALED_H   = 325          # round((720/1108)*500)
+H          = 380 + SCALED_H + 20   # 725
+RECT_X     = 20
+RECT_Y     = 380
+HAND_Y     = 350 + SCALED_H // 2  # 512
 
 
 def contain(im, box_w, box_h):
@@ -55,50 +66,42 @@ def draw_centered(draw, text, cx, cy, font, fill):
     draw.text((cx - tw // 2, cy - th // 2), text, font=font, fill=fill)
 
 
-# ── 1. Background: willow canopy, 540x540 ────────────────────────────────────
+# ── 1. Background: willow canopy, 540×725 ────────────────────────────────────
 src = Image.open(os.path.join(A, "dmg-reference.jpg"))
-sw, sh = src.size                                    # 736 × 1308
+sw, sh = src.size
 src = src.resize((W, round(sh * W / sw)), Image.LANCZOS)
 bg  = src.crop((0, 0, W, H)).convert("RGBA")
 
-# ── 2. Iris logo: 80x80, centered at (270, 40) ───────────────────────────────
+# ── 2. Video placeholder: solid black 500×325, saved separately ──────────────
+placeholder = Image.new("RGBA", (500, SCALED_H), (0, 0, 0, 255))
+placeholder_path = os.path.join(A, "dmg_video_placeholder.png")
+placeholder.save(placeholder_path)
+bg.alpha_composite(placeholder, (RECT_X, RECT_Y))
+
+# ── 3. Iris logo: 80×80, centered at (270, 40) ───────────────────────────────
 logo = Image.open(os.path.join(A, "iris-logo-white-transparent.png")).convert("RGBA")
 logo = contain(logo, 80, 80)
 lw, lh = logo.size
 bg.alpha_composite(logo, (270 - lw // 2, 40 - lh // 2))
 
-# ── 3. Arrow: 45x55, centered at (270, 190) ──────────────────────────────────
+# ── 4. Arrow: 45×55, centered at (270, 190) ──────────────────────────────────
 arrow = remove_white_bg(Image.open(os.path.join(A, "arrow.png")))
 arrow = arrow.resize((45, 55), Image.LANCZOS)
-bg.alpha_composite(arrow, (270 - 22, 190 - 27))     # top-left (248, 163)
+bg.alpha_composite(arrow, (270 - 22, 190 - 27))      # top-left (248, 163)
 
-# ── 4. Video player frame: 500x220, top-left (20, 300) ───────────────────────
-VPW, VPH = 500, 220
-player = Image.new("RGBA", (VPW, VPH), (0, 0, 0, 0))
-pd     = ImageDraw.Draw(player)
-pd.rounded_rectangle(
-    [(0, 0), (VPW - 1, VPH - 1)],
-    radius=12,
-    fill=(0, 0, 0, 190),
-    outline=(255, 255, 255, 180),
-    width=2,
-)
-pcx, pcy = VPW // 2, VPH // 2
-pts = [(pcx - 22, pcy - 30), (pcx - 22, pcy + 30), (pcx + 35, pcy)]
-pd.polygon(pts, fill=(255, 255, 255, 210))
-bg.alpha_composite(player, (20, 300))
-
-# ── 5. Pointing hand: 140x100, top-left (10, 395) ────────────────────────────
+# ── 5. Pointing hand: 140×100 box → 140×91, top-left (10, 512) ──────────────
+#    point.png is already RGBA — do NOT remove_white_bg (causes artifacts)
 finger = Image.open(os.path.join(A, "point.png")).convert("RGBA")
-finger = contain(finger, 140, 100)                   # → 140x91
-bg.alpha_composite(finger, (10, 395))
+finger = contain(finger, 140, 100)                    # → 140×91
+bg.alpha_composite(finger, (10, HAND_Y))
 
-# ── 6. Instruction text centered at (270, 530) ───────────────────────────────
+# ── 6. Instruction text: 11pt #CCC, centered at (270, 710) ──────────────────
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od      = ImageDraw.Draw(overlay)
-font12  = load_font(12)
-draw_centered(od, "Drag Iris to Applications to install", 270, 530, font12, (255, 255, 255, 255))
+font11  = load_font(11)
+draw_centered(od, "Drag Iris to Applications to install", 270, H - 15,
+              font11, (204, 204, 204, 255))
 bg = Image.alpha_composite(bg, overlay)
 
 bg.convert("RGB").save(OUT)
-print("wrote", OUT, bg.size)
+print(f"wrote {OUT}  size={bg.size}")
