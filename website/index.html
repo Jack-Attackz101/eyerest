@@ -148,6 +148,17 @@
       padding: 10px 24px; border-radius: 4px; z-index: 999; white-space: nowrap;
       border: 1px solid rgba(244,239,230,0.25); box-shadow: 3px 3px 0 rgba(0,0,0,0.3); }
 
+    /* hidden download popover */
+    #hidden-download { cursor: pointer; user-select: none; }
+    .download-popover { position: fixed; z-index: 9999; background: var(--bg); color: var(--ink);
+      border: 2px solid var(--ink); border-radius: 8px; padding: 14px 16px;
+      box-shadow: 4px 4px 0 rgba(28,28,28,0.55); text-align: center; }
+    .download-button { background: var(--ink); color: var(--bg); border: 2px solid var(--ink);
+      border-radius: 4px; font-family: var(--sans); font-weight: 600; font-size: 13px;
+      padding: 9px 22px; cursor: pointer; white-space: nowrap;
+      box-shadow: 3px 3px 0 var(--green); transition: transform 0.1s, box-shadow 0.1s; }
+    .download-button:hover { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--green); }
+
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .reveal { opacity: 1 !important; transform: none !important; } }
 
     @media (max-width: 768px) {
@@ -294,7 +305,7 @@
   <!-- footer -->
   <footer>
     <span class="f-l"><img src="images/iris-logo-white.png" alt="Iris" id="footer-logo" /> iris</span>
-    <span class="f-c">© 2026 Iris</span>
+    <span id="hidden-download" class="f-c">© 2026 Iris</span>
     <span style="width:16px"></span>
   </footer>
 
@@ -368,6 +379,31 @@
         if (msg) { msg.textContent = 'Network error. Please try again.'; msg.className = 'waitlist-msg err'; msg.style.display = 'block'; }
       }
     }
+
+    // hidden download: click copyright → popover with DMG link
+    (function () {
+      document.getElementById('hidden-download').addEventListener('click', function (e) {
+        e.stopPropagation();
+        const existing = document.querySelector('.download-popover');
+        if (existing) { existing.remove(); return; }
+        const popover = document.createElement('div');
+        popover.classList.add('download-popover');
+        popover.innerHTML = '<a href="/Iris.dmg" download><button class="download-button">Download</button></a>';
+        document.body.appendChild(popover);
+        const rect = e.target.getBoundingClientRect();
+        const h = popover.offsetHeight;
+        const w = popover.offsetWidth;
+        popover.style.top  = (rect.top - h - 8) + 'px';
+        popover.style.left = Math.max(8, rect.left - w / 2 + rect.width / 2) + 'px';
+        function hidePopover(ev) {
+          if (!popover.contains(ev.target)) {
+            popover.remove();
+            document.removeEventListener('click', hidePopover);
+          }
+        }
+        document.addEventListener('click', hidePopover);
+      });
+    })();
 
     // secret admin: click footer logo → show waitlist count
     (function () {
