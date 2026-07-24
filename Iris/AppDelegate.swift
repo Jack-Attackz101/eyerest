@@ -80,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func completeLaunchSequence() {
         engine.start()
+        Task { @MainActor in UpdateChecker.shared.start() }
 
         stats.refreshForToday()
         challengeController.presentIfDue()

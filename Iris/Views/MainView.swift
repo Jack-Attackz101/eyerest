@@ -12,6 +12,7 @@ struct MainView: View {
     @EnvironmentObject private var engine: TimerEngine
     @EnvironmentObject private var dashboard: DashboardState
     @ObservedObject private var stats = StatsEngine.shared
+    @ObservedObject private var updater = UpdateChecker.shared
     @Binding var showSettings: Bool
 
     @State private var envIndicatorOpacity: Double = 1
@@ -59,6 +60,13 @@ struct MainView: View {
                 .font(.system(size: 15, weight: .light))
                 .foregroundStyle(.white.opacity(0.9))
             Spacer()
+            if updater.isUpdateAvailable {
+                Button(updater.isUpdating ? "Updating…" : "Update & Relaunch") {
+                    Task { await updater.performUpdate() }
+                }
+                .buttonStyle(UpdatePillStyle())
+                .disabled(updater.isUpdating)
+            }
             Button {
                 showSettings = true
             } label: {
@@ -255,6 +263,19 @@ struct AmberPillStyle: ButtonStyle {
                 Capsule().fill(Color.orange.opacity(0.55))
             }
             .overlay(Capsule().stroke(Color.orange.opacity(0.9), lineWidth: 1))
+            .opacity(configuration.isPressed ? 0.75 : 1)
+    }
+}
+
+/// Green pill — "Update & Relaunch" in the header.
+struct UpdatePillStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color(red: 75/255, green: 214/255, blue: 99/255), in: Capsule())
             .opacity(configuration.isPressed ? 0.75 : 1)
     }
 }
