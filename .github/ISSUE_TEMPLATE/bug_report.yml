@@ -1,0 +1,43 @@
+name: Bug report
+description: Something in Iris isn't working the way it should.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: e.g. macOS 14.5 Sonoma
+    validations:
+      required: true
+  - type: input
+    id: iris-version
+    attributes:
+      label: Iris version
+      description: Open the Iris menu-bar icon → About to find it.
+      placeholder: e.g. 1.0.1
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      placeholder: Describe what you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: reproduces
+    attributes:
+      label: Does it happen every time?
+      options:
+        - "Yes, every time"
+        - "Sometimes"
+        - "Only happened once"
+    validations:
+      required: true
