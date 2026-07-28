@@ -1,85 +1,147 @@
 #!/usr/bin/env python3
 """
-Generate Iris DMG background (460×360) → installer/dmg_background.png
+Generate the Iris DMG background.
 
-Composites only:
-  Arrow  48×60  center (230, 150)
-  Text line 1   center (230, 325) — 11pt white
-  Text line 2   center (230, 342) — 9pt #AADDAA
+Output: installer/dmg_background.png  (540 x 340)
 
-Finder icons (create-dmg):
-  --app-drop-link  230  60
-  --icon "Iris.app" 230 235
+The layout matches the create-dmg window geometry used by
+installer/build_dmg.sh:
+
+    --window-size 540 340
+    --icon "Iris.app"  135 150
+    --app-drop-link    405 150
+    --background installer/dmg_background.png
+
+The background is a flat vertical gradient (#F6F7F9 top -> #E9EDF2 bottom)
+with a single white chalk-style arrow arcing from the app-icon slot toward
+the Applications alias, and exactly one line of instruction text. No
+photograph, no numpy.
 """
+
+import math
 import os
-import numpy as np
+
 from PIL import Image, ImageDraw, ImageFont
 
+# ---- Canvas ---------------------------------------------------------------
+WIDTH, HEIGHT = 540, 340
 
-def remove_white_bg(im, thr=240):
-    im = im.convert("RGBA")
-    a  = np.array(im)
-    mask = (a[:, :, 0] > thr) & (a[:, :, 1] > thr) & (a[:, :, 2] > thr)
-    a[mask, 3] = 0
-    return Image.fromarray(a)
+# ---- Gradient -------------------------------------------------------------
+TOP_COLOR = (0xF6, 0xF7, 0xF9)      # #F6F7F9
+BOTTOM_COLOR = (0xE9, 0xED, 0xF2)   # #E9EDF2
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-A    = os.path.join(HERE, "assets")
-OUT  = os.path.join(HERE, "dmg_background.png")
+# ---- Arrow ----------------------------------------------------------------
+ARROW_START = (190.0, 150.0)
+ARROW_PEAK = (270.0, 118.0)
+ARROW_END = (350.0, 150.0)
+ARROW_WIDTH = 6                          # 6px stroke, round cap / round join
+ARROW_ALPHA = int(round(0.92 * 255))     # 92% opacity white -> 235
+ARROW_HEAD_LEN = 22.0                    # 22px arrowhead legs
+ARROW_HEAD_ANGLE = math.radians(28.0)    # +/-28 deg from horizontal
 
-W, H = 460, 360
+# Quadratic Bezier control point chosen so the curve passes through the peak
+# at t = 0.5:  B(0.5) = 0.25*P0 + 0.5*C + 0.25*P2 = PEAK
+CONTROL = (
+    2 * ARROW_PEAK[0] - 0.5 * (ARROW_START[0] + ARROW_END[0]),
+    2 * ARROW_PEAK[1] - 0.5 * (ARROW_START[1] + ARROW_END[1]),
+)
+
+# ---- Text -----------------------------------------------------------------
+TEXT = "Drag Iris into Applications"
+TEXT_COLOR = (0x4B, 0x55, 0x63)   # #4B5563
+TEXT_SIZE = 18                    # semibold 18px
+TEXT_BASELINE_Y = 292
+
+FONT_CANDIDATES = [
+    "/System/Library/Fonts/SFNSDisplay-Semibold.otf",
+    "/System/Library/Fonts/SFNSText-Semibold.otf",
+    "/System/Library/Fonts/SFNS.ttf",
+    "/System/Library/Fonts/Helvetica.ttc",
+    "/Library/Fonts/Arial Bold.ttf",
+    "DejaVuSans-Bold.ttf",
+]
 
 
 def load_font(size):
-    for path in [
-        "/System/Library/Fonts/SFNS.ttf",
-        "/System/Library/Fonts/Helvetica.ttc",
-        "/System/Library/Fonts/HelveticaNeue.ttc",
-    ]:
-        if os.path.exists(path):
-            try:
-                return ImageFont.truetype(path, size)
-            except Exception:
-                continue
+    for path in FONT_CANDIDATES:
+        try:
+            return ImageFont.truetype(path, size)
+        except (OSError, IOError):
+            continue
     return ImageFont.load_default()
 
 
-def draw_centered(draw, text, cx, cy, font, fill):
-    bbox = draw.textbbox((0, 0), text, font=font)
-    tw   = bbox[2] - bbox[0]
-    th   = bbox[3] - bbox[1]
-    draw.text((cx - tw // 2, cy - th // 2), text, font=font, fill=fill)
+def make_gradient(width, height, top, bottom):
+    base = Image.new("RGB", (width, height), top)
+    draw = ImageDraw.Draw(base)
+    denom = max(height - 1, 1)
+    for y in range(height):
+        t = y / denom
+        color = (
+            round(top[0] + (bottom[0] - top[0]) * t),
+            round(top[1] + (bottom[1] - top[1]) * t),
+            round(top[2] + (bottom[2] - top[2]) * t),
+        )
+        draw.line([(0, y), (width, y)], fill=color)
+    return base
 
 
-# ── 1. Background: willow fills 460×360, center-cropped ──────────────────────
-src   = Image.open(os.path.join(A, "dmg-reference.jpg"))
-sw, sh = src.size
-scale  = W / sw
-new_h  = round(sh * scale)
-src    = src.resize((W, new_h), Image.LANCZOS)
-top    = max(0, (new_h - H) // 2)
-bg     = src.crop((0, top, W, top + H)).convert("RGBA")
+def quad_bezier(p0, c, p2, steps=140):
+    pts = []
+    for i in range(steps + 1):
+        t = i / steps
+        mt = 1.0 - t
+        x = mt * mt * p0[0] + 2 * mt * t * c[0] + t * t * p2[0]
+        y = mt * mt * p0[1] + 2 * mt * t * c[1] + t * t * p2[1]
+        pts.append((x, y))
+    return pts
 
 
-# ── 2. Arrow: 48×60, centered at (230, 150) ──────────────────────────────────
-arrow = remove_white_bg(Image.open(os.path.join(A, "arrow.png")))
-arrow = arrow.resize((48, 60), Image.LANCZOS)
-bg.alpha_composite(arrow, (230 - 24, 150 - 30))
+def draw_round_polyline(draw, pts, width, color):
+    """Stroke a polyline with round caps and round joins."""
+    draw.line(pts, fill=color, width=width, joint="curve")
+    r = width / 2.0
+    for (x, y) in pts:
+        draw.ellipse([x - r, y - r, x + r, y + r], fill=color)
 
 
-# ── 3. Instruction text ───────────────────────────────────────────────────────
-overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-od      = ImageDraw.Draw(overlay)
+def main():
+    canvas = make_gradient(WIDTH, HEIGHT, TOP_COLOR, BOTTOM_COLOR).convert("RGBA")
 
-font11 = load_font(11)
-font9  = load_font(9)
+    # Arrow on its own layer so the 92% opacity blends over the gradient.
+    arrow_layer = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    adraw = ImageDraw.Draw(arrow_layer)
+    color = (255, 255, 255, ARROW_ALPHA)
 
-draw_centered(od, "Drag the Iris app icon into the Applications folder",
-              230, 300, font11, (255, 255, 255, 255))
-draw_centered(od, "First launch: right-click Iris → Open",
-              230, 317, font9,  (170, 221, 170, 255))
+    curve = quad_bezier(ARROW_START, CONTROL, ARROW_END)
+    draw_round_polyline(adraw, curve, ARROW_WIDTH, color)
 
-bg = Image.alpha_composite(bg, overlay)
+    # Open-V arrowhead at the tip, legs 22px at +/-28 deg from horizontal.
+    for signed in (ARROW_HEAD_ANGLE, -ARROW_HEAD_ANGLE):
+        ang = math.pi - signed
+        ex = ARROW_END[0] + ARROW_HEAD_LEN * math.cos(ang)
+        ey = ARROW_END[1] + ARROW_HEAD_LEN * math.sin(ang)
+        draw_round_polyline(adraw, [ARROW_END, (ex, ey)], ARROW_WIDTH, color)
 
-bg.convert("RGB").save(OUT)
-print(f"wrote {OUT}  size={bg.size}")
+    canvas = Image.alpha_composite(canvas, arrow_layer)
+
+    # Exactly one line of instruction text, centred, baseline at y=292.
+    draw = ImageDraw.Draw(canvas)
+    font = load_font(TEXT_SIZE)
+    ascent, _ = font.getmetrics()
+    bbox = draw.textbbox((0, 0), TEXT, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_x = (WIDTH - text_w) / 2.0 - bbox[0]
+    text_y = TEXT_BASELINE_Y - ascent
+    draw.text((text_x, text_y), TEXT, font=font, fill=TEXT_COLOR)
+
+    out = canvas.convert("RGB")
+    out_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "dmg_background.png"
+    )
+    out.save(out_path, "PNG")
+    print("wrote", out_path)
+
+
+if __name__ == "__main__":
+    main()
