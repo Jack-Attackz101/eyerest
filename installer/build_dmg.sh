@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build Iris.dmg with the approved window layout.
+# Build Iris.dmg with the approved portrait willow layout.
 #
 # Prerequisites:
-#   - create-dmg (brew install create-dmg)
-#   - a signed, stapled Iris.app at the repository root
+#   brew install create-dmg
+#   a signed, stapled Iris.app at the repository root
 #
 # Steps: regenerate the DMG background, then run create-dmg.
 
@@ -17,7 +17,7 @@ APP="Iris.app"
 DMG="Iris.dmg"
 BACKGROUND="installer/dmg_background.png"
 
-# 1. Regenerate the DMG background.
+# 1. Regenerate the background (460x660 willow + arrow + one line of text).
 python3 installer/gen_dmg_bg.py
 
 # 2. Require create-dmg.
@@ -36,12 +36,14 @@ fi
 rm -f "$DMG"
 
 # 5. Build the DMG.
+#    Applications folder sits at the TOP (y=100), Iris sits BELOW it (y=464),
+#    so the hand-drawn arrow in the background points upward from app to folder.
 create-dmg \
     --volname "Iris" \
-    --window-size 540 340 \
-    --icon-size 100 \
-    --icon "Iris.app" 135 150 \
-    --app-drop-link 405 150 \
+    --window-size 460 660 \
+    --icon-size 135 \
+    --app-drop-link 230 100 \
+    --icon "Iris.app" 230 464 \
     --background "$BACKGROUND" \
     "$DMG" \
     "$APP"
