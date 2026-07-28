@@ -121,6 +121,22 @@
     .step-card h3 { font-family: var(--display); font-weight: 400; font-size: 28px; letter-spacing: 0.02em; margin: 6px 0 8px; }
     .step-card p { font-family: var(--sans); font-size: 14px; color: var(--muted); line-height: 1.7; }
 
+    /* ---------- pricing ---------- */
+    .price-sub { font-family: var(--sans); font-size: 18px; color: var(--muted); margin: 12px 0 48px; max-width: 560px; }
+    .price-title { margin-bottom: 0; }
+    .price-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+    .price-card { position: relative; background: var(--card); border: 2px solid var(--ink); border-radius: 8px; box-shadow: 4px 4px 0 var(--ink); padding: 32px; transition: transform 0.15s, box-shadow 0.15s; }
+    .price-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+    .price-card.featured { border: 2px solid #4C6FFF; box-shadow: 4px 4px 0 #4C6FFF; }
+    .price-card.featured:hover { box-shadow: 6px 6px 0 #4C6FFF; }
+    .price-badge { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; color: #fff; background: var(--ink); border-radius: 999px; padding: 4px 12px; margin-bottom: 16px; }
+    .price-badge.accent { background: #4C6FFF; }
+    .price-card h3 { font-family: var(--display); font-weight: 400; font-size: 28px; letter-spacing: 0.02em; margin-bottom: 12px; }
+    .price-amount { display: flex; align-items: baseline; gap: 8px; }
+    .price-amount .n { font-family: var(--display); font-size: 64px; line-height: 1; color: var(--ink); }
+    .price-amount .per { font-family: var(--sans); font-size: 15px; color: var(--muted); }
+    .price-note { font-family: var(--sans); font-size: 14px; color: var(--muted); text-align: center; margin-top: 32px; }
+
     /* ---------- waitlist section (bottom) ---------- */
     .waitlist-section { border-top: 2px solid var(--ink); text-align: center; }
     .waitlist-section .sub { font-family: var(--sans); font-size: 18px; color: var(--muted); margin: 12px 0 40px; }
@@ -173,6 +189,7 @@
       .stats-inner { flex-direction: column; gap: 30px; }
       .stat-div { width: 60px; height: 2px; }
       .how-grid { grid-template-columns: 1fr; }
+      .price-grid { grid-template-columns: 1fr; }
       .wl-card { padding: 32px 24px; }
     }
   </style>
@@ -204,7 +221,7 @@
       <div class="hero-cta">
         <a class="btn-ghost" href="#features">See how it works ↓</a>
       </div>
-      <p class="hero-meta">Free · macOS 13+ · Launching soon.</p>
+      <p class="hero-meta">From $4.99/mo · macOS 13+ · Launching soon.</p>
     </div>
   </header>
 
@@ -279,6 +296,31 @@
           </a>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- pricing -->
+  <section class="pad" id="pricing">
+    <div class="wrap">
+      <h2 class="display sec-title price-title reveal">Simple launch pricing.</h2>
+      <p class="price-sub reveal">Choose monthly, yearly, or lock in lifetime access as an early supporter.</p>
+      <div class="price-grid reveal">
+        <div class="price-card">
+          <h3>Monthly</h3>
+          <div class="price-amount"><span class="n">$4.99</span><span class="per">/ month</span></div>
+        </div>
+        <div class="price-card featured">
+          <span class="price-badge accent">Best value</span>
+          <h3>Yearly</h3>
+          <div class="price-amount"><span class="n">$29</span><span class="per">/ year</span></div>
+        </div>
+        <div class="price-card">
+          <span class="price-badge">Launch special</span>
+          <h3>Lifetime</h3>
+          <div class="price-amount"><span class="n">$79</span><span class="per">once</span></div>
+        </div>
+      </div>
+      <p class="price-note reveal">Available for early access members at launch. Future pricing may change.</p>
     </div>
   </section>
 
