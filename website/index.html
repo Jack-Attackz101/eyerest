@@ -136,6 +136,28 @@
     .wl-submit:hover { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--green); }
     .wl-submit:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: 3px 3px 0 var(--green); }
 
+  /* ---------- pricing ---------- */
+  .pricing-section { text-align: center; }
+  .pricing-section .sub { font-family: var(--sans); font-size: 18px; color: var(--muted); margin: 12px 0 48px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 900px; margin: 0 auto; align-items: stretch; }
+  .price-card { position: relative; background: var(--card); border: 2px solid var(--ink); border-radius: 8px; box-shadow: 4px 4px 0 var(--ink); padding: 44px 28px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .price-card--featured { border-color: #4C6FFF; box-shadow: 5px 5px 0 #4C6FFF; }
+  .price-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 12px; border-radius: 4px; white-space: nowrap; }
+  .price-card--featured .price-badge { background: #4C6FFF; color: #fff; }
+  .price-badge--alt { background: var(--green); color: #fff; }
+  .price-plan { font-family: var(--display); font-weight: 400; font-size: 32px; letter-spacing: 0.02em; color: var(--ink); }
+  .price-amount { margin: 8px 0 28px; color: var(--ink); }
+  .price-num { font-family: var(--display); font-size: 56px; line-height: 1; letter-spacing: 0.01em; }
+  .price-per { font-family: var(--sans); font-size: 16px; color: var(--muted); }
+  .price-btn { display: block; margin-top: auto; width: 100%; box-sizing: border-box; padding: 13px 0; text-align: center; background: var(--ink); color: #fff; font-family: var(--sans); font-weight: 600; font-size: 15px; border-radius: 4px; box-shadow: 3px 3px 0 var(--green); transition: transform 0.1s, box-shadow 0.1s; cursor: pointer; }
+  .price-btn:hover { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--green); }
+  .price-btn--featured { background: #4C6FFF; box-shadow: 3px 3px 0 #4C6FFF; }
+  .price-btn--featured:hover { box-shadow: 1px 1px 0 #4C6FFF; }
+  .price-note { font-family: var(--mono); font-size: 12px; color: rgba(28,28,28,0.6); margin-top: 40px; letter-spacing: 0.02em; }
+  @media (max-width: 768px) {
+    .pricing-grid { grid-template-columns: 1fr; max-width: 400px; gap: 34px; }
+  }
+
     /* ---------- footer ---------- */
     footer { background: var(--ink); height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
     footer .f-l { display: flex; align-items: center; gap: 8px; font-family: var(--sans); font-size: 13px; color: rgba(244,239,230,0.5); }
@@ -204,7 +226,7 @@
       <div class="hero-cta">
         <a class="btn-ghost" href="#features">See how it works ↓</a>
       </div>
-      <p class="hero-meta">Free · macOS 13+ · Launching soon.</p>
+      <p class="hero-meta">From $4.99/mo · macOS 13+ · Launching soon.</p>
     </div>
   </header>
 
@@ -279,6 +301,34 @@
           </a>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- pricing -->
+  <section class="pad pricing-section" id="pricing">
+    <div class="wrap">
+      <h2 class="display sec-title reveal" style="margin-bottom:0">Simple launch pricing.</h2>
+      <p class="sub reveal">Choose monthly, yearly, or lock in lifetime access as an early supporter.</p>
+      <div class="pricing-grid">
+        <div class="price-card reveal">
+          <p class="price-plan">Monthly</p>
+          <p class="price-amount"><span class="price-num">$4.99</span><span class="price-per">/mo</span></p>
+          <a href="#waitlist" class="price-btn">Join waitlist</a>
+        </div>
+        <div class="price-card price-card--featured reveal">
+          <span class="price-badge">Best value</span>
+          <p class="price-plan">Yearly</p>
+          <p class="price-amount"><span class="price-num">$29</span><span class="price-per">/yr</span></p>
+          <a href="#waitlist" class="price-btn price-btn--featured">Join waitlist</a>
+        </div>
+        <div class="price-card reveal">
+          <span class="price-badge price-badge--alt">Launch special</span>
+          <p class="price-plan">Lifetime</p>
+          <p class="price-amount"><span class="price-num">$69</span><span class="price-per"> once</span></p>
+          <a href="#waitlist" class="price-btn">Join waitlist</a>
+        </div>
+      </div>
+      <p class="price-note reveal">Available for early access members at launch. Future pricing may change.</p>
     </div>
   </section>
 
