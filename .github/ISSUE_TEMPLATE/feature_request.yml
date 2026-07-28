@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest an idea or improvement for Iris.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+      description: Describe the goal or problem you'd like Iris to help with.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What do you do today instead?
+      description: Describe how you handle this today without the feature.
+    validations:
+      required: true

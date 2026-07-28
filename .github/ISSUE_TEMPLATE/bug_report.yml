@@ -1,0 +1,45 @@
+name: Bug report
+description: Report something in Iris that isn't working as expected.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      description: Which version of macOS are you running? (e.g. 14.5)
+      placeholder: "14.5"
+    validations:
+      required: true
+  - type: input
+    id: iris-version
+    attributes:
+      label: Iris version
+      description: Which version of Iris are you running?
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug and the steps to reproduce it.
+    validations:
+      required: true
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What you expected
+      description: Describe what you expected to happen instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: reproducibility
+    attributes:
+      label: Does it reproduce?
+      options:
+        - Every time
+        - Sometimes
+        - Only once
+    validations:
+      required: true
