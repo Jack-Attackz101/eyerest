@@ -29,7 +29,14 @@ BACKGROUND="installer/dmg_background.png"
 python3 installer/gen_dmg_bg.py
 
 # 2. Require create-dmg.
-if ! command -v create-dmg >/dev/null 2>&1; then
+# Prefer the Homebrew version (1.3.0) which supports --window-size, --app-drop-link,
+# --icon, and --background. The Sindre Sorhus version on /usr/local/bin (8.x) does not.
+HOMEBREW_CREATE_DMG="/usr/local/Cellar/create-dmg/1.3.0/bin/create-dmg"
+if [[ -x "$HOMEBREW_CREATE_DMG" ]]; then
+    CREATE_DMG="$HOMEBREW_CREATE_DMG"
+elif command -v create-dmg >/dev/null 2>&1; then
+    CREATE_DMG="create-dmg"
+else
     echo "error: create-dmg not found. Install it with: brew install create-dmg" >&2
     exit 1
 fi
@@ -57,7 +64,7 @@ rm -f "$DMG"
 # 6. Build the DMG.
 #    Applications folder sits at the TOP (y=100), Iris sits BELOW it (y=464),
 #    so the hand-drawn arrow in the background points upward from app to folder.
-create-dmg \
+"$CREATE_DMG" \
     --volname "Iris" \
     --window-size 460 660 \
     --icon-size 135 \

@@ -13,7 +13,7 @@
 //
 
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 import Vision
 import AppKit
 
@@ -117,16 +117,17 @@ final class PostureCameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferD
 
             // Sample every 30 seconds via timer; grab one frame per sample.
             let t = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
-                self?.triggerSample()
+                Task { @MainActor [weak self] in self?.triggerSample() }
             }
             RunLoop.main.add(t, forMode: .common)
             sampleTimer = t
             // Capture first frame immediately after short delay.
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-                self?.triggerSample()
+                Task { @MainActor [weak self] in self?.triggerSample() }
             }
 
-            DispatchQueue.global(qos: .utility).async { session.startRunning() }
+            let captureSession = session
+            Task.detached { captureSession.startRunning() }
         } catch {
             NSLog("Iris: PostureCameraEngine setup failed: \(error.localizedDescription)")
         }
