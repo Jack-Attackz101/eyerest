@@ -21,6 +21,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let dashboard = DashboardState()
     private let nudgeEngine = NudgeEngine()
 
+    // V3 feature engines
+    private let waterEngine = WaterReminderEngine()
+    private let standUpEngine = StandUpEngine()
+    private let wristReliefEngine = WristReliefEngine()
+    private let scrollFatigueEngine = ScrollFatigueEngine()
+
     private var statusItem: NSStatusItem!
     private var dashboardPanel: DashboardPanelController!
     private var warningController: WarningPillController!
@@ -28,6 +34,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var challengeController: ChallengeController!
     private var blockerController: BlockerController!
     private var focusBlockerEngine: FocusBlockerEngine!
+    private var windDownController: WindDownController!
+    private var deskResetController: DeskResetController!
     private var onboarding: OnboardingWindowController?
 
     private var cancellables = Set<AnyCancellable>()
@@ -38,6 +46,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Generation counter — invalidates in-flight completion handlers when a
     // new nudge or revert animation starts before the previous one finishes.
     private var nudgeAnimGen = 0
+
+    // Late-night guard: fire the wrap-up nudge only once per session.
+    private var lateNightNudgeFired = false
+    // Brightness check timer.
+    private var brightnessCheckTimer: Timer?
+    // Track call start time for post-meeting reset.
+    private var callStartDate: Date?
 
     private enum OnboardingKeys {
         static let hasCompleted = "iris.hasCompletedOnboarding"
@@ -68,6 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         challengeController = ChallengeController(engine: engine)
         blockerController = BlockerController()
         focusBlockerEngine = FocusBlockerEngine(engine: engine, blocker: blockerController)
+        windDownController = WindDownController(engine: engine)
+        deskResetController = DeskResetController()
 
         observeState()
 
@@ -101,6 +118,68 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return challengeController.isPresenting || engine.timerState == .resting
         }
         focusBlockerEngine.start()
+
+        // MARK: V3 features
+
+        // Feature 2: Water reminders
+        waterEngine.start()
+
+        // Feature 4: Stand-up mode
+        standUpEngine.onNudge = { [weak self] in
+            self?.showTransientNudge("time to stand up")
+        }
+        standUpEngine.start()
+
+        // Feature 5: Late-night guard — show wrap-up nudge when first activated.
+        engine.$isInLateNight
+            .receive(on: RunLoop.main)
+            .sink { [weak self] inLateNight in
+                guard let self else { return }
+                if inLateNight && !self.lateNightNudgeFired {
+                    self.lateNightNudgeFired = true
+                    self.showTransientNudge("time to wrap up")
+                }
+                if !inLateNight { self.lateNightNudgeFired = false }
+            }
+            .store(in: &cancellables)
+
+        // Feature 6: Brightness check — periodic nudge during late-night window.
+        startBrightnessCheckTimer()
+
+        // Feature 9: Wrist relief timer
+        wristReliefEngine.onNudge = { [weak self] in
+            self?.showTransientNudge("shake out your wrists")
+        }
+        wristReliefEngine.start()
+
+        // Feature 10: Post-meeting reset
+        engine.onLongCallEnded = { [weak self] in
+            self?.showTransientNudge("look away — 20 seconds")
+        }
+
+        // Feature 11: Scroll fatigue
+        scrollFatigueEngine.onNudge = { [weak self] in
+            self?.showTransientNudge("rest your wrists")
+        }
+        scrollFatigueEngine.start()
+
+        // Feature 12: Posture camera
+        Task { @MainActor in
+            PostureCameraEngine.shared.onPostureAlert = { [weak self] in
+                self?.showTransientNudge("sit up straight")
+            }
+            if engine.postureCameraEnabled {
+                PostureCameraEngine.shared.start()
+            }
+        }
+
+        // Feature 7 & 8: Wind-down and Desk-reset buttons in MainView
+        NotificationCenter.default.addObserver(self,
+            selector: #selector(handleWindDownRequested),
+            name: .irisWindDownRequested, object: nil)
+        NotificationCenter.default.addObserver(self,
+            selector: #selector(handleDeskResetRequested),
+            name: .irisDeskResetRequested, object: nil)
     }
 
     // MARK: - Onboarding
@@ -261,6 +340,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func stopPulse() {
         statusItem.button?.layer?.removeAnimation(forKey: "pulse")
+    }
+
+    // MARK: - V3 feature actions
+
+    /// Shows a transient menu-bar nudge for 8 seconds, then auto-reverts.
+    private func showTransientNudge(_ text: String) {
+        beginNudge(text)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            guard let self, self.isShowingNudge else { return }
+            self.endNudge(animated: true)
+        }
+    }
+
+    /// Feature 6: Brightness check timer
+    private func startBrightnessCheckTimer() {
+        brightnessCheckTimer?.invalidate()
+        let t = Timer(timeInterval: 30 * 60, repeats: true) { [weak self] _ in
+            self?.checkBrightness()
+        }
+        RunLoop.main.add(t, forMode: .common)
+        brightnessCheckTimer = t
+    }
+
+    private func checkBrightness() {
+        guard engine.brightnessCheckEnabled && engine.isInLateNight else { return }
+        showTransientNudge("lower your brightness")
+    }
+
+    /// Feature 7: Wind-down
+    @objc private func handleWindDownRequested() {
+        dashboardPanel.hide()
+        windDownController.show()
+    }
+
+    /// Feature 8: Desk reset
+    @objc private func handleDeskResetRequested() {
+        guard let button = statusItem.button else { return }
+        deskResetController.toggle(from: button)
     }
 
     // MARK: - Menu bar nudge display

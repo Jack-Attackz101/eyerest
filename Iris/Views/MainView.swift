@@ -111,17 +111,47 @@ struct MainView: View {
     // MARK: - Layer 5: controls
 
     private var controls: some View {
-        HStack(spacing: 10) {
-            if engine.isCallPaused {
-                // Override the auto-pause and keep running for this call.
-                Button("Resume") { engine.resumeDuringCall() }
-                    .buttonStyle(AmberPillStyle())
-            } else {
-                Button(engine.isPaused ? "Resume" : "Pause") { engine.togglePause() }
-                    .buttonStyle(FrostedPillStyle())
+        VStack(spacing: 8) {
+            // Water nudge row (Feature 2): shown when a water reminder is pending.
+            if engine.waterRemindersEnabled && engine.waterNudgePending {
+                Button("💧 Drank it") { engine.acknowledgeWaterDrink() }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(height: 30)
+                    .padding(.horizontal, 16)
+                    .background(Color(hex: 0x1B4F8A).opacity(0.8), in: Capsule())
+                    .buttonStyle(.plain)
             }
-            Button("Rest Now") { engine.restNow() }
-                .buttonStyle(SolidPillStyle())
+
+            HStack(spacing: 10) {
+                if engine.isCallPaused {
+                    Button("Resume") { engine.resumeDuringCall() }
+                        .buttonStyle(AmberPillStyle())
+                } else {
+                    Button(engine.isPaused ? "Resume" : "Pause") { engine.togglePause() }
+                        .buttonStyle(FrostedPillStyle())
+                }
+                Button("Rest Now") { engine.restNow() }
+                    .buttonStyle(SolidPillStyle())
+            }
+
+            // Secondary controls row: Wind Down + Desk Reset (when enabled).
+            if engine.windDownEnabled || engine.deskResetEnabled {
+                HStack(spacing: 8) {
+                    if engine.windDownEnabled {
+                        Button("Wind Down") {
+                            NotificationCenter.default.post(name: .irisWindDownRequested, object: nil)
+                        }
+                        .buttonStyle(FrostedSmallPillStyle())
+                    }
+                    if engine.deskResetEnabled {
+                        Button("Desk Reset") {
+                            NotificationCenter.default.post(name: .irisDeskResetRequested, object: nil)
+                        }
+                        .buttonStyle(FrostedSmallPillStyle())
+                    }
+                }
+            }
         }
     }
 
@@ -222,6 +252,30 @@ struct StatusPill: View {
 }
 
 // MARK: - Control pill styles
+
+// MARK: - Notification names
+
+extension Notification.Name {
+    static let irisWindDownRequested = Notification.Name("iris.windDownRequested")
+    static let irisDeskResetRequested = Notification.Name("iris.deskResetRequested")
+}
+
+/// Small frosted pill for secondary actions.
+struct FrostedSmallPillStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(.white.opacity(0.75))
+            .frame(height: 28)
+            .padding(.horizontal, 12)
+            .background {
+                Capsule().fill(.ultraThinMaterial)
+                Capsule().fill(Color.white.opacity(0.10))
+            }
+            .overlay(Capsule().stroke(Color.white.opacity(0.18), lineWidth: 1))
+            .opacity(configuration.isPressed ? 0.7 : 1)
+    }
+}
 
 /// Frosted translucent pill (Pause/Resume).
 struct FrostedPillStyle: ButtonStyle {

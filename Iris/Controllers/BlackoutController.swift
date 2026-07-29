@@ -41,6 +41,7 @@ final class BlackoutController {
 
         model.fadeDuration = 0.6
         startEventMonitor()
+        prepareStretchCard()
         preparePosturePrompt()
 
         // Flip visibility next runloop so the 0 -> 1 opacity fade actually plays.
@@ -49,7 +50,21 @@ final class BlackoutController {
         }
     }
 
-    /// Feature 5: pick this session's prompt and reveal it 2s in (fade over 0.5s).
+    /// Feature 1: show a 15-second stretch card at the start of rest, then switch to countdown.
+    private func prepareStretchCard() {
+        model.showStretchCard = false
+        model.stretchCard = nil
+        guard engine.stretchCardsEnabled else { return }
+        model.stretchCard = StretchCard.consume(for: engine.problemArea,
+                                                using: UserDefaults.standard)
+        model.showStretchCard = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) { [weak self] in
+            guard let self, self.isActive else { return }
+            self.model.showStretchCard = false
+        }
+    }
+
+    /// Pick this session's posture prompt and reveal it 2s in (fade over 0.5s).
     private func preparePosturePrompt() {
         model.showPrompt = false
         guard engine.postureNudgesEnabled else {
@@ -57,7 +72,9 @@ final class BlackoutController {
             return
         }
         model.promptText = engine.consumePosturePrompt()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+        // If stretch cards are enabled, posture prompt shows 17s in (2s after card ends).
+        let delay: TimeInterval = engine.stretchCardsEnabled ? 17.0 : 2.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self, self.isActive else { return }
             self.model.showPrompt = true
         }
@@ -68,6 +85,7 @@ final class BlackoutController {
         model.fadeDuration = 0.8
         model.visible = false
         model.showPrompt = false
+        model.showStretchCard = false
         stopEventMonitor()
 
         // Tear the panels down after the fade-out completes.

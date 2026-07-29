@@ -23,6 +23,7 @@ struct SettingsView: View {
                     scheduleSection
                     focusSection
                     wellnessSection
+                    habitsSection
                     systemSection
                     quitButton
                 }
@@ -110,6 +111,10 @@ struct SettingsView: View {
             }
             ChallengeSettingsSection()
         }
+    }
+
+    private var habitsSection: some View {
+        HabitsSettingsSection()
     }
 
     private var systemSection: some View {

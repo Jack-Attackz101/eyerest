@@ -108,6 +108,54 @@ final class TimerEngine: ObservableObject {
         didSet { saveBlockedItems() }
     }
 
+    // MARK: - Persisted settings (V3 — 12 new features)
+
+    @Published var stretchCardsEnabled: Bool {
+        didSet { defaults.set(stretchCardsEnabled, forKey: Keys.stretchCards) }
+    }
+    @Published var waterRemindersEnabled: Bool {
+        didSet { defaults.set(waterRemindersEnabled, forKey: Keys.waterReminders) }
+    }
+    @Published var problemArea: ProblemArea {
+        didSet { defaults.set(problemArea.rawValue, forKey: Keys.problemArea) }
+    }
+    @Published var standUpModeEnabled: Bool {
+        didSet { defaults.set(standUpModeEnabled, forKey: Keys.standUpMode) }
+    }
+    @Published var lateNightGuardEnabled: Bool {
+        didSet { defaults.set(lateNightGuardEnabled, forKey: Keys.lateNightGuard) }
+    }
+    @Published var lateNightHour: Int {
+        didSet { defaults.set(lateNightHour, forKey: Keys.lateNightHour) }
+    }
+    @Published var brightnessCheckEnabled: Bool {
+        didSet { defaults.set(brightnessCheckEnabled, forKey: Keys.brightnessCheck) }
+    }
+    @Published var windDownEnabled: Bool {
+        didSet { defaults.set(windDownEnabled, forKey: Keys.windDown) }
+    }
+    @Published var deskResetEnabled: Bool {
+        didSet { defaults.set(deskResetEnabled, forKey: Keys.deskReset) }
+    }
+    @Published var wristReliefEnabled: Bool {
+        didSet { defaults.set(wristReliefEnabled, forKey: Keys.wristRelief) }
+    }
+    @Published var postMeetingResetEnabled: Bool {
+        didSet { defaults.set(postMeetingResetEnabled, forKey: Keys.postMeetingReset) }
+    }
+    @Published var scrollFatigueEnabled: Bool {
+        didSet { defaults.set(scrollFatigueEnabled, forKey: Keys.scrollFatigue) }
+    }
+    @Published var postureCameraEnabled: Bool {
+        didSet { defaults.set(postureCameraEnabled, forKey: Keys.postureCamera) }
+    }
+
+    /// Set by WaterReminderEngine when the threshold is hit; cleared by acknowledgeWaterDrink().
+    @Published var waterNudgePending: Bool = false
+
+    /// True when the current hour is past lateNightHour (and before 5am).
+    @Published private(set) var isInLateNight: Bool = false
+
     // MARK: - Private
 
     private let defaults = UserDefaults.standard
@@ -116,8 +164,15 @@ final class TimerEngine: ObservableObject {
     private var pausedBeforeSleep = false
     private var isSyncingLoginItem = false
     private var scheduledEndDate: Date?
+    private var callActiveDate: Date?
 
     private var unitMultiplier: Int { DebugConfig.fastCycle ? 1 : 60 }
+
+    /// When late-night guard is active, use at most 15 min interval.
+    private var effectiveIntervalMinutes: Int {
+        guard lateNightGuardEnabled && isInLateNight else { return intervalMinutes }
+        return min(15, intervalMinutes)
+    }
 
     /// Posture prompts rotated through on the rest screen (Feature 5).
     static let posturePrompts = [
@@ -148,6 +203,20 @@ final class TimerEngine: ObservableObject {
         static let nudgeFrequency = "iris.nudgeFrequency"
         static let focusBlocker = "iris.focusBlockerEnabled"
         static let blockedItems = "iris.blockedItems"
+        // V3 keys (12 new features)
+        static let stretchCards = "iris.stretchCardsEnabled"
+        static let waterReminders = "iris.waterRemindersEnabled"
+        static let problemArea = "iris.problemArea"
+        static let standUpMode = "iris.standUpModeEnabled"
+        static let lateNightGuard = "iris.lateNightGuardEnabled"
+        static let lateNightHour = "iris.lateNightHour"
+        static let brightnessCheck = "iris.brightnessCheckEnabled"
+        static let windDown = "iris.windDownEnabled"
+        static let deskReset = "iris.deskResetEnabled"
+        static let wristRelief = "iris.wristReliefEnabled"
+        static let postMeetingReset = "iris.postMeetingResetEnabled"
+        static let scrollFatigue = "iris.scrollFatigueEnabled"
+        static let postureCamera = "iris.postureCameraEnabled"
     }
 
     private init() {
@@ -162,6 +231,19 @@ final class TimerEngine: ObservableObject {
             Keys.postureNudges: true,
             Keys.nudgeFrequency: NudgeFrequency.regularly.rawValue,
             Keys.quietEnabled: false,
+            // V3 defaults — all features OFF except lateNightHour
+            Keys.stretchCards: false,
+            Keys.waterReminders: false,
+            Keys.standUpMode: false,
+            Keys.lateNightGuard: false,
+            Keys.lateNightHour: 22,
+            Keys.brightnessCheck: false,
+            Keys.windDown: false,
+            Keys.deskReset: false,
+            Keys.wristRelief: false,
+            Keys.postMeetingReset: false,
+            Keys.scrollFatigue: false,
+            Keys.postureCamera: false,
         ])
 
         intervalMinutes = Self.clamp(defaults.integer(forKey: Keys.interval), 5...120)
@@ -184,6 +266,22 @@ final class TimerEngine: ObservableObject {
         challenge = Self.loadChallenge(from: defaults, key: Keys.challenge)
         focusBlockerEnabled = defaults.bool(forKey: Keys.focusBlocker)
         blockedItems = Self.loadBlockedItems(from: defaults, key: Keys.blockedItems)
+
+        // V3 settings
+        stretchCardsEnabled = defaults.bool(forKey: Keys.stretchCards)
+        waterRemindersEnabled = defaults.bool(forKey: Keys.waterReminders)
+        let rawArea = defaults.string(forKey: Keys.problemArea) ?? ProblemArea.eyes.rawValue
+        problemArea = ProblemArea(rawValue: rawArea) ?? .eyes
+        standUpModeEnabled = defaults.bool(forKey: Keys.standUpMode)
+        lateNightGuardEnabled = defaults.bool(forKey: Keys.lateNightGuard)
+        lateNightHour = defaults.integer(forKey: Keys.lateNightHour)
+        brightnessCheckEnabled = defaults.bool(forKey: Keys.brightnessCheck)
+        windDownEnabled = defaults.bool(forKey: Keys.windDown)
+        deskResetEnabled = defaults.bool(forKey: Keys.deskReset)
+        wristReliefEnabled = defaults.bool(forKey: Keys.wristRelief)
+        postMeetingResetEnabled = defaults.bool(forKey: Keys.postMeetingReset)
+        scrollFatigueEnabled = defaults.bool(forKey: Keys.scrollFatigue)
+        postureCameraEnabled = defaults.bool(forKey: Keys.postureCamera)
 
         syncLoginItemStateFromSystem()
         registerSleepWakeObservers()
@@ -249,7 +347,7 @@ final class TimerEngine: ObservableObject {
 
     private func beginCounting() {
         isPaused = false
-        timeRemaining = Double(intervalMinutes * unitMultiplier)
+        timeRemaining = Double(effectiveIntervalMinutes * unitMultiplier)
         timerState = .counting
     }
 
@@ -283,13 +381,28 @@ final class TimerEngine: ObservableObject {
         guard isCallActive != active else { return }
         isCallActive = active
         if active {
+            callActiveDate = Date()
             // Auto-pausing mid-warning should retract the pill.
             if isCallPaused, timerState == .warning { timerState = .counting }
         } else {
-            // Call ended → forget the override so the next call auto-pauses again.
-            // The timer resumes on its own since the call suspension has cleared.
+            // Call ended → check duration for post-meeting reset (Feature 10).
+            if let start = callActiveDate, postMeetingResetEnabled {
+                let duration = Date().timeIntervalSince(start)
+                if duration >= 30 * 60 {
+                    onLongCallEnded?()
+                }
+            }
+            callActiveDate = nil
             userResumedDuringCall = false
         }
+    }
+
+    /// Fired when a call lasting ≥30 minutes ends and postMeetingResetEnabled is true.
+    var onLongCallEnded: (() -> Void)?
+
+    /// Clears the pending water nudge; call when the user acknowledges drinking.
+    func acknowledgeWaterDrink() {
+        waterNudgePending = false
     }
 
     /// User chose to keep Iris running for the rest of this call session.
@@ -303,6 +416,10 @@ final class TimerEngine: ObservableObject {
         guard timerState != .resting else { return }
 
         let now = Date()
+
+        // --- Late-night guard (Feature 5) ---
+        let lateNight = lateNightGuardEnabled && Self.isLateNight(now, afterHour: lateNightHour)
+        if lateNight != isInLateNight { isInLateNight = lateNight }
 
         // --- Schedule blocks drive the authoritative .scheduledPause state ---
         if let (block, end) = computeActiveScheduleBlock(at: now) {
@@ -492,6 +609,12 @@ final class TimerEngine: ObservableObject {
     private static func minutesOfDay(_ date: Date, calendar: Calendar = .current) -> Int {
         let comps = calendar.dateComponents([.hour, .minute], from: date)
         return (comps.hour ?? 0) * 60 + (comps.minute ?? 0)
+    }
+
+    static func isLateNight(_ now: Date, afterHour hour: Int, calendar: Calendar = .current) -> Bool {
+        let h = calendar.component(.hour, from: now)
+        // After the chosen hour, OR before 5am (crosses midnight).
+        return h >= hour || h < 5
     }
 
     static func isInQuietWindow(_ now: Date, start: Date, end: Date, calendar: Calendar = .current) -> Bool {
