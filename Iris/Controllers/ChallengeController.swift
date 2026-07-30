@@ -91,6 +91,13 @@ final class ChallengeController {
         present()
     }
 
+#if DEBUG
+    /// Bypass the date gate — for demo and testing only.
+    func presentNow() {
+        present()
+    }
+#endif
+
     private func present() {
         guard !isShowing else { return }
         isShowing = true

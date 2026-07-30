@@ -11,6 +11,9 @@ import Cocoa
 import Combine
 import SwiftUI
 
+/// How long a transient menu-bar nudge stays visible before the icon returns.
+private let nudgeDisplaySeconds: TimeInterval = 6
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let engine = TimerEngine.shared
@@ -122,6 +125,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // MARK: V3 features
 
         // Feature 2: Water reminders
+        waterEngine.onNudge = { [weak self] in
+            self?.showTransientNudge("drink some water")
+        }
         waterEngine.start()
 
         // Feature 4: Stand-up mode
@@ -180,6 +186,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(self,
             selector: #selector(handleDeskResetRequested),
             name: .irisDeskResetRequested, object: nil)
+
+#if DEBUG
+        NotificationCenter.default.addObserver(self,
+            selector: #selector(handleDemoNudge(_:)),
+            name: .irisDemoNudge, object: nil)
+        NotificationCenter.default.addObserver(self,
+            selector: #selector(handleDemoChallenge),
+            name: .irisDemoChallenge, object: nil)
+#endif
     }
 
     // MARK: - Onboarding
@@ -347,7 +362,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Shows a transient menu-bar nudge for 8 seconds, then auto-reverts.
     private func showTransientNudge(_ text: String) {
         beginNudge(text)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + nudgeDisplaySeconds) { [weak self] in
             guard let self, self.isShowingNudge else { return }
             self.endNudge(animated: true)
         }
@@ -379,6 +394,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem.button else { return }
         deskResetController.toggle(from: button)
     }
+
+#if DEBUG
+    @objc private func handleDemoNudge(_ notification: Notification) {
+        let text = notification.object as? String ?? "nudge"
+        showTransientNudge(text)
+    }
+
+    @objc private func handleDemoChallenge() {
+        challengeController.presentNow()
+    }
+#endif
 
     // MARK: - Menu bar nudge display
 

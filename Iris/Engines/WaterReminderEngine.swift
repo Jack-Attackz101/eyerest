@@ -17,6 +17,9 @@ final class WaterReminderEngine {
     /// Threshold: nudge after this many seconds of active work.
     private let thresholdSeconds = 45 * 60   // 45 minutes
 
+    /// Called when the threshold fires. AppDelegate wires this to show a menu-bar nudge.
+    var onNudge: (() -> Void)?
+
     func start() {
         let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.tick()
@@ -44,6 +47,7 @@ final class WaterReminderEngine {
         if workedSeconds >= thresholdSeconds {
             workedSeconds = 0
             engine.waterNudgePending = true
+            onNudge?()
         }
     }
 }

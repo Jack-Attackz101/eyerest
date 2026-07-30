@@ -255,8 +255,12 @@ struct StatusPill: View {
 // MARK: - Notification names
 
 extension Notification.Name {
-    static let irisWindDownRequested = Notification.Name("iris.windDownRequested")
+    static let irisWindDownRequested  = Notification.Name("iris.windDownRequested")
     static let irisDeskResetRequested = Notification.Name("iris.deskResetRequested")
+#if DEBUG
+    static let irisDemoNudge          = Notification.Name("iris.demo.nudge")
+    static let irisDemoChallenge      = Notification.Name("iris.demo.challenge")
+#endif
 }
 
 /// Small frosted pill for secondary actions.

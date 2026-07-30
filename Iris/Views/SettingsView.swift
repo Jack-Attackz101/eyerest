@@ -25,6 +25,9 @@ struct SettingsView: View {
                     wellnessSection
                     habitsSection
                     systemSection
+#if DEBUG
+                    DemoSettingsSection()
+#endif
                     quitButton
                 }
                 .padding(.horizontal, 16)
