@@ -232,6 +232,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.wantsLayer = true
         button.target = self
         button.action = #selector(togglePopover)
+        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
     }
 
     /// A 16pt template SF Symbol for the menu bar.
@@ -250,6 +251,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             FileHandle.standardError.write(Data("Iris: status item button unavailable\n".utf8))
             return
         }
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            showHelpMenu(from: button)
+            return
+        }
         if isShowingNudge {
             nudgeEngine.skipCurrentNudge()
             endNudge(animated: false)
@@ -259,6 +264,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         dashboardPanel.toggle(from: button)
+    }
+
+    private func showHelpMenu(from button: NSStatusBarButton) {
+        let menu = NSMenu()
+        let bugItem = NSMenuItem(title: "Report a Bug", action: #selector(openBugReport), keyEquivalent: "")
+        bugItem.target = self
+        menu.addItem(bugItem)
+        let featureItem = NSMenuItem(title: "Request a Feature", action: #selector(openFeatureRequest), keyEquivalent: "")
+        featureItem.target = self
+        menu.addItem(featureItem)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height), in: button)
+    }
+
+    @objc private func openBugReport() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let encoded = version.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? version
+        guard let url = URL(string: "https://github.com/Jack-Attackz101/eyerest/issues/new?template=bug_report.yml&iris-version=\(encoded)") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc private func openFeatureRequest() {
+        guard let url = URL(string: "https://github.com/Jack-Attackz101/eyerest/issues/new?template=feature_request.yml") else { return }
+        NSWorkspace.shared.open(url)
     }
 
     private func showDebugMenu(from button: NSStatusBarButton) {
