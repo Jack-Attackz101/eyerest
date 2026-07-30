@@ -61,11 +61,10 @@ struct MainView: View {
                 .foregroundStyle(.white.opacity(0.9))
             Spacer()
             if updater.isUpdateAvailable {
-                Button(updater.isUpdating ? "Updating…" : "Update & Relaunch") {
-                    Task { await updater.performUpdate() }
+                Button("Update Available") {
+                    updater.checkForUpdates()
                 }
                 .buttonStyle(UpdatePillStyle())
-                .disabled(updater.isUpdating)
             }
             Button {
                 showSettings = true

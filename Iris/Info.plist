@@ -32,5 +32,9 @@
 	<string>Iris checks whether your camera is active so it can automatically pause breaks during video calls. It never records or transmits video.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUFeedURL</key>
+	<string>https://jack-attackz101.github.io/eyerest/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>REPLACE_WITH_OUTPUT_OF_generate_keys</string>
 </dict>
 </plist>

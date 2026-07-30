@@ -109,6 +109,89 @@ will trigger the "damaged" error for any downloader.
 
 ---
 
+---
+
+## Shipping an update (Sparkle self-update)
+
+> **⚠ Sparkle updates silently fail on unsigned builds.**
+> Sparkle's `Autoupdate` XPC helper must be code-signed and the app must be
+> notarized. An unsigned release will appear in the appcast but users will
+> never be prompted to install it. Complete steps 4–6 of this checklist first.
+
+### One-time setup (done once, not per release)
+
+- [ ] **Generate EdDSA key pair**
+  ```bash
+  # After Xcode has resolved the Sparkle package:
+  SIGN_UPDATE=$(find ~/Library/Developer/Xcode/DerivedData \
+      -name generate_keys -path "*/Sparkle/*" -type f 2>/dev/null | head -1)
+  "$SIGN_UPDATE"
+  ```
+  The private key is stored in your **macOS Keychain** automatically — it is
+  never written to disk or committed to the repo. Back it up with:
+  ```bash
+  security find-generic-password -s "https://sparkle-project.org" -w | pbcopy
+  ```
+  Store the copied base64 string in a password manager. If you lose this key,
+  existing users cannot verify future updates and you must ship a new
+  `SUPublicEDKey` in a future version.
+
+- [ ] **Put the public key in Info.plist**
+  The command above prints a line like `Public key (SUPublicEDKey): <base64>`.
+  Open `Iris/Info.plist` and replace the `REPLACE_WITH_OUTPUT_OF_generate_keys`
+  placeholder with that base64 string.
+
+- [ ] **Enable GitHub Pages**
+  Repo Settings → Pages → Source: Deploy from branch → Branch: `main`,
+  Folder: `/docs`. After saving, the appcast will be live at:
+  `https://jack-attackz101.github.io/eyerest/appcast.xml`
+
+- [ ] **Populate the 1.0.0 appcast entry**
+  Once you have the key and a signed 1.0.0 build:
+  ```bash
+  installer/release_update.sh 1.0.0 1
+  ```
+  Then commit and push `docs/appcast.xml`.
+
+---
+
+### Per-release steps (every version after 1.0.0)
+
+Complete the main checklist steps 1–7 first (bump version, archive, sign,
+notarize, build DMG). Then:
+
+- [ ] **Run the release script**
+  ```bash
+  installer/release_update.sh <version>
+  # e.g. installer/release_update.sh 1.0.1
+  ```
+  The script zips `Iris.app`, signs the zip with EdDSA (key from Keychain),
+  and prepends a new `<item>` block to `docs/appcast.xml`.
+
+- [ ] **Commit and push the updated appcast**
+  ```bash
+  git add docs/appcast.xml
+  git commit -m "release: appcast for v<version>"
+  git push origin main
+  ```
+  GitHub Pages re-publishes within ~60 seconds. Existing users running a
+  Sparkle-enabled build will be notified at their next daily check.
+
+- [ ] **Create the GitHub Release and upload the zip**
+  ```bash
+  gh release create v<version> Iris-<version>.zip \
+      --title "Iris <version>" \
+      --notes "See useiris.vercel.app for what's new."
+  ```
+  The enclosure URL in the appcast points to this GitHub Release asset.
+
+- [ ] **Verify the update on a test machine**
+  Install the *previous* version, launch it, open Settings → "Check for
+  Updates…". Sparkle should find the new version and offer to install it.
+  Confirm the install completes and the relaunched app shows the new version.
+
+---
+
 ## If a user reports "Iris is damaged"
 
 The app is not damaged. macOS attached a quarantine flag when the file was

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Iris appcast — served from GitHub Pages (docs/ folder, main branch).
+  GitHub Pages URL: https://jack-attackz101.github.io/eyerest/appcast.xml
+
+  To add a new release, run:
+      installer/release_update.sh <version>
+  which appends a new <item> block to this file automatically.
+
+  Sparkle verifies the EdDSA signature in every <enclosure> before installing.
+  An item with a missing or invalid signature is silently skipped.
+-->
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>Iris</title>
+        <link>https://jack-attackz101.github.io/eyerest/appcast.xml</link>
+        <description>Iris release feed</description>
+        <language>en</language>
+
+        <!--
+        INITIAL ENTRY — fill in after running installer/release_update.sh 1.0.0
+
+        Replace the three PLACEHOLDER values:
+          sparkle:edSignature  →  output of: sign_update Iris-1.0.0.zip
+          length               →  byte count of Iris-1.0.0.zip
+          url                  →  GitHub Release asset URL for Iris-1.0.0.zip
+
+        Until filled in, Sparkle will reject this item and offer no update.
+        That is safe — simply leave it as-is until the first signed release.
+        -->
+        <item>
+            <title>Iris 1.0.0</title>
+            <pubDate>Tue, 29 Jul 2025 00:00:00 +0000</pubDate>
+            <sparkle:releaseNotesLink>https://jack-attackz101.github.io/eyerest/</sparkle:releaseNotesLink>
+            <enclosure
+                url="PLACEHOLDER_GITHUB_RELEASE_URL/Iris-1.0.0.zip"
+                sparkle:version="1"
+                sparkle:shortVersionString="1.0.0"
+                length="PLACEHOLDER_BYTE_LENGTH"
+                type="application/octet-stream"
+                sparkle:edSignature="PLACEHOLDER_EDSIGNATURE" />
+        </item>
+
+    </channel>
+</rss>

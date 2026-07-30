@@ -122,6 +122,22 @@ struct SettingsView: View {
             SectionHeader(title: "System")
             SettingToggleRow(label: "Launch at login", isOn: $engine.launchAtLogin)
             SettingToggleRow(label: "Pause during calls", isOn: $engine.autoPauseDuringCalls)
+            SettingToggleRow(
+                label: "Check for updates automatically",
+                isOn: Binding(
+                    get: { UpdateChecker.shared.automaticallyChecksForUpdates },
+                    set: { UpdateChecker.shared.automaticallyChecksForUpdates = $0 }
+                )
+            )
+            SettingRow {
+                Spacer()
+                Button("Check for Updates…") {
+                    UpdateChecker.shared.checkForUpdates()
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.irisAccent)
+                .buttonStyle(.plain)
+            }
         }
     }
 
