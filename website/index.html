@@ -203,9 +203,7 @@
     .icon-eye.large { width: 46px; height: 28px; border-width: 3px; border-color: rgba(255,255,255,0.9); }
     .icon-eye.large::after { width: 12px; height: 12px; background: rgba(255,255,255,0.9); }
 
-    .mock-desktop { position: relative; aspect-ratio: 16 / 10; background: linear-gradient(180deg, #bcd7e0 0%, #8fb9c9 38%, var(--blue) 60%, var(--green) 100%); overflow: hidden; }
-    .mock-desktop::before { content: ""; position: absolute; left: 10%; bottom: 6%; width: 34%; height: 34%; border-radius: 50% 50% 0 0; background: rgba(61,107,46,0.55); }
-    .mock-desktop::after { content: ""; position: absolute; right: 12%; top: 12%; width: 44px; height: 44px; border-radius: 50%; background: var(--red); opacity: 0.85; }
+    .mock-desktop { position: relative; aspect-ratio: 16 / 10; background: url('images/cloudbkng.png') center/cover; overflow: hidden; }
 
     .mock-dropdown { position: absolute; top: 8px; right: 10px; width: 200px; background: rgba(20,20,20,0.95); border-radius: 14px; padding: 16px 14px; color: #fff; font-family: var(--sans); box-shadow: 0 10px 30px rgba(0,0,0,0.35); z-index: 5; }
     .dd-header { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.9); margin-bottom: 10px; }
@@ -285,7 +283,7 @@
     #demo-iris-btn:focus-visible { outline: 2px solid #5B9AB8; outline-offset: 1px; }
     .hero-desktop {
       aspect-ratio: 16/10; position: relative;
-      background: linear-gradient(155deg, #2c5f7a 0%, #4a8fa8 40%, #6ab5c8 70%, #89ccda 100%);
+      background: url('images/cloudbkng.png') center/cover;
       overflow: hidden;
     }
     #demo-dropdown {
@@ -300,17 +298,26 @@
       display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
       letter-spacing: 0.05em; color: rgba(255,255,255,0.7); margin-bottom: 10px;
     }
-    .demo-dd-body { display: flex; align-items: center; gap: 10px; }
-    .demo-dd-ring-svg { width: 48px; height: 48px; flex-shrink: 0; }
-    .demo-ring-bg { fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 3.5; }
-    .demo-ring-fg {
-      fill: none; stroke: rgba(255,255,255,0.88); stroke-width: 3.5; stroke-linecap: round;
-      transform-box: fill-box; transform-origin: center; transform: rotate(-90deg);
+    .demo-dd-status {
+      margin-left: auto; display: flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 500; color: #fff;
+      padding: 2px 6px; background: rgba(0,0,0,0.4); border-radius: 8px;
     }
-    #demo-ring-fill { stroke-dasharray: 138.2; stroke-dashoffset: 0; transition: stroke-dashoffset 0.4s ease; }
-    .demo-dd-text { flex: 1; }
-    #demo-countdown { font-family: var(--mono); font-size: 21px; line-height: 1.1; }
-    #demo-dd-time { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+    .demo-dd-dot { width: 5px; height: 5px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+    .demo-dd-timer { text-align: center; margin-bottom: 10px; }
+    #demo-countdown { font-family: var(--mono); font-size: 26px; font-weight: 300; line-height: 1.1; color: #fff; }
+    #demo-dd-time { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+    .demo-dd-controls { display: flex; gap: 6px; }
+    .demo-dd-pause {
+      flex: 1; height: 28px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.15); color: #fff; font-family: var(--sans); font-size: 11px;
+      font-weight: 500; cursor: pointer; backdrop-filter: blur(8px);
+    }
+    .demo-dd-rest {
+      flex: 1; height: 28px; border-radius: 14px; border: none;
+      background: rgba(255,255,255,0.9); color: #111; font-family: var(--sans); font-size: 11px;
+      font-weight: 500; cursor: pointer;
+    }
     #demo-break-overlay {
       position: absolute; inset: 0; background: rgba(0,0,0,0.97); z-index: 10;
       display: flex; align-items: center; justify-content: center;
@@ -318,16 +325,20 @@
     }
     #demo-break-overlay[hidden] { display: none; }
     #demo-break-overlay.iris-active { opacity: 1; }
-    .hero-break-inner { text-align: center; color: #fff; }
-    .hero-br-svg { width: 100px; height: 100px; display: block; margin: 0 auto 14px; }
+    .hero-break-inner { text-align: center; color: #fff; position: relative; display: flex; flex-direction: column; align-items: center; }
+    .hero-br-svg { width: 100px; height: 100px; display: block; margin: 0 auto 0; }
+    .hero-br-eye { width: 28px; height: 17px; border: 2.5px solid rgba(255,255,255,0.9); border-radius: 50%; position: absolute; top: 41px; }
+    .hero-br-eye::after { content: ""; position: absolute; top: 50%; left: 50%; width: 7px; height: 7px; background: rgba(255,255,255,0.9); border-radius: 50%; transform: translate(-50%,-50%); }
+    #demo-br-seconds { font-family: var(--mono); font-size: 40px; font-weight: 300; line-height: 1; margin-top: 8px; }
+    .hero-br-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .hero-br-prompt { font-family: var(--sans); font-size: 13px; color: rgba(255,255,255,0.85); margin: 10px 0 0 !important; }
+    .hero-br-wordmark { position: absolute; bottom: -24px; font-family: var(--sans); font-size: 10px; font-weight: 300; color: rgba(255,255,255,0.15); }
     .hero-br-bg { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 4; }
     .hero-br-fg {
       fill: none; stroke: rgba(255,255,255,0.82); stroke-width: 4; stroke-linecap: round;
       transform-box: fill-box; transform-origin: center; transform: rotate(-90deg);
     }
     #demo-br-fill { stroke-dasharray: 289; stroke-dashoffset: 0; }
-    .hero-break-inner p { font-family: var(--sans); font-size: 15px; color: rgba(255,255,255,0.9); margin-bottom: 6px; }
-    .hero-break-inner small { font-family: var(--sans); font-size: 11px; color: rgba(255,255,255,0.3); }
     #demo-toast {
       position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
       background: rgba(28,28,28,0.94); color: #fff; font-family: var(--sans);
@@ -432,16 +443,15 @@
                   <circle cx="6" cy="4" r="1.5" fill="rgba(255,255,255,0.7)"/>
                 </svg>
                 <span>iris</span>
+                <span class="demo-dd-status"><span class="demo-dd-dot"></span>Active</span>
               </div>
-              <div class="demo-dd-body">
-                <svg class="demo-dd-ring-svg" viewBox="0 0 50 50" aria-hidden="true">
-                  <circle class="demo-ring-bg" cx="25" cy="25" r="22"/>
-                  <circle class="demo-ring-fg" cx="25" cy="25" r="22" id="demo-ring-fill"/>
-                </svg>
-                <div class="demo-dd-text">
-                  <div id="demo-countdown">20:00</div>
-                  <div id="demo-dd-time">until break</div>
-                </div>
+              <div class="demo-dd-timer">
+                <div id="demo-countdown">20:00</div>
+                <div id="demo-dd-time">until your next break</div>
+              </div>
+              <div class="demo-dd-controls">
+                <button type="button" class="demo-dd-pause" id="demoPauseBtn">Pause</button>
+                <button type="button" class="demo-dd-rest" id="demoRestBtn">Rest Now</button>
               </div>
             </div>
             <div id="demo-break-overlay" hidden>
@@ -450,8 +460,11 @@
                   <circle class="hero-br-bg" cx="50" cy="50" r="46"/>
                   <circle class="hero-br-fg" cx="50" cy="50" r="46" id="demo-br-fill"/>
                 </svg>
-                <p>Look 20 feet away.</p>
-                <small>Click to skip</small>
+                <div class="hero-br-eye" aria-hidden="true"></div>
+                <div id="demo-br-seconds">20</div>
+                <div class="hero-br-label">seconds</div>
+                <p class="hero-br-prompt">Look 20 feet away.</p>
+                <div class="hero-br-wordmark">iris</div>
               </div>
             </div>
             <div id="demo-toast" aria-live="polite">Break complete</div>
@@ -581,7 +594,6 @@
                   <div class="break-seconds" id="breakSeconds">20</div>
                   <div class="break-seconds-label">seconds</div>
                   <div class="break-prompt" id="breakPrompt"></div>
-                  <button type="button" class="break-skip" id="breakSkipBtn">Skip</button>
                   <div class="break-wordmark">iris</div>
                 </div>
               </div>

@@ -28,14 +28,15 @@ const $ = id => document.getElementById(id);
 const screenWrap   = $('demo-screen-wrap');
 const irisBtn      = $('demo-iris-btn');
 const dropdown     = $('demo-dropdown');
-const ddTime       = $('demo-dd-time');
-const ringFill     = $('demo-ring-fill');
 const countdown    = $('demo-countdown');
 const breakOverlay = $('demo-break-overlay');
 const brFill       = $('demo-br-fill');
+const brSeconds    = $('demo-br-seconds');
 const toast        = $('demo-toast');
 const hintEl       = $('demo-hint');
 const clockEl      = $('demo-clock');
+const pauseBtn     = $('demoPauseBtn');
+const restBtn      = $('demoRestBtn');
 
 // ── Clock ────────────────────────────────────────────────────────
 function tickClock() {
@@ -84,13 +85,10 @@ function setState(next) {
 }
 
 // ── Ring helpers ─────────────────────────────────────────────────
-const RING_C = 2 * Math.PI * 22;   // dropdown ring r=22
-const BR_C   = 2 * Math.PI * 46;   // break ring r=46
+const BR_C = 2 * Math.PI * 46;   // break ring r=46
 
-function setRingProgress(frac) {
-  // frac 0 = full circle, 1 = empty
-  if (ringFill) ringFill.style.strokeDashoffset = RING_C * frac;
-}
+// Paused state for countdown
+let _paused = false;
 
 // ── Hint pulse (stops on first interaction) ───────────────────────
 let _hintAlive = true;
@@ -173,6 +171,7 @@ function _closeDropdown(then) {
 // ── Break overlay ─────────────────────────────────────────────────
 function _showBreak() {
   breakOverlay.hidden = false;
+  if (brSeconds) brSeconds.textContent = '20';
 
   if (REDUCED) {
     breakOverlay.classList.add('iris-active');
@@ -181,7 +180,8 @@ function _showBreak() {
   }
   requestAnimationFrame(() => breakOverlay.classList.add('iris-active'));
 
-  // Drain the break ring over 4 s (demo-compressed from 20 s)
+  // Drain the break ring over 4 s (demo-compressed from 20 s).
+  // Count seconds display from 20 -> 0 proportionally.
   if (brFill) {
     if (motionAnimate) {
       motionAnimate(brFill, { strokeDashoffset: [0, BR_C] }, { duration: 4, easing: 'linear' });
@@ -190,6 +190,14 @@ function _showBreak() {
       requestAnimationFrame(() => { brFill.style.strokeDashoffset = BR_C; });
     }
   }
+  // Tick the display number down from 20 to 0 over 4 s (one step per 200ms).
+  let displaySec = 20;
+  const secTick = setInterval(() => {
+    displaySec = Math.max(0, displaySec - 1);
+    if (brSeconds) brSeconds.textContent = String(displaySec);
+    if (displaySec <= 0) clearInterval(secTick);
+  }, 200);
+  _timers.push(secTick);
 }
 
 function _hideBreak(then) {
@@ -215,12 +223,15 @@ function _showToast() {
 // ── Full reset ────────────────────────────────────────────────────
 function _reset() {
   _cancelAll();
+  _paused = false;
+  if (pauseBtn) pauseBtn.textContent = 'Pause';
   _closeDropdown();
   breakOverlay.classList.remove('iris-active');
   breakOverlay.hidden = true;
   toast.classList.remove('visible');
   countdown.textContent = '20:00';
   if (brFill) { brFill.style.transition = 'none'; brFill.style.strokeDashoffset = '0'; }
+  if (brSeconds) brSeconds.textContent = '20';
   setState('idle');
 }
 
@@ -228,12 +239,13 @@ function _reset() {
 function startDemo() {
   _cancelAll();
   _killHint();
+  _paused = false;
+  if (pauseBtn) pauseBtn.textContent = 'Pause';
 
   // Reset UI before starting
   countdown.textContent = '0:04';
-  ddTime.textContent = '0:04';
-  setRingProgress(0);
   if (brFill) { brFill.style.transition = 'none'; brFill.style.strokeDashoffset = '0'; }
+  if (brSeconds) brSeconds.textContent = '20';
   breakOverlay.classList.remove('iris-active');
   breakOverlay.hidden = true;
   toast.classList.remove('visible');
@@ -247,10 +259,8 @@ function startDemo() {
   // t=1000 → 3000: countdown ticks 0:03, 0:02, 0:01
   [3, 2, 1].forEach((n, i) => {
     _after(1000 * (i + 1), () => {
-      const label = `0:0${n}`;
-      countdown.textContent = label;
-      ddTime.textContent = label;
-      setRingProgress((3 - n) / 3);
+      if (_paused) return;
+      countdown.textContent = `0:0${n}`;
     });
   });
 
@@ -287,4 +297,23 @@ breakOverlay?.addEventListener('click', () => {
   if (state !== 'breaking') return;
   _cancelAll();
   _hideBreak(() => { _showToast(); setState('idle'); });
+});
+
+pauseBtn?.addEventListener('click', () => {
+  if (state !== 'countdown') return;
+  _paused = !_paused;
+  if (pauseBtn) pauseBtn.textContent = _paused ? 'Resume' : 'Pause';
+});
+
+restBtn?.addEventListener('click', () => {
+  if (state !== 'countdown') return;
+  _cancelAll();
+  _closeDropdown(() => {
+    countdown.textContent = '20:00';
+    setState('breaking');
+    _showBreak();
+    _after(4000, () => {
+      _hideBreak(() => { setState('toast'); _showToast(); setState('idle'); });
+    });
+  });
 });
