@@ -11,6 +11,7 @@ struct LicenseSettingsSection: View {
     @State private var isActivating = false
     @State private var failed = false
     @State private var succeeded = false
+    @State private var networkError = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -24,6 +25,15 @@ struct LicenseSettingsSection: View {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundStyle(Color.irisAccent)
                 }
+            } else if license.isPendingVerification {
+                SettingRow {
+                    Text("Pending verification")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Image(systemName: "clock")
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 SettingRow {
                     if license.trialDaysRemaining > 0 {
@@ -36,12 +46,18 @@ struct LicenseSettingsSection: View {
                             .foregroundStyle(Color(hex: 0xCC4444))
                     }
                     Spacer()
-                    Button("Buy - $35") {
-                        NSWorkspace.shared.open(LicenseManager.shared.gumroadURL)
+                    if let url = LicenseManager.shared.gumroadURL {
+                        Button("Buy - $35") {
+                            NSWorkspace.shared.open(url)
+                        }
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.irisAccent)
+                        .buttonStyle(.plain)
+                    } else {
+                        Text("buy link coming soon")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
                     }
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.irisAccent)
-                    .buttonStyle(.plain)
                 }
                 SettingRow {
                     TextField("License key", text: $key)
@@ -62,6 +78,13 @@ struct LicenseSettingsSection: View {
                             .foregroundStyle(Color(hex: 0xCC4444))
                     }
                 }
+                if networkError {
+                    SettingRow {
+                        Text("No internet. Key accepted offline — will verify next launch.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 if succeeded {
                     SettingRow {
                         Text("Activated. Thank you.")
@@ -77,8 +100,13 @@ struct LicenseSettingsSection: View {
         isActivating = true
         failed = false
         succeeded = false
-        let ok = await LicenseManager.shared.activate(key: key)
+        networkError = false
+        let result = await LicenseManager.shared.activate(key: key)
         isActivating = false
-        if ok { succeeded = true } else { failed = true }
+        switch result {
+        case .success:    succeeded = true
+        case .invalid:    failed = true
+        case .networkError: networkError = true
+        }
     }
 }

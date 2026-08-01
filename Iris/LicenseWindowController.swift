@@ -9,7 +9,6 @@
 import AppKit
 import SwiftUI
 
-@MainActor
 final class LicenseWindowController: NSObject {
     private var panel: NSPanel?
     var onActivated: (() -> Void)?
@@ -45,6 +44,7 @@ private struct LicenseActivationView: View {
     @State private var key = ""
     @State private var isActivating = false
     @State private var failed = false
+    @State private var networkError = false
 
     let onActivated: () -> Void
 
@@ -59,14 +59,21 @@ private struct LicenseActivationView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Button {
-                NSWorkspace.shared.open(LicenseManager.shared.gumroadURL)
-            } label: {
-                Text("Buy - $35")
+            if let url = LicenseManager.shared.gumroadURL {
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Text("Buy - $35")
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+                .keyboardShortcut(.defaultAction)
+            } else {
+                Text("buy link coming soon · $35")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
             }
-            .controlSize(.large)
-            .keyboardShortcut(.defaultAction)
 
             Divider()
 
@@ -87,6 +94,11 @@ private struct LicenseActivationView: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.red)
                 }
+                if networkError {
+                    Text("Could not reach Gumroad. Your key has been accepted for now and will be verified next time you launch Iris online.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(28)
@@ -96,8 +108,14 @@ private struct LicenseActivationView: View {
     private func tryActivate() async {
         isActivating = true
         failed = false
-        let ok = await LicenseManager.shared.activate(key: key)
+        networkError = false
+        let result = await LicenseManager.shared.activate(key: key)
         isActivating = false
-        if ok { onActivated() } else { failed = true }
+        switch result {
+        case .success, .networkError:
+            onActivated()
+        case .invalid:
+            failed = true
+        }
     }
 }

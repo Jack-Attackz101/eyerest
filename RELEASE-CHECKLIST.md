@@ -192,6 +192,82 @@ notarize, build DMG). Then:
 
 ---
 
+---
+
+## Upgrade path: old unlicensed build → new licensed build
+
+**Background.** All Iris builds shipped before the licensing commit (around
+2026-07-29) had no trial tracking and no paywall. Anyone who downloaded one of
+those builds could use the app indefinitely. The next DMG on the website
+introduces a 7-day trial and a $35 license requirement.
+
+**What happens when an existing user updates:**
+
+1. They download the new DMG and install it (Sparkle auto-update or manual).
+2. On first launch, `LicenseManager` checks `UserDefaults` for `iris.trialStart`.
+3. Because the old app never wrote that key, it is absent. The new app sets it
+   to the current date and starts a fresh 7-day trial.
+4. The user has 7 full days to decide whether to buy, with no difference in
+   functionality.
+5. After 7 days, the engine stops at launch and the license window appears.
+
+**What this means for you (the developer):**
+
+- You must say in the release notes that the new version introduces a $35
+  purchase requirement. Do not let users discover the paywall on day 8.
+  Recommended wording: "Iris is now $35 one-time. This update starts a free
+  7-day trial for everyone. You will only see a buy prompt after that."
+- If you want to be more generous, extend `trialDays` in `LicenseManager.swift`
+  before cutting the release (e.g. 14 days for existing users). You cannot
+  distinguish existing from new users after the fact, so a longer trial applies
+  to both.
+- Anyone who was already using the old build for years is treated the same as
+  a brand-new user: they get 7 days. That is intentional and fair — they got
+  free use for however long; the trial is a grace period, not a punishment.
+
+**Checklist item for the first licensed release:**
+
+- [ ] Release notes clearly state the 7-day trial and $35 price.
+- [ ] `trialDays` in `LicenseManager.swift` is set to the desired grace period.
+- [ ] Gumroad permalink is set before the DMG is built (see LicenseManager.swift).
+- [ ] `check-placeholders` CI job passes with no unfilled placeholders.
+
+---
+
+## License activation: offline and Gumroad-down behavior
+
+**Current behavior (as of the licensing commit):**
+
+Activation calls `POST https://api.gumroad.com/v2/licenses/verify`.
+
+| Scenario | What happens |
+|---|---|
+| Gumroad returns `success: true` | Key stored in UserDefaults; user runs app permanently. No further network calls. |
+| Gumroad returns `success: false` | "Key not recognised" error; no access granted. |
+| Network unreachable (no internet, Gumroad down, airplane mode) | Key stored as **pending** in UserDefaults; user gets provisional access immediately. |
+
+**On every subsequent launch**, if a pending key exists, the app re-attempts
+verification in a background task. If Gumroad says the key is invalid, the
+pending key is revoked. If Gumroad is still unreachable, the key stays pending
+and the user retains provisional access.
+
+**Why this matters:**
+A user who purchased while their Wi-Fi was down, or during a Gumroad outage,
+should never be locked out of software they paid for. The provisional model
+means they get in immediately, and the key is silently confirmed (or rejected)
+the next time they have a connection.
+
+**Risk:** a user could enter a random key on a machine with no internet and
+get provisional access indefinitely if they never reconnect. For a $35 indie
+app, this is an acceptable tradeoff — the cost of locking out a paying customer
+is higher than the cost of this edge-case abuse.
+
+**Once a key is confirmed and stored in `iris.licenseKey`**, it is never
+re-verified. If Gumroad goes down entirely after activation, existing users
+are unaffected.
+
+---
+
 ## If a user reports "Iris is damaged"
 
 The app is not damaged. macOS attached a quarantine flag when the file was

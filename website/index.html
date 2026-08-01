@@ -14,6 +14,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;500&family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Shippori+Mincho:wght@400;500;600&display=swap" rel="stylesheet" />
 
+  <script type="importmap">
+  {
+    "imports": {
+      "figma-squircle": "https://cdn.jsdelivr.net/npm/figma-squircle@0.5.2/+esm",
+      "motion":         "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm"
+    }
+  }
+  </script>
+
   <style>
     :root {
       --bg: #F4EFE6;
@@ -54,7 +63,7 @@
 
     /* ---------- hero ---------- */
     .hero { position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center;
-      padding: 96px 24px 40px; overflow: hidden; }
+      padding: 96px 24px 0; overflow: visible; background: var(--bg); }
     .hero-bg { position: absolute; inset: 0; z-index: 0; }
     .hero-bg img { width: 100%; height: 100%; object-fit: cover; }
     .hero-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(244,239,230,0.3), rgba(244,239,230,0)); height: 50%; }
@@ -241,6 +250,92 @@
     .demo-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--sans); font-size: 14px; color: var(--ink); cursor: pointer; }
     .demo-toggle input { width: 34px; height: 20px; accent-color: var(--green); cursor: pointer; }
 
+    /* ────── hero interactive demo ────── */
+    .hero-demo { width: 100%; max-width: 900px; margin: 48px auto 0; opacity: 0; transition: opacity 0.5s ease 1s; }
+    .hero.loaded .hero-demo { opacity: 1; }
+    #demo-hint {
+      display: flex; align-items: center; gap: 6px; justify-content: flex-end;
+      padding-right: 44px; margin-bottom: 8px; font-family: var(--mono);
+      font-size: 11px; color: rgba(28,28,28,0.5); letter-spacing: 0.02em; transition: opacity 0.5s ease;
+    }
+    @keyframes demo-hint-pulse { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
+    #demo-hint.pulsing { animation: demo-hint-pulse 0.8s ease; }
+    .hero-frame {
+      background: #1e1e1e; border: 1.5px solid rgba(0,0,0,0.6); border-radius: 18px;
+      box-shadow: 0 48px 96px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.18); overflow: hidden;
+    }
+    .hero-titlebar { height: 30px; background: #2d2d2d; display: flex; align-items: center; padding: 0 14px; gap: 8px; }
+    .hero-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .hero-dot:nth-child(1) { background: #ff5f57; }
+    .hero-dot:nth-child(2) { background: #febc2e; }
+    .hero-dot:nth-child(3) { background: #28c840; }
+    .hero-menubar {
+      height: 28px; background: rgba(28,28,28,0.97); display: flex; align-items: center;
+      justify-content: space-between; padding: 0 12px; font-family: var(--sans); font-size: 12px;
+      color: rgba(255,255,255,0.85);
+    }
+    .hero-mb-left { display: flex; align-items: center; gap: 14px; }
+    .hero-mb-right { display: flex; align-items: center; gap: 6px; }
+    #demo-clock { font-size: 12px; font-weight: 500; }
+    #demo-iris-btn {
+      background: none; border: none; cursor: pointer; padding: 3px 5px; border-radius: 5px;
+      display: inline-flex; align-items: center; justify-content: center; line-height: 0;
+    }
+    #demo-iris-btn:hover { background: rgba(255,255,255,0.14); }
+    #demo-iris-btn:focus-visible { outline: 2px solid #5B9AB8; outline-offset: 1px; }
+    .hero-desktop {
+      aspect-ratio: 16/10; position: relative;
+      background: linear-gradient(155deg, #2c5f7a 0%, #4a8fa8 40%, #6ab5c8 70%, #89ccda 100%);
+      overflow: hidden;
+    }
+    #demo-dropdown {
+      position: absolute; top: 6px; right: 8px; width: 196px;
+      background: rgba(28,28,28,0.95); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 14px 12px 12px; color: #fff; font-family: var(--sans);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.45); transform-origin: top right;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    #demo-dropdown[hidden] { display: none; }
+    .demo-dd-head {
+      display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+      letter-spacing: 0.05em; color: rgba(255,255,255,0.7); margin-bottom: 10px;
+    }
+    .demo-dd-body { display: flex; align-items: center; gap: 10px; }
+    .demo-dd-ring-svg { width: 48px; height: 48px; flex-shrink: 0; }
+    .demo-ring-bg { fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 3.5; }
+    .demo-ring-fg {
+      fill: none; stroke: rgba(255,255,255,0.88); stroke-width: 3.5; stroke-linecap: round;
+      transform-box: fill-box; transform-origin: center; transform: rotate(-90deg);
+    }
+    #demo-ring-fill { stroke-dasharray: 138.2; stroke-dashoffset: 0; transition: stroke-dashoffset 0.4s ease; }
+    .demo-dd-text { flex: 1; }
+    #demo-countdown { font-family: var(--mono); font-size: 21px; line-height: 1.1; }
+    #demo-dd-time { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+    #demo-break-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.97); z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.35s ease; cursor: pointer;
+    }
+    #demo-break-overlay[hidden] { display: none; }
+    #demo-break-overlay.iris-active { opacity: 1; }
+    .hero-break-inner { text-align: center; color: #fff; }
+    .hero-br-svg { width: 100px; height: 100px; display: block; margin: 0 auto 14px; }
+    .hero-br-bg { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 4; }
+    .hero-br-fg {
+      fill: none; stroke: rgba(255,255,255,0.82); stroke-width: 4; stroke-linecap: round;
+      transform-box: fill-box; transform-origin: center; transform: rotate(-90deg);
+    }
+    #demo-br-fill { stroke-dasharray: 289; stroke-dashoffset: 0; }
+    .hero-break-inner p { font-family: var(--sans); font-size: 15px; color: rgba(255,255,255,0.9); margin-bottom: 6px; }
+    .hero-break-inner small { font-family: var(--sans); font-size: 11px; color: rgba(255,255,255,0.3); }
+    #demo-toast {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      background: rgba(28,28,28,0.94); color: #fff; font-family: var(--sans);
+      font-size: 12px; padding: 7px 16px; border-radius: 20px; white-space: nowrap;
+      opacity: 0; transition: opacity 0.25s ease; pointer-events: none; z-index: 11;
+    }
+    #demo-toast.visible { opacity: 1; }
+
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .reveal { opacity: 1 !important; transform: none !important; } }
 
     @media (max-width: 768px) {
@@ -275,20 +370,19 @@
   <!-- nav -->
   <nav>
     <a href="#top" class="nav-brand"><img src="images/iris-logo-black.png" alt="Iris" /><span>iris</span></a>
-    <!-- Replace REPLACE_WITH_PERMALINK with your Gumroad product permalink (gumroad.com/l/<permalink>) -->
-    <a class="nav-cta" href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener">Buy - $35</a>
+    <!-- Wire up Gumroad link here once product permalink is set -->
+    <a class="nav-cta" href="/Iris.dmg" download>Download</a>
   </nav>
 
   <!-- hero -->
   <header class="hero" id="top">
-    <div class="hero-bg"><img src="images/hero.png" alt="Coastal train station under a blue sky" /></div>
     <div class="hero-inner">
       <img class="hero-logo" src="images/iris-logo-black.png" alt="Iris logo" />
       <h1 class="display hero-word">IRIS</h1>
       <p class="hero-headline">Rest your eyes. Automatically.</p>
 
       <div class="hero-waitlist">
-        <a class="btn-primary" href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">Buy - $35</a>
+        <p style="font-family:var(--mono);font-size:12px;color:rgba(28,28,28,0.45);letter-spacing:0.04em;padding-top:8px;">buy link coming soon · $35</p>
       </div>
 
       <div class="hero-cta">
@@ -296,6 +390,74 @@
         <a class="btn-ghost" href="#features">See how it works ↓</a>
       </div>
       <p class="hero-meta">$35 one time &middot; macOS 13+ &middot; 7-day free trial, full features.</p>
+    </div>
+
+    <!-- hero interactive demo -->
+    <div class="hero-demo">
+      <div id="demo-hint" role="note">
+        <span>psst, it&rsquo;s interactive!</span>
+        <svg width="28" height="20" viewBox="0 0 28 20" fill="none" aria-hidden="true" style="flex-shrink:0">
+          <path d="M2 2 C8 2 20 8 26 18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M20 15 L26 18 L22 20" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="hero-frame">
+        <div class="hero-titlebar">
+          <span class="hero-dot"></span>
+          <span class="hero-dot"></span>
+          <span class="hero-dot"></span>
+        </div>
+        <div id="demo-screen-wrap">
+          <div class="hero-menubar">
+            <div class="hero-mb-left">
+              <span style="font-weight:600">Finder</span>
+              <span style="opacity:0.5">File</span>
+              <span style="opacity:0.5">Edit</span>
+            </div>
+            <div class="hero-mb-right">
+              <span id="demo-clock">9:41 AM</span>
+              <button type="button" id="demo-iris-btn" aria-haspopup="true" aria-expanded="false" aria-label="Open Iris break timer">
+                <svg width="16" height="10" viewBox="0 0 16 10" fill="none" aria-hidden="true">
+                  <ellipse cx="8" cy="5" rx="7" ry="4" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/>
+                  <circle cx="8" cy="5" r="2" fill="rgba(255,255,255,0.9)"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="hero-desktop">
+            <div id="demo-dropdown" hidden>
+              <div class="demo-dd-head">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                  <ellipse cx="6" cy="4" rx="5.5" ry="3.5" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
+                  <circle cx="6" cy="4" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                </svg>
+                <span>iris</span>
+              </div>
+              <div class="demo-dd-body">
+                <svg class="demo-dd-ring-svg" viewBox="0 0 50 50" aria-hidden="true">
+                  <circle class="demo-ring-bg" cx="25" cy="25" r="22"/>
+                  <circle class="demo-ring-fg" cx="25" cy="25" r="22" id="demo-ring-fill"/>
+                </svg>
+                <div class="demo-dd-text">
+                  <div id="demo-countdown">20:00</div>
+                  <div id="demo-dd-time">until break</div>
+                </div>
+              </div>
+            </div>
+            <div id="demo-break-overlay" hidden>
+              <div class="hero-break-inner">
+                <svg class="hero-br-svg" viewBox="0 0 100 100" aria-hidden="true">
+                  <circle class="hero-br-bg" cx="50" cy="50" r="46"/>
+                  <circle class="hero-br-fg" cx="50" cy="50" r="46" id="demo-br-fill"/>
+                </svg>
+                <p>Look 20 feet away.</p>
+                <small>Click to skip</small>
+              </div>
+            </div>
+            <div id="demo-toast" aria-live="polite">Break complete</div>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -363,10 +525,10 @@
           </iframe>
         </div>
         <div style="text-align:center; margin-top: 36px;">
-          <a href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex; align-items:center; padding:14px 32px; font-size:15px; box-shadow:3px 3px 0 var(--green); background:var(--ink); color:#fff; border-radius:4px; font-family:var(--sans); font-weight:600; transition:transform 0.1s, box-shadow 0.1s; text-decoration:none;"
+          <a href="/Iris.dmg" download class="btn-primary" style="display:inline-flex; align-items:center; padding:14px 32px; font-size:15px; box-shadow:3px 3px 0 var(--green); background:var(--ink); color:#fff; border-radius:4px; font-family:var(--sans); font-weight:600; transition:transform 0.1s, box-shadow 0.1s; text-decoration:none;"
              onmouseover="this.style.transform='translate(2px,2px)';this.style.boxShadow='1px 1px 0 var(--green)'"
              onmouseout="this.style.transform='';this.style.boxShadow='3px 3px 0 var(--green)'">
-            Buy - $35 &#x2192;
+            Download free trial &#x2192;
           </a>
         </div>
       </div>
@@ -460,8 +622,8 @@
         <h3 class="display">Iris</h3>
         <p class="req">$35 one time &middot; macOS 13+ &middot; 7-day free trial, full features.</p>
         <div style="display:flex; flex-direction:column; align-items:stretch; gap:12px; margin-top:4px;">
-          <a class="wl-submit" href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;">Buy - $35</a>
-          <a href="/Iris.dmg" download style="font-family:var(--sans); font-size:13px; text-align:center; color:var(--ink); opacity:0.5; text-decoration:underline; cursor:pointer;">Download free trial</a>
+          <p style="font-family:var(--mono);font-size:12px;color:rgba(28,28,28,0.4);letter-spacing:0.04em;text-align:center;padding:4px 0;">buy link coming soon · $35</p>
+          <a href="/Iris.dmg" download class="wl-submit" style="display:flex; align-items:center; justify-content:center; text-decoration:none;">Download free trial</a>
         </div>
       </div>
     </div>
@@ -809,5 +971,6 @@
       });
     })();
   </script>
+  <script type="module" src="/js/iris-demo.js"></script>
 </body>
 </html>

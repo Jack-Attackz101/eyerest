@@ -1,0 +1,64 @@
+name: No placeholders in production code
+
+# Placeholder strings (REPLACE_WITH_*, TODO_*, PLACEHOLDER_*) in website HTML/JS
+# or Swift sources mean a setup step was skipped before shipping. This workflow
+# makes that loud so it never reaches production silently again.
+#
+# Exclusions:
+#   - *.md files (documentation is allowed to reference placeholders as examples)
+#   - Info.plist (contains REPLACE_WITH_OUTPUT_OF_generate_keys for Sparkle, a
+#     one-time setup step completed separately — see RELEASE-CHECKLIST.md)
+#
+# Escape hatch: add [skip placeholder-check] to the commit message.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if placeholder strings remain in website or Swift sources
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PATTERN='REPLACE_WITH_|TODO_PLACEHOLDER|PLACEHOLDER_'
+          FOUND=0
+
+          echo "Checking website HTML/CSS/JS..."
+          WEB=$(grep -rn --include="*.html" --include="*.css" --include="*.js" \
+                "$PATTERN" website/ 2>/dev/null || true)
+          if [ -n "$WEB" ]; then
+            echo "$WEB"
+            FOUND=1
+          fi
+
+          echo "Checking Swift sources..."
+          SWIFT=$(grep -rn --include="*.swift" "$PATTERN" Iris/ 2>/dev/null || true)
+          if [ -n "$SWIFT" ]; then
+            echo "$SWIFT"
+            FOUND=1
+          fi
+
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No placeholder strings found. Good to ship."
+            exit 0
+          fi
+
+          echo ""
+          echo "Placeholder strings found in production code. Fix them before merging."
+          echo "If this is intentional, add [skip placeholder-check] to the commit message."
+
+          if git log -1 --format=%B | grep -qi '\[skip placeholder-check\]'; then
+            echo "::warning::Placeholders found but skipped on request."
+            exit 0
+          fi
+
+          echo "::error::Unfilled placeholder strings in production code. See output above."
+          exit 1

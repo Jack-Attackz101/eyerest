@@ -106,6 +106,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         engine.start()
         Task { @MainActor in UpdateChecker.shared.start() }
+        Task.detached(priority: .background) {
+            await LicenseManager.shared.verifyPendingKeyIfNeeded()
+        }
 
         stats.refreshForToday()
         challengeController.presentIfDue()
