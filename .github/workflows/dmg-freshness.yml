@@ -1,0 +1,81 @@
+name: DMG freshness
+
+# The download on the website is a binary committed by hand. Every time a Swift
+# file changes without rebuilding it, useiris.vercel.app quietly starts serving
+# an old app. That has already happened twice. This makes it loud instead.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Is the shipped DMG older than the source it was built from
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DMG="website/Iris.dmg"
+          if [ ! -f "$DMG" ]; then
+            echo "::error::$DMG is missing. The website has nothing to download."
+            exit 1
+          fi
+
+          dmg_epoch=$(git log -1 --format=%ct -- "$DMG")
+          dmg_when=$(git log -1 --date=iso --format=%ad -- "$DMG")
+
+          # newest commit that touched any Swift source
+          src_epoch=$(git log -1 --format=%ct -- '*.swift')
+          src_when=$(git log -1 --date=iso --format=%ad -- '*.swift')
+
+          echo "DMG built at : $dmg_when"
+          echo "Source at    : $src_when"
+          echo
+
+          if [ "$src_epoch" -le "$dmg_epoch" ]; then
+            echo "The download is current."
+            exit 0
+          fi
+
+          echo "Swift commits that are NOT in the shipped download:"
+          echo
+          git log --since="@$dmg_epoch" --date=short \
+                  --format='  %h  %ad  %s' -- '*.swift'
+          echo
+
+          cat <<'MSG'
+          ------------------------------------------------------------------
+          The DMG on the website is older than the source.
+
+          Anyone downloading Iris right now gets a build that is missing the
+          commits listed above.
+
+          To fix it, on your Mac:
+
+              brew install create-dmg          # first time only
+              ./installer/build_dmg.sh
+              git add website/Iris.dmg
+              git commit -m "chore: rebuild DMG"
+              git push
+
+          If you deliberately want to ship without rebuilding, add
+          [skip dmg-check] to the commit message.
+          ------------------------------------------------------------------
+          MSG
+
+          if git log -1 --format=%B | grep -qi '\[skip dmg-check\]'; then
+            echo "::warning::DMG is stale, skipped on request."
+            exit 0
+          fi
+
+          echo "::error::The DMG on the website is stale. Rebuild it before release."
+          exit 1
+
