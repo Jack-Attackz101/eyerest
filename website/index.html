@@ -159,6 +159,71 @@
       box-shadow: 3px 3px 0 var(--green); transition: transform 0.1s, box-shadow 0.1s; }
     .download-button:hover { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--green); }
 
+    /* ---------- demo ---------- */
+    .demo-intro { font-family: var(--sans); font-size: 15px; color: var(--muted); max-width: 640px; margin: -8px 0 40px; line-height: 1.7; }
+    .demo-shell { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: start; }
+
+    .mock-mac { padding: 10px; background: #0b0b0b; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 5px 5px 0 var(--ink); }
+    .mock-screen { border-radius: 9px; overflow: hidden; }
+    .mock-menubar { height: 30px; background: rgba(20,20,20,0.94); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-family: var(--sans); font-size: 12px; color: rgba(255,255,255,0.85); }
+    .mock-menubar-left, .mock-menubar-right { display: flex; align-items: center; gap: 12px; }
+    .mock-menu-icon { background: none; border: none; padding: 4px 6px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; line-height: 0; }
+    .mock-menu-icon:hover { background: rgba(255,255,255,0.12); }
+    .mock-menu-icon:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; background: rgba(255,255,255,0.12); }
+
+    .icon-eye { display: inline-block; width: 15px; height: 9px; border: 1.6px solid rgba(255,255,255,0.9); border-radius: 50%; position: relative; }
+    .icon-eye::after { content: ""; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: rgba(255,255,255,0.9); border-radius: 50%; transform: translate(-50%, -50%); }
+    .icon-eye.small { width: 13px; height: 8px; }
+    .icon-eye.large { width: 46px; height: 28px; border-width: 3px; border-color: rgba(255,255,255,0.9); }
+    .icon-eye.large::after { width: 12px; height: 12px; background: rgba(255,255,255,0.9); }
+
+    .mock-desktop { position: relative; aspect-ratio: 16 / 10; background: linear-gradient(180deg, #bcd7e0 0%, #8fb9c9 38%, var(--blue) 60%, var(--green) 100%); overflow: hidden; }
+    .mock-desktop::before { content: ""; position: absolute; left: 10%; bottom: 6%; width: 34%; height: 34%; border-radius: 50% 50% 0 0; background: rgba(61,107,46,0.55); }
+    .mock-desktop::after { content: ""; position: absolute; right: 12%; top: 12%; width: 44px; height: 44px; border-radius: 50%; background: var(--red); opacity: 0.85; }
+
+    .mock-dropdown { position: absolute; top: 8px; right: 10px; width: 200px; background: rgba(20,20,20,0.95); border-radius: 14px; padding: 16px 14px; color: #fff; font-family: var(--sans); box-shadow: 0 10px 30px rgba(0,0,0,0.35); z-index: 5; }
+    .dd-header { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.9); margin-bottom: 10px; }
+    .dd-timer { text-align: center; margin-bottom: 12px; }
+    .dd-time { font-family: var(--mono); font-size: 32px; font-weight: 400; letter-spacing: 0.02em; }
+    .dd-time-label { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+    .dd-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .dd-btn { flex: 1; height: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: #fff; font-family: var(--sans); font-size: 12px; font-weight: 500; cursor: pointer; }
+    .dd-btn:hover { background: rgba(255,255,255,0.2); }
+    .dd-btn-solid { background: rgba(255,255,255,0.9); color: #111; border: none; }
+    .dd-btn-solid:hover { background: #fff; }
+    .dd-settings-link { width: 100%; background: none; border: none; color: rgba(255,255,255,0.6); font-family: var(--sans); font-size: 12px; text-align: center; padding: 6px 0 0; cursor: pointer; }
+    .dd-settings-link:hover { color: #fff; }
+    .dd-btn:focus-visible, .dd-settings-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    .mock-toasts { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 6; align-items: center; }
+    .mock-toast { background: rgba(20,20,20,0.94); color: #fff; font-family: var(--sans); font-size: 12px; padding: 8px 14px; border-radius: 20px; white-space: nowrap; opacity: 0; transition: opacity 0.25s ease; }
+    .mock-toast.show { opacity: 1; }
+
+    .mock-break { position: absolute; inset: 0; background: rgba(0,0,0,0.96); z-index: 10; display: flex; align-items: center; justify-content: center; }
+    .mock-break[hidden] { display: none; }
+    .mock-break-inner { text-align: center; color: #fff; padding: 0 20px; position: relative; }
+    .break-ring { position: relative; width: 92px; height: 92px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; }
+    .break-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 4; }
+    .ring-fg { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; }
+    .break-seconds { font-family: var(--mono); font-size: 44px; font-weight: 400; }
+    .break-seconds-label { font-family: var(--sans); font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; margin-bottom: 14px; }
+    .break-prompt { font-family: var(--sans); font-size: 14px; color: rgba(255,255,255,0.9); max-width: 220px; min-height: 18px; margin: 0 auto 18px; }
+    .break-skip { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-family: var(--sans); font-size: 12px; font-weight: 500; padding: 8px 22px; border-radius: 16px; cursor: pointer; }
+    .break-skip:hover { background: rgba(255,255,255,0.22); }
+    .break-skip:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .break-wordmark { position: absolute; bottom: -30px; left: 0; right: 0; font-family: var(--sans); font-size: 10px; letter-spacing: 0.05em; color: rgba(255,255,255,0.18); }
+
+    .demo-controls { display: flex; flex-direction: column; gap: 20px; }
+    .demo-break-btn { align-self: flex-start; background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 4px; font-family: var(--sans); font-weight: 600; font-size: 14px; padding: 12px 24px; cursor: pointer; box-shadow: 3px 3px 0 var(--green); transition: transform 0.1s, box-shadow 0.1s; }
+    .demo-break-btn:hover { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--green); }
+    .demo-break-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    .demo-toggles { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 8px; box-shadow: 3px 3px 0 var(--ink); transition: box-shadow 0.2s; }
+    .demo-toggles.flash { box-shadow: 3px 3px 0 var(--blue); }
+    .demo-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--sans); font-size: 14px; color: var(--ink); cursor: pointer; }
+    .demo-toggle input { width: 34px; height: 20px; accent-color: var(--green); cursor: pointer; }
+
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .reveal { opacity: 1 !important; transform: none !important; } }
 
     @media (max-width: 768px) {
@@ -174,6 +239,17 @@
       .stat-div { width: 60px; height: 2px; }
       .how-grid { grid-template-columns: 1fr; }
       .wl-card { padding: 32px 24px; }
+      .demo-shell { grid-template-columns: 1fr; gap: 24px; }
+      .mock-dropdown { width: 168px; padding: 12px 10px; }
+      .dd-time { font-size: 25px; }
+      .break-ring { width: 58px; height: 58px; margin-bottom: 8px; }
+      .icon-eye.large { width: 30px; height: 18px; border-width: 2.5px; }
+      .icon-eye.large::after { width: 8px; height: 8px; }
+      .break-seconds { font-size: 24px; }
+      .break-seconds-label { margin-bottom: 8px; }
+      .break-prompt { font-size: 12px; min-height: 14px; margin: 0 auto 10px; }
+      .break-skip { padding: 6px 16px; font-size: 11px; }
+      .demo-break-btn { align-self: stretch; text-align: center; }
     }
   </style>
 </head>
@@ -277,6 +353,72 @@
              onmouseout="this.style.transform='';this.style.boxShadow='3px 3px 0 var(--green)'">
             Join the waitlist →
           </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- try the demo -->
+  <section class="pad" id="demo">
+    <div class="wrap">
+      <h2 class="display sec-title reveal">Try it yourself.</h2>
+      <p class="demo-intro reveal">a working copy of the menu bar app, right here. click the icon, take a break, flip a couple reminders on. this demo speeds up the 20 minute cycle to about 20 seconds so you can see a full loop without waiting around. everything else matches the real app.</p>
+
+      <div class="demo-shell reveal">
+        <div class="mock-mac">
+          <div class="mock-screen">
+            <div class="mock-menubar">
+              <div class="mock-menubar-left">Iris Demo</div>
+              <div class="mock-menubar-right">
+                <span>9:41 AM</span>
+                <button type="button" class="mock-menu-icon" id="irisMenuBtn" aria-haspopup="true" aria-expanded="false" aria-label="Open Iris menu">
+                  <span class="icon-eye" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+            <div class="mock-desktop">
+              <div class="mock-dropdown" id="irisDropdown" hidden>
+                <div class="dd-header"><span class="icon-eye small" aria-hidden="true"></span><span>iris</span></div>
+                <div class="dd-timer">
+                  <div class="dd-time" id="ddTime">00:20</div>
+                  <div class="dd-time-label">until your next break</div>
+                </div>
+                <div class="dd-row">
+                  <button type="button" class="dd-btn" id="ddPauseBtn">Pause</button>
+                  <button type="button" class="dd-btn dd-btn-solid" id="ddRestBtn">Rest Now</button>
+                </div>
+                <button type="button" class="dd-settings-link" id="ddSettingsBtn">Settings</button>
+              </div>
+
+              <div class="mock-toasts" id="mockToasts" aria-live="polite"></div>
+
+              <div class="mock-break" id="mockBreak" hidden>
+                <div class="mock-break-inner">
+                  <div class="break-ring" aria-hidden="true">
+                    <svg viewBox="0 0 100 100">
+                      <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
+                      <circle class="ring-fg" id="ringFg" cx="50" cy="50" r="44"></circle>
+                    </svg>
+                    <span class="icon-eye large" aria-hidden="true"></span>
+                  </div>
+                  <div class="break-seconds" id="breakSeconds">20</div>
+                  <div class="break-seconds-label">seconds</div>
+                  <div class="break-prompt" id="breakPrompt"></div>
+                  <button type="button" class="break-skip" id="breakSkipBtn">Skip</button>
+                  <div class="break-wordmark">iris</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-controls">
+          <button type="button" class="demo-break-btn" id="takeBreakBtn">Take a break now</button>
+          <div class="demo-toggles" id="reminderToggles">
+            <label class="demo-toggle"><span>Water reminders</span><input type="checkbox" id="toggleWater"></label>
+            <label class="demo-toggle"><span>Stand-up mode</span><input type="checkbox" id="toggleStandup"></label>
+            <label class="demo-toggle"><span>Wrist relief timer</span><input type="checkbox" id="toggleWrist"></label>
+          </div>
         </div>
       </div>
     </div>
@@ -436,6 +578,223 @@
           toast.textContent = 'Could not load count';
         }
         tid = setTimeout(() => { toast.style.display = 'none'; }, 5000);
+      });
+    })();
+
+    // ---------- Try it yourself: mock Mac demo ----------
+    (function () {
+      const demoSection = document.getElementById('demo');
+      if (!demoSection) return;
+
+      const menuBtn = document.getElementById('irisMenuBtn');
+      const dropdown = document.getElementById('irisDropdown');
+      const ddTime = document.getElementById('ddTime');
+      const ddPauseBtn = document.getElementById('ddPauseBtn');
+      const ddRestBtn = document.getElementById('ddRestBtn');
+      const ddSettingsBtn = document.getElementById('ddSettingsBtn');
+      const takeBreakBtn = document.getElementById('takeBreakBtn');
+      const mockBreak = document.getElementById('mockBreak');
+      const breakSecondsEl = document.getElementById('breakSeconds');
+      const breakPromptEl = document.getElementById('breakPrompt');
+      const breakSkipBtn = document.getElementById('breakSkipBtn');
+      const ringFg = document.getElementById('ringFg');
+      const toastsHost = document.getElementById('mockToasts');
+      const reminderToggles = document.getElementById('reminderToggles');
+      const toggleWater = document.getElementById('toggleWater');
+      const toggleStandup = document.getElementById('toggleStandup');
+      const toggleWrist = document.getElementById('toggleWrist');
+
+      const CYCLE_SECONDS = 20;   // demo stand-in for the real 20-minute interval
+      const BREAK_SECONDS = 20;   // matches the real 20-second rest
+      const RING_C = 2 * Math.PI * 44;
+      // Exact posture prompts rotated on the real rest screen (TimerEngine.posturePrompts).
+      const POSTURE_PROMPTS = [
+        'Roll your shoulders back', 'Take three deep breaths', 'Sit up straight',
+        'Relax your jaw', 'Unclench your hands', 'Drop your shoulders away from your ears',
+      ];
+
+      let remaining = CYCLE_SECONDS;
+      let cycleTimer = null;
+      let paused = false;
+      let breakActive = false;
+      let breakRemaining = BREAK_SECONDS;
+      let breakTimer = null;
+      let promptTimeout = null;
+      let promptIndex = 0;
+
+      function formatTime(s) {
+        const total = Math.max(0, s);
+        return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
+      }
+
+      function renderDropdown() {
+        if (ddTime) ddTime.textContent = formatTime(remaining);
+        if (ddPauseBtn) ddPauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      }
+
+      function setRing(frac) {
+        if (!ringFg) return;
+        ringFg.style.strokeDasharray = String(RING_C);
+        ringFg.style.strokeDashoffset = String(RING_C * (1 - frac));
+      }
+
+      function stopCycle() {
+        if (cycleTimer) { clearInterval(cycleTimer); cycleTimer = null; }
+      }
+
+      function startCycle() {
+        stopCycle();
+        remaining = CYCLE_SECONDS;
+        paused = false;
+        renderDropdown();
+        cycleTimer = setInterval(() => {
+          if (paused || breakActive) return;
+          remaining -= 1;
+          if (remaining <= 0) {
+            triggerBreak();
+            remaining = CYCLE_SECONDS;
+          }
+          renderDropdown();
+        }, 1000);
+      }
+
+      function togglePause() {
+        paused = !paused;
+        renderDropdown();
+      }
+
+      function nextPrompt() {
+        const text = POSTURE_PROMPTS[promptIndex % POSTURE_PROMPTS.length];
+        promptIndex += 1;
+        return text;
+      }
+
+      function updateBreakUI() {
+        if (breakSecondsEl) breakSecondsEl.textContent = String(Math.max(0, breakRemaining));
+        setRing(Math.max(0, breakRemaining) / BREAK_SECONDS);
+      }
+
+      function stopBreakTimer() {
+        if (breakTimer) { clearInterval(breakTimer); breakTimer = null; }
+        if (promptTimeout) { clearTimeout(promptTimeout); promptTimeout = null; }
+      }
+
+      function triggerBreak() {
+        if (breakActive) return;
+        closeDropdown();
+        breakActive = true;
+        breakRemaining = BREAK_SECONDS;
+        if (breakPromptEl) breakPromptEl.textContent = '';
+        if (mockBreak) mockBreak.hidden = false;
+        updateBreakUI();
+        promptTimeout = setTimeout(() => {
+          if (breakActive && breakPromptEl) breakPromptEl.textContent = nextPrompt();
+        }, 1200);
+        breakTimer = setInterval(() => {
+          breakRemaining -= 1;
+          updateBreakUI();
+          if (breakRemaining <= 0) dismissBreak();
+        }, 1000);
+      }
+
+      function dismissBreak() {
+        stopBreakTimer();
+        breakActive = false;
+        if (mockBreak) mockBreak.hidden = true;
+      }
+
+      function handleOutsideClick(e) {
+        if (dropdown && !dropdown.contains(e.target) && e.target !== menuBtn) closeDropdown();
+      }
+
+      function handleEscape(e) {
+        if (e.key === 'Escape') closeDropdown();
+      }
+
+      function openDropdown() {
+        if (!dropdown || !menuBtn) return;
+        dropdown.hidden = false;
+        menuBtn.setAttribute('aria-expanded', 'true');
+        renderDropdown();
+        document.addEventListener('click', handleOutsideClick, true);
+        document.addEventListener('keydown', handleEscape, true);
+      }
+
+      function closeDropdown() {
+        if (!dropdown || !menuBtn) return;
+        dropdown.hidden = true;
+        menuBtn.setAttribute('aria-expanded', 'false');
+        document.removeEventListener('click', handleOutsideClick, true);
+        document.removeEventListener('keydown', handleEscape, true);
+      }
+
+      function showToast(text) {
+        if (!toastsHost) return;
+        const el = document.createElement('div');
+        el.className = 'mock-toast';
+        el.textContent = text;
+        toastsHost.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('show'));
+        setTimeout(() => {
+          el.classList.remove('show');
+          setTimeout(() => el.remove(), 300);
+        }, 3200);
+      }
+
+      function flashToggles() {
+        if (!reminderToggles) return;
+        reminderToggles.classList.add('flash');
+        setTimeout(() => reminderToggles.classList.remove('flash'), 1200);
+      }
+
+      if (menuBtn && dropdown) {
+        menuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (dropdown.hidden) openDropdown(); else closeDropdown();
+        });
+      }
+      if (ddPauseBtn) ddPauseBtn.addEventListener('click', togglePause);
+      if (ddRestBtn) ddRestBtn.addEventListener('click', () => triggerBreak());
+      if (ddSettingsBtn) {
+        ddSettingsBtn.addEventListener('click', () => {
+          closeDropdown();
+          if (reminderToggles) {
+            reminderToggles.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+            flashToggles();
+          }
+        });
+      }
+      if (takeBreakBtn) takeBreakBtn.addEventListener('click', () => triggerBreak());
+      if (breakSkipBtn) breakSkipBtn.addEventListener('click', dismissBreak);
+
+      if (toggleWater) toggleWater.addEventListener('change', () => { if (toggleWater.checked) showToast('drink some water'); });
+      if (toggleStandup) toggleStandup.addEventListener('change', () => { if (toggleStandup.checked) showToast('time to stand up'); });
+      if (toggleWrist) toggleWrist.addEventListener('change', () => { if (toggleWrist.checked) showToast('shake out your wrists'); });
+
+      // Only run timers while the demo is actually on screen — no forever-running intervals.
+      const demoIO = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && document.visibilityState === 'visible') {
+            startCycle();
+          } else {
+            stopCycle();
+            stopBreakTimer();
+            breakActive = false;
+            if (mockBreak) mockBreak.hidden = true;
+            closeDropdown();
+          }
+        });
+      }, { threshold: 0.2 });
+      demoIO.observe(demoSection);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') {
+          stopCycle();
+        } else {
+          const rect = demoSection.getBoundingClientRect();
+          const inView = rect.top < window.innerHeight && rect.bottom > 0;
+          if (inView) startCycle();
+        }
       });
     })();
   </script>
