@@ -249,8 +249,7 @@
     .demo-toggle input { width: 34px; height: 20px; accent-color: var(--green); cursor: pointer; }
 
     /* ────── hero interactive demo ────── */
-    .hero-demo { width: 100%; max-width: 900px; margin: 48px auto 0; opacity: 0; transition: opacity 0.5s ease 1s; }
-    .hero.loaded .hero-demo { opacity: 1; }
+    .hero-demo { width: 100%; max-width: 900px; margin: 0 auto; }
     #demo-hint {
       display: flex; align-items: center; gap: 6px; justify-content: flex-end;
       padding-right: 44px; margin-bottom: 8px; font-family: var(--mono);
@@ -434,6 +433,7 @@
 
   <!-- hero -->
   <header class="hero" id="top">
+    <div class="hero-bg"><img src="images/hero.png" alt="" /></div>
     <div class="hero-inner">
       <img class="hero-logo" src="images/iris-logo-black.png" alt="Iris logo" />
       <h1 class="display hero-word">IRIS</h1>
@@ -449,9 +449,40 @@
       </div>
       <p class="hero-meta">$35 one time &middot; macOS 13+ &middot; 7-day free trial, full features.</p>
     </div>
+  </header>
 
-    <!-- hero interactive demo -->
-    <div class="hero-demo">
+  <!-- features -->
+  <section class="pad" id="features">
+    <div class="wrap">
+      <h2 class="display sec-title reveal">What Iris does.</h2>
+
+      <div class="feat-row reveal">
+        <div class="frame"><img src="images/1.jpg" alt="Red train through a green forest" /></div>
+        <div class="feat-list">
+          <div class="item"><div class="n">01</div><h3>Full blackout</h3><p>Every screen. Every display. Twenty seconds, no exceptions.</p></div>
+          <div class="item"><div class="n">02</div><h3>No skip button</h3><p>The timer runs. You wait. That's exactly the point.</p></div>
+          <div class="item"><div class="n">03</div><h3>Smart call detection</h3><p>Iris pauses automatically when you're on a call.</p></div>
+        </div>
+      </div>
+
+      <div class="feat-row reversed reveal">
+        <div class="feat-list">
+          <div class="item"><div class="n">04</div><h3>Morning challenge</h3><p>Start your day with movement before your Mac unlocks.</p></div>
+          <div class="item"><div class="n">05</div><h3>Schedule blocks</h3><p>Quiet hours, lunch breaks, meetings. Iris steps aside.</p></div>
+          <div class="item"><div class="n">06</div><h3>Posture nudges</h3><p>Every break: breathe, sit up, reset.</p></div>
+        </div>
+        <div class="frame"><img src="images/2.jpg" alt="Cream and orange train in a mountain valley" /></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- interactive demo -->
+  <section class="pad" id="try-demo">
+    <div class="wrap">
+      <h2 class="display sec-title reveal">Try it yourself.</h2>
+      <p class="reveal" style="font-family:var(--sans);font-size:15px;color:var(--muted);max-width:560px;margin:12px 0 32px;">Click the eye icon in the mock menu bar to trigger a full break cycle. The timer is sped up so you can see the whole loop in seconds.</p>
+    </div>
+    <div class="hero-demo reveal">
       <div id="demo-hint" role="note">
         <span>psst, it&rsquo;s interactive!</span>
         <svg width="28" height="20" viewBox="0 0 28 20" fill="none" aria-hidden="true" style="flex-shrink:0">
@@ -532,31 +563,6 @@
             <div id="demo-toast" aria-live="polite">Break complete</div>
           </div>
         </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- features -->
-  <section class="pad" id="features">
-    <div class="wrap">
-      <h2 class="display sec-title reveal">What Iris does.</h2>
-
-      <div class="feat-row reveal">
-        <div class="frame"><img src="images/1.jpg" alt="Red train through a green forest" /></div>
-        <div class="feat-list">
-          <div class="item"><div class="n">01</div><h3>Full blackout</h3><p>Every screen. Every display. Twenty seconds, no exceptions.</p></div>
-          <div class="item"><div class="n">02</div><h3>No skip button</h3><p>The timer runs. You wait. That's exactly the point.</p></div>
-          <div class="item"><div class="n">03</div><h3>Smart call detection</h3><p>Iris pauses automatically when you're on a call.</p></div>
-        </div>
-      </div>
-
-      <div class="feat-row reversed reveal">
-        <div class="feat-list">
-          <div class="item"><div class="n">04</div><h3>Morning challenge</h3><p>Start your day with movement before your Mac unlocks.</p></div>
-          <div class="item"><div class="n">05</div><h3>Schedule blocks</h3><p>Quiet hours, lunch breaks, meetings. Iris steps aside.</p></div>
-          <div class="item"><div class="n">06</div><h3>Posture nudges</h3><p>Every break: breathe, sit up, reset.</p></div>
-        </div>
-        <div class="frame"><img src="images/2.jpg" alt="Cream and orange train in a mountain valley" /></div>
       </div>
     </div>
   </section>
