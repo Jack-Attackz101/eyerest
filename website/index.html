@@ -287,36 +287,80 @@
       overflow: hidden;
     }
     #demo-dropdown {
-      position: absolute; top: 6px; right: 8px; width: 196px;
-      background: rgba(28,28,28,0.95); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px; padding: 14px 12px 12px; color: #fff; font-family: var(--sans);
-      box-shadow: 0 14px 36px rgba(0,0,0,0.45); transform-origin: top right;
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      position: absolute; top: 4px; right: 8px;
+      width: 320px; height: 380px;
+      border-radius: 20px; overflow: hidden;
+      transform-origin: top right;
+      box-shadow: 0 24px 56px rgba(0,0,0,0.52), 0 4px 14px rgba(0,0,0,0.32);
     }
     #demo-dropdown[hidden] { display: none; }
-    .demo-dd-head {
-      display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
-      letter-spacing: 0.05em; color: rgba(255,255,255,0.7); margin-bottom: 10px;
+    .iris-pop-bg {
+      position: absolute; inset: 0;
+      background: url('images/cloudbkng.png') 60% top / cover no-repeat;
     }
-    .demo-dd-status {
-      margin-left: auto; display: flex; align-items: center; gap: 4px;
-      font-size: 10px; font-weight: 500; color: #fff;
-      padding: 2px 6px; background: rgba(0,0,0,0.4); border-radius: 8px;
+    .iris-pop-grad-top {
+      position: absolute; top: 0; left: 0; right: 0; height: 160px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+      pointer-events: none;
     }
-    .demo-dd-dot { width: 5px; height: 5px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
-    .demo-dd-timer { text-align: center; margin-bottom: 10px; }
-    #demo-countdown { font-family: var(--mono); font-size: 26px; font-weight: 300; line-height: 1.1; color: #fff; }
-    #demo-dd-time { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 3px; }
-    .demo-dd-controls { display: flex; gap: 6px; }
-    .demo-dd-pause {
-      flex: 1; height: 28px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.15); color: #fff; font-family: var(--sans); font-size: 11px;
-      font-weight: 500; cursor: pointer; backdrop-filter: blur(8px);
+    .iris-pop-grad-btm {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+      background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+      pointer-events: none;
     }
-    .demo-dd-rest {
-      flex: 1; height: 28px; border-radius: 14px; border: none;
-      background: rgba(255,255,255,0.9); color: #111; font-family: var(--sans); font-size: 11px;
-      font-weight: 500; cursor: pointer;
+    .iris-pop-content {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+    }
+    .iris-pop-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 16px 16px 0;
+    }
+    .iris-pop-brand {
+      display: flex; align-items: center; gap: 7px;
+      font-family: var(--sans); font-size: 15px; font-weight: 300;
+      color: rgba(255,255,255,0.92);
+    }
+    .iris-pop-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .iris-pop-gear {
+      background: none; border: none; padding: 0; cursor: default;
+      display: inline-flex; align-items: center; color: rgba(255,255,255,0.5);
+    }
+    .iris-status-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 8px; border-radius: 10px;
+      background: rgba(0,0,0,0.38);
+      font-family: var(--sans); font-size: 11px; font-weight: 500; color: #fff;
+    }
+    .iris-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+    .iris-timer-block {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    #demo-countdown {
+      font-family: ui-monospace, monospace; font-size: 58px; font-weight: 100;
+      color: #fff; letter-spacing: 0.01em; line-height: 1;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
+    #demo-dd-time {
+      font-family: var(--sans); font-size: 12px; font-weight: 300;
+      color: rgba(255,255,255,0.6); margin-top: 7px;
+    }
+    .iris-controls {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; padding-bottom: 20px;
+    }
+    .iris-pill-frosted {
+      width: 110px; height: 36px; border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: #fff; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    .iris-pill-solid {
+      width: 110px; height: 36px; border-radius: 18px;
+      border: none; background: rgba(255,255,255,0.92);
+      color: #111; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer;
     }
     #demo-break-overlay {
       position: absolute; inset: 0; background: rgba(0,0,0,0.97); z-index: 10;
@@ -373,6 +417,9 @@
       .break-prompt { font-size: 12px; min-height: 14px; margin: 0 auto 10px; }
       .break-skip { padding: 6px 16px; font-size: 11px; }
       .demo-break-btn { align-self: stretch; text-align: center; }
+      /* Keep Iris popover inside the desktop on narrow viewports */
+      #demo-dropdown { height: min(380px, calc(100% - 8px)); width: min(320px, calc(60% + 20px)); }
+      #demo-countdown { font-size: clamp(32px, 10vw, 58px); }
     }
   </style>
 </head>
@@ -437,21 +484,36 @@
           </div>
           <div class="hero-desktop">
             <div id="demo-dropdown" hidden>
-              <div class="demo-dd-head">
-                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
-                  <ellipse cx="6" cy="4" rx="5.5" ry="3.5" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
-                  <circle cx="6" cy="4" r="1.5" fill="rgba(255,255,255,0.7)"/>
-                </svg>
-                <span>iris</span>
-                <span class="demo-dd-status"><span class="demo-dd-dot"></span>Active</span>
-              </div>
-              <div class="demo-dd-timer">
-                <div id="demo-countdown">20:00</div>
-                <div id="demo-dd-time">until your next break</div>
-              </div>
-              <div class="demo-dd-controls">
-                <button type="button" class="demo-dd-pause" id="demoPauseBtn">Pause</button>
-                <button type="button" class="demo-dd-rest" id="demoRestBtn">Rest Now</button>
+              <div class="iris-pop-bg"></div>
+              <div class="iris-pop-grad-top"></div>
+              <div class="iris-pop-grad-btm"></div>
+              <div class="iris-pop-content">
+                <div class="iris-pop-header">
+                  <div class="iris-pop-brand">
+                    <svg width="16" height="10" viewBox="0 0 16 10" fill="none" aria-hidden="true">
+                      <ellipse cx="8" cy="5" rx="7" ry="4" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/>
+                      <circle cx="8" cy="5" r="2" fill="rgba(255,255,255,0.9)"/>
+                    </svg>
+                    <span>iris</span>
+                  </div>
+                  <div class="iris-pop-meta">
+                    <div class="iris-status-pill"><span class="iris-status-dot"></span><span>Active</span></div>
+                    <button type="button" class="iris-pop-gear" aria-label="Settings" tabindex="-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="iris-timer-block">
+                  <div id="demo-countdown">19:47</div>
+                  <div id="demo-dd-time">until your next break</div>
+                </div>
+                <div class="iris-controls">
+                  <button type="button" class="iris-pill-frosted" id="demoPauseBtn">Pause</button>
+                  <button type="button" class="iris-pill-solid" id="demoRestBtn">Rest Now</button>
+                </div>
               </div>
             </div>
             <div id="demo-break-overlay" hidden>
