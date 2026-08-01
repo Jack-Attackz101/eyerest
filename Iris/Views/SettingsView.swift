@@ -25,6 +25,7 @@ struct SettingsView: View {
                     wellnessSection
                     habitsSection
                     systemSection
+                    LicenseSettingsSection()
 #if DEBUG
                     DemoSettingsSection()
 #endif

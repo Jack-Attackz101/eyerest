@@ -149,7 +149,6 @@
       border: 1px solid rgba(244,239,230,0.25); box-shadow: 3px 3px 0 rgba(0,0,0,0.3); }
 
     /* hidden download popover */
-    #hidden-download { cursor: pointer; user-select: none; }
     .download-popover { position: fixed; z-index: 9999; background: var(--bg); color: var(--ink);
       border: 2px solid var(--ink); border-radius: 8px; padding: 14px 16px;
       box-shadow: 4px 4px 0 rgba(28,28,28,0.55); text-align: center; }
@@ -258,7 +257,8 @@
   <!-- nav -->
   <nav>
     <a href="#top" class="nav-brand"><img src="images/iris-logo-black.png" alt="Iris" /><span>iris</span></a>
-    <a class="nav-cta" href="#waitlist">Join the waitlist</a>
+    <!-- Replace REPLACE_WITH_PERMALINK with your Gumroad product permalink (gumroad.com/l/<permalink>) -->
+    <a class="nav-cta" href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener">Buy - $35</a>
   </nav>
 
   <!-- hero -->
@@ -269,18 +269,15 @@
       <h1 class="display hero-word">IRIS</h1>
       <p class="hero-headline">Rest your eyes. Automatically.</p>
 
-      <form class="hero-waitlist" id="waitlist-hero" onsubmit="submitWaitlist(event, this)">
-        <div class="waitlist-row">
-          <input class="waitlist-input" type="email" name="email" placeholder="your@email.com" required autocomplete="email" />
-          <button class="btn-primary" type="submit">Join waitlist</button>
-        </div>
-        <p class="waitlist-msg" style="display:none"></p>
-      </form>
+      <div class="hero-waitlist">
+        <a class="btn-primary" href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">Buy - $35</a>
+      </div>
 
       <div class="hero-cta">
+        <a class="btn-ghost" href="/Iris.dmg" download>Try free for 7 days</a>
         <a class="btn-ghost" href="#features">See how it works ↓</a>
       </div>
-      <p class="hero-meta">$35 one time · macOS 13+ · Launching soon.</p>
+      <p class="hero-meta">$35 one time &middot; macOS 13+ &middot; 7-day free trial, full features.</p>
     </div>
   </header>
 
@@ -348,10 +345,10 @@
           </iframe>
         </div>
         <div style="text-align:center; margin-top: 36px;">
-          <a href="#waitlist" class="btn-primary" style="display:inline-flex; align-items:center; padding:14px 32px; font-size:15px; box-shadow:3px 3px 0 var(--green); background:var(--ink); color:#fff; border-radius:4px; font-family:var(--sans); font-weight:600; transition:transform 0.1s, box-shadow 0.1s;"
+          <a href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex; align-items:center; padding:14px 32px; font-size:15px; box-shadow:3px 3px 0 var(--green); background:var(--ink); color:#fff; border-radius:4px; font-family:var(--sans); font-weight:600; transition:transform 0.1s, box-shadow 0.1s; text-decoration:none;"
              onmouseover="this.style.transform='translate(2px,2px)';this.style.boxShadow='1px 1px 0 var(--green)'"
              onmouseout="this.style.transform='';this.style.boxShadow='3px 3px 0 var(--green)'">
-            Join the waitlist →
+            Buy - $35 &#x2192;
           </a>
         </div>
       </div>
@@ -438,19 +435,16 @@
   <!-- waitlist (bottom) -->
   <section class="pad waitlist-section" id="waitlist">
     <div class="wrap">
-      <h2 class="display sec-title reveal" style="margin-bottom:0">Be first in line.</h2>
-      <p class="sub reveal">Join the waitlist. We'll email you the moment Iris is ready.</p>
+      <h2 class="display sec-title reveal" style="margin-bottom:0">Protect your eyes.</h2>
+      <p class="sub reveal">One purchase. No subscription. Yours forever.</p>
       <div class="wl-card reveal">
         <img class="logo" src="images/iris-logo-black.png" alt="Iris" />
-        <h3 class="display">Join Waitlist</h3>
-        <p class="req">$35 one time · macOS 13+ · No spam, ever.</p>
-        <form id="waitlist-bottom" onsubmit="submitWaitlist(event, this)">
-          <div class="waitlist-row" style="margin-top:0">
-            <input class="waitlist-input" type="email" name="email" placeholder="your@email.com" required autocomplete="email" />
-            <button class="wl-submit" type="submit">Notify me when it's ready</button>
-          </div>
-          <p class="waitlist-msg" style="display:none;margin-top:14px"></p>
-        </form>
+        <h3 class="display">Iris</h3>
+        <p class="req">$35 one time &middot; macOS 13+ &middot; 7-day free trial, full features.</p>
+        <div style="display:flex; flex-direction:column; align-items:stretch; gap:12px; margin-top:4px;">
+          <a class="wl-submit" href="https://gumroad.com/l/REPLACE_WITH_PERMALINK" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;">Buy - $35</a>
+          <a href="/Iris.dmg" download style="font-family:var(--sans); font-size:13px; text-align:center; color:var(--ink); opacity:0.5; text-decoration:underline; cursor:pointer;">Download free trial</a>
+        </div>
       </div>
     </div>
   </section>
@@ -458,7 +452,7 @@
   <!-- footer -->
   <footer>
     <span class="f-l"><img src="images/iris-logo-white.png" alt="Iris" id="footer-logo" /> iris</span>
-    <span id="hidden-download" class="f-c">© 2026 Iris</span>
+    <span class="f-c">© 2026 Iris</span>
     <span class="f-l">
       <a class="f-c" href="https://github.com/Jack-Attackz101/eyerest/issues/new?template=bug_report.yml" target="_blank" rel="noopener">Report a bug</a>
       <a class="f-c" href="https://github.com/Jack-Attackz101/eyerest/issues/new?template=feature_request.yml" target="_blank" rel="noopener">Request a feature</a>
@@ -493,73 +487,6 @@
       });
     }, { threshold: 0.5 });
     document.querySelectorAll('[data-count]').forEach((el) => cio.observe(el));
-
-    // waitlist form submission
-    async function submitWaitlist(e, form) {
-      e.preventDefault();
-      const input = form.querySelector('input[type="email"]');
-      const btn   = form.querySelector('button[type="submit"]');
-      const msg   = form.querySelector('.waitlist-msg');
-      const row   = form.querySelector('.waitlist-row');
-      const email = input.value.trim();
-
-      btn.disabled = true;
-      const orig = btn.textContent;
-      btn.textContent = '...';
-
-      try {
-        const res  = await fetch('/api/waitlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          if (row) row.style.display = 'none';
-          if (msg) {
-            msg.textContent = data.new
-              ? "✓ You're on the list. We'll be in touch."
-              : "✓ You're already on the list.";
-            msg.className = 'waitlist-msg ok';
-            msg.style.display = 'block';
-          }
-        } else {
-          btn.disabled = false;
-          btn.textContent = orig;
-          if (msg) { msg.textContent = 'Something went wrong. Try again.'; msg.className = 'waitlist-msg err'; msg.style.display = 'block'; }
-        }
-      } catch {
-        btn.disabled = false;
-        btn.textContent = orig;
-        if (msg) { msg.textContent = 'Network error. Please try again.'; msg.className = 'waitlist-msg err'; msg.style.display = 'block'; }
-      }
-    }
-
-    // hidden download: click copyright → popover with DMG link
-    (function () {
-      document.getElementById('hidden-download').addEventListener('click', function (e) {
-        e.stopPropagation();
-        const existing = document.querySelector('.download-popover');
-        if (existing) { existing.remove(); return; }
-        const popover = document.createElement('div');
-        popover.classList.add('download-popover');
-        popover.innerHTML = '<a href="/Iris.dmg" download><button class="download-button">Download</button></a>';
-        document.body.appendChild(popover);
-        const rect = e.target.getBoundingClientRect();
-        const h = popover.offsetHeight;
-        const w = popover.offsetWidth;
-        popover.style.top  = (rect.top - h - 8) + 'px';
-        popover.style.left = Math.max(8, rect.left - w / 2 + rect.width / 2) + 'px';
-        function hidePopover(ev) {
-          if (!popover.contains(ev.target)) {
-            popover.remove();
-            document.removeEventListener('click', hidePopover);
-          }
-        }
-        document.addEventListener('click', hidePopover);
-      });
-    })();
 
     // secret admin: click footer logo → show waitlist count
     (function () {

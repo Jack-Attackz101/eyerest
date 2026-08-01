@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windDownController: WindDownController!
     private var deskResetController: DeskResetController!
     private var onboarding: OnboardingWindowController?
+    private var licenseWindow: LicenseWindowController?
 
     private var cancellables = Set<AnyCancellable>()
     private var previousState: TimerEngine.TimerState = .idle
@@ -99,6 +100,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func completeLaunchSequence() {
+        guard LicenseManager.shared.canRun else {
+            showLicenseWindow()
+            return
+        }
         engine.start()
         Task { @MainActor in UpdateChecker.shared.start() }
 
@@ -195,6 +200,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             selector: #selector(handleDemoChallenge),
             name: .irisDemoChallenge, object: nil)
 #endif
+    }
+
+    // MARK: - License gate
+
+    private func showLicenseWindow() {
+        let controller = LicenseWindowController()
+        controller.onActivated = { [weak self] in
+            self?.licenseWindow = nil
+            self?.completeLaunchSequence()
+        }
+        licenseWindow = controller
+        controller.show()
     }
 
     // MARK: - Onboarding
