@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Iris — Rest your eyes, automatically.</title>
+  <title>Iris. Rest your eyes, automatically.</title>
   <meta name="description" content="Iris enforces the 20-20-20 eye health rule on macOS. Every 20 minutes, your screen goes dark for 20 seconds. Join the waitlist." />
   <meta property="og:title" content="Iris" />
   <meta property="og:description" content="Rest your eyes, automatically." />
@@ -440,7 +440,7 @@
       <p class="hero-headline">Rest your eyes. Automatically.</p>
 
       <div class="hero-cta">
-        <a class="btn-ghost" href="/Iris.dmg" download>Try free for 7 days — $35 to keep</a>
+        <a class="btn-ghost" href="/Iris.dmg" download>Try free for 7 days, $35 to keep</a>
         <a class="btn-ghost" href="#features">See how it works ↓</a>
       </div>
       <p class="hero-meta">macOS 13 or later</p>
@@ -598,7 +598,7 @@
             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
             allowfullscreen
             loading="lazy"
-            title="Iris — see how it works">
+            title="Iris, see how it works">
           </iframe>
         </div>
         <div style="text-align:center; margin-top: 36px;">
@@ -1020,7 +1020,7 @@
       if (toggleStandup) toggleStandup.addEventListener('change', () => { if (toggleStandup.checked) showToast('time to stand up'); });
       if (toggleWrist) toggleWrist.addEventListener('change', () => { if (toggleWrist.checked) showToast('shake out your wrists'); });
 
-      // Only run timers while the demo is actually on screen — no forever-running intervals.
+      // Only run timers while the demo is actually on screen, no forever-running intervals.
       const demoIO = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && document.visibilityState === 'visible') {
