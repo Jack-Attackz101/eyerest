@@ -47,7 +47,7 @@ struct LicenseSettingsSection: View {
                     }
                     Spacer()
                     if let url = LicenseManager.shared.gumroadURL {
-                        Button("Buy - $35") {
+                        Button("Buy - $14") {
                             NSWorkspace.shared.open(url)
                         }
                         .font(.system(size: 12, weight: .medium))
