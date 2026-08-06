@@ -87,8 +87,21 @@ final class WarningPillController {
             : NSSize(width: 260, height: 56)  // 56 = 8pt gap + 44pt pill + 4pt margin
     }
 
+    /// The screen the pill belongs on.
+    ///
+    /// `NSScreen.main` is whichever screen currently holds the key window, not
+    /// the built-in display. On a Mac plugged into an external monitor, if the
+    /// focused window was on the external screen then `detectGeometry()` read
+    /// that screen's `safeAreaInsets.top`, got 0, set `hasNotch = false`, and the
+    /// pill rendered as the narrow 240pt floating fallback with a shadow and an
+    /// 8pt gap, positioned on the external monitor. That is the "detached and
+    /// too narrow" pill. Prefer a screen that actually has a notch.
+    private var pillScreen: NSScreen? {
+        NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.main
+    }
+
     private func detectGeometry() {
-        guard let screen = NSScreen.main else { model.hasNotch = false; return }
+        guard let screen = pillScreen else { model.hasNotch = false; return }
         let top = screen.safeAreaInsets.top
         if top > 0 {
             model.hasNotch = true
@@ -103,7 +116,7 @@ final class WarningPillController {
     }
 
     private func positionPanel() {
-        guard let screen = NSScreen.main else { return }
+        guard let screen = pillScreen else { return }
         let size = panelSize
         // Panel top edge flush with the physical top of the screen, centered on
         // the (centered) notch so the pill's top lines up with the notch bottom.
