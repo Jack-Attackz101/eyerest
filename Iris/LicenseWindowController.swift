@@ -63,13 +63,13 @@ private struct LicenseActivationView: View {
                 Button {
                     NSWorkspace.shared.open(url)
                 } label: {
-                    Text("Buy - $35")
+                    Text("Buy - $14")
                         .frame(maxWidth: .infinity)
                 }
                 .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
             } else {
-                Text("buy link coming soon · $35")
+                Text("buy link coming soon · $14")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)

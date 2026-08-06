@@ -25,6 +25,10 @@ final class FocusBlockerEngine {
 
     private var pollTimer: Timer?
     private var tempWhitelist: [UUID: Date] = [:]
+    /// Last time we acted on a given app bundle id, to stop the 3 second poll
+    /// re-triggering while the app is still quitting.
+    private var recentlyActioned: [String: Date] = [:]
+    private static let actionCooldown: TimeInterval = 30
     private var overlayActive = false
     private var cancellables = Set<AnyCancellable>()
 
@@ -39,7 +43,20 @@ final class FocusBlockerEngine {
         "com.operasoftware.Opera",
         "com.vivaldi.Vivaldi",
         "com.kagi.kagimacOS",
+        // Chromium forks that were missing. Website blocking reads the URL via
+        // the Accessibility API, which is generic, so a bundle id is all that
+        // is needed for each of these to start working.
+        "at.studio.AsideBrowser",        // Aside
+        "company.thebrowser.Browser",    // Arc
+        "company.thebrowser.dia",        // Dia
+        "com.pushplaylabs.sidekick",     // Sidekick
+        "com.naver.Whale",               // Whale
+        "ru.yandex.desktop.yandex-browser",
     ]
+
+    /// Browsers we have seen but do not recognise, logged once each so an
+    /// unsupported browser is diagnosable instead of silently doing nothing.
+    private var unknownBrowsersSeen: Set<String> = []
 
     // MARK: - Init
 
@@ -113,7 +130,18 @@ final class FocusBlockerEngine {
         for item in enabledItems(kind: .app) {
             guard let bundleID = item.bundleID, !isWhitelisted(item) else { continue }
             if let app = running.first(where: { $0.bundleIdentifier == bundleID }) {
-                app.hide()
+                // Do not re-fire while the app is still shutting down. Without
+                // this the poll stacks overlays every 3 seconds and the only
+                // escape is "let me in", which defeats the whole feature.
+                if let last = recentlyActioned[bundleID],
+                   Date().timeIntervalSince(last) < Self.actionCooldown { continue }
+                recentlyActioned[bundleID] = Date()
+
+                // Quit it, do not hide it. hide() leaves the process running, so
+                // the next poll finds it again and the prompt returns forever.
+                // terminate() can be refused by an app with unsaved work, in
+                // which case fall back to hiding and let the cooldown hold.
+                if !app.terminate() { app.hide() }
                 triggerOverlay(for: item)
             }
         }
@@ -121,8 +149,19 @@ final class FocusBlockerEngine {
 
     private func checkBrowser() {
         guard AXIsProcessTrusted() else { return }
-        guard let front = NSWorkspace.shared.frontmostApplication,
-              Self.browserBundleIDs.contains(front.bundleIdentifier ?? "") else { return }
+        guard let front = NSWorkspace.shared.frontmostApplication else { return }
+        let frontID = front.bundleIdentifier ?? ""
+        guard Self.browserBundleIDs.contains(frontID) else {
+            // Only interesting if it looks like a browser we should support.
+            if frontID.localizedCaseInsensitiveContains("browser")
+                || frontID.localizedCaseInsensitiveContains("safari")
+                || frontID.localizedCaseInsensitiveContains("chrom"),
+               !unknownBrowsersSeen.contains(frontID) {
+                unknownBrowsersSeen.insert(frontID)
+                NSLog("[Iris] Website blocking does not recognise this browser: \(frontID). Add it to browserBundleIDs.")
+            }
+            return
+        }
 
         guard let text = readBrowserText(pid: front.processIdentifier) else { return }
         let lowered = text.lowercased()
