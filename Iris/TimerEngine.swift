@@ -80,6 +80,20 @@ final class TimerEngine: ObservableObject {
     @Published var autoPauseDuringCalls: Bool {
         didSet { defaults.set(autoPauseDuringCalls, forKey: Keys.autoPauseCalls) }
     }
+
+    /// Hold a break back for a moment if it would land mid-sentence.
+    /// On by default: this is the behaviour people expect, and its absence is
+    /// the single most cited reason people uninstall apps in this category.
+    @Published var waitForNaturalGap: Bool {
+        didSet { defaults.set(waitForNaturalGap, forKey: Keys.waitForGap) }
+    }
+
+    /// How long the current break has been held back, in seconds.
+    @Published private(set) var deferredSeconds: Int = 0
+
+    /// The longest a break can ever be postponed. Past this it fires regardless,
+    /// because a break you can dodge indefinitely is not a break.
+    static let maxDeferralSeconds = 120
     @Published var postureNudgesEnabled: Bool {
         didSet { defaults.set(postureNudgesEnabled, forKey: Keys.postureNudges) }
     }
@@ -193,6 +207,7 @@ final class TimerEngine: ObservableObject {
         // V2 keys (iris.-prefixed)
         static let ambient = "iris.ambientSoundEnabled"
         static let autoPauseCalls = "iris.autoPauseDuringCalls"
+        static let waitForGap = "iris.waitForNaturalGap"
         static let postureNudges = "iris.postureNudgesEnabled"
         static let quietEnabled = "iris.quietHoursEnabled"
         static let quietStart = "iris.quietHoursStart"
@@ -254,6 +269,7 @@ final class TimerEngine: ObservableObject {
 
         ambientSoundEnabled = defaults.bool(forKey: Keys.ambient)
         autoPauseDuringCalls = defaults.bool(forKey: Keys.autoPauseCalls)
+        waitForNaturalGap = defaults.object(forKey: Keys.waitForGap) as? Bool ?? true
         postureNudgesEnabled = defaults.bool(forKey: Keys.postureNudges)
         let rawFreq = defaults.string(forKey: Keys.nudgeFrequency) ?? NudgeFrequency.regularly.rawValue
         nudgeFrequency = NudgeFrequency(rawValue: rawFreq) ?? .regularly
@@ -313,6 +329,15 @@ final class TimerEngine: ObservableObject {
         case .counting, .warning:
             timeRemaining -= 1
             if timeRemaining <= 0 {
+                // Do not black the screen out mid-sentence. Hold briefly, but
+                // only up to maxDeferralSeconds, so a break cannot be dodged
+                // forever by simply never stopping typing.
+                if shouldDeferBreak {
+                    deferredSeconds += 1
+                    timeRemaining = 1
+                    return
+                }
+                deferredSeconds = 0
                 beginRest()
             } else if timerState == .counting && timeRemaining <= Double(warningMinutes * unitMultiplier) {
                 timerState = .warning
@@ -333,6 +358,20 @@ final class TimerEngine: ObservableObject {
     /// call is active, and the user hasn't chosen to keep running).
     var isCallPaused: Bool {
         autoPauseDuringCalls && isCallActive && !userResumedDuringCall
+    }
+
+    /// Whether this exact moment is a bad one to interrupt, and we have not
+    /// already waited too long.
+    var shouldDeferBreak: Bool {
+        guard waitForNaturalGap else { return false }
+        guard deferredSeconds < Self.maxDeferralSeconds else { return false }
+        return FlowDetector.shared.isInFlow
+    }
+
+    /// Why a break is being held, if it is. Nil when nothing is being held.
+    var deferralReason: String? {
+        guard waitForNaturalGap, deferredSeconds > 0 else { return nil }
+        return FlowDetector.shared.reason
     }
 
     /// True when the countdown must not advance for any reason.

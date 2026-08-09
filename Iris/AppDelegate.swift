@@ -160,6 +160,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Feature 6: Brightness check — periodic nudge during late-night window.
         startBrightnessCheckTimer()
 
+        // Flow detection: hold a break back if it would land mid-sentence.
+        // Started here because TimerEngine consults it on every tick once the
+        // countdown reaches zero.
+        FlowDetector.shared.start()
+
         // Feature 9: Wrist relief timer
         wristReliefEngine.onNudge = { [weak self] in
             self?.showTransientNudge("shake out your wrists")
