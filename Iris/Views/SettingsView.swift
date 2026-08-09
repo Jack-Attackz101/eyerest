@@ -153,6 +153,9 @@ struct SettingsView: View {
                 SettingToggleRow(label: "Pause during calls", isOn: $engine.autoPauseDuringCalls,
                                  icon: "video.fill", tint: .irisTintSystem,
                                  caption: "Skips breaks while a camera is in use")
+                SettingToggleRow(label: "Wait for a natural gap", isOn: $engine.waitForNaturalGap,
+                                 icon: "hand.raised.fill", tint: .irisTintSystem,
+                                 caption: "Holds a break up to 2 min if you are typing")
                 SettingToggleRow(
                     label: "Automatic updates",
                     isOn: Binding(
