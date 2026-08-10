@@ -12,6 +12,10 @@ final class DeskResetController {
 
     private var panel: NSPanel?
 
+    /// True while the checklist is on screen. Read by NudgeBudget, which must
+    /// not interrupt it.
+    var isPresenting: Bool { panel?.isVisible == true }
+
     func toggle(from anchorView: NSView) {
         if let existing = panel, existing.isVisible {
             dismiss()

@@ -18,6 +18,10 @@ final class WindDownController {
     private var phaseSecondsLeft: Int = 0
     private var isActive = false
 
+    /// True while the wind-down overlay owns the screen. Read by NudgeBudget,
+    /// which must not interrupt it.
+    var isPresenting: Bool { isActive }
+
     init(engine: TimerEngine) {
         self.engine = engine
     }
