@@ -12,6 +12,7 @@ import SwiftUI
 
 struct DemoSettingsSection: View {
     @EnvironmentObject private var engine: TimerEngine
+    @ObservedObject private var budget = NudgeBudget.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -85,7 +86,81 @@ struct DemoSettingsSection: View {
             DemoRow("Scroll fatigue nudge") {
                 NotificationCenter.default.post(name: .irisDemoNudge, object: "rest your wrists")
             }
+
+            nudgeBudget
         }
+    }
+
+    // MARK: - Nudge budget
+    //
+    // The rows above bypass the gate on purpose. These two go through it, so it
+    // is possible to see the budget accept, merge and refuse in real use rather
+    // than reasoning about it. The counters answer the only question that
+    // matters after shipping: is 8 minutes and 4 an hour too tight?
+
+    private var nudgeBudget: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHeader(title: "Nudge budget")
+                .padding(.top, 14)
+
+            SettingsCard {
+                DemoRow("Request water via budget") {
+                    NudgeBudget.shared.request(.water) { text in
+                        NotificationCenter.default.post(name: .irisDemoNudge, object: text)
+                    }
+                }
+
+                // Two requests inside the coalescing window must produce one
+                // combined pill, not two in a row.
+                DemoRow("Request stand up + wrists (coalesce)") {
+                    NudgeBudget.shared.request(.standUp) { text in
+                        NotificationCenter.default.post(name: .irisDemoNudge, object: text)
+                    }
+                    NudgeBudget.shared.request(.wristRelief) { text in
+                        NotificationCenter.default.post(name: .irisDemoNudge, object: text)
+                    }
+                }
+
+                SettingRow {
+                    Text("This hour")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.irisSecondary)
+                    Spacer()
+                    Text("\(budget.shownInLastHour) of \(NudgeBudget.nudgesPerHourCap) shown, "
+                         + "gap clears in \(budget.secondsUntilGapClears)s")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.irisTertiary)
+                }
+
+                ForEach(NudgeBudget.Source.allCases) { source in
+                    let tally = budget.tallies[source] ?? NudgeBudget.Tally()
+                    SettingRow {
+                        Text(source.label)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.irisSecondary)
+                        Spacer()
+                        Text(Self.tallyText(tally))
+                            .font(.system(size: 10))
+                            .monospacedDigit()
+                            .foregroundStyle(Color.irisTertiary)
+                    }
+                }
+
+                SettingRow {
+                    Spacer()
+                    Button("Reset counters") { budget.resetTallies() }
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.irisAccent)
+                        .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private static func tallyText(_ tally: NudgeBudget.Tally) -> String {
+        var text = "\(tally.granted) granted, \(tally.denied) denied"
+        if let reason = tally.lastDenial { text += " (\(reason.rawValue))" }
+        return text
     }
 }
 
