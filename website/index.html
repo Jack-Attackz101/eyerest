@@ -98,25 +98,49 @@
     .frame { border: 2px solid var(--ink); border-radius: 8px; box-shadow: 4px 4px 0 var(--ink); overflow: hidden; background: var(--card); }
     .frame img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4/5; }
 
-    .feat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; margin-bottom: 64px; }
-    .feat-list .item { margin-bottom: 28px; }
+    /* The two things nothing else on the market has, stacked beside the photo
+       and set larger than the grouped list below, because they carry the
+       section. */
+    .feat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; margin-bottom: 72px; }
+    .feat-list .item { margin-bottom: 44px; }
     .feat-list .item:last-child { margin-bottom: 0; }
-    .feat-list .n { font-family: var(--mono); font-size: 11px; color: var(--green); }
-    .feat-list h3 { font-family: var(--display); font-weight: 400; font-size: 28px; color: var(--ink); margin: 2px 0 6px; letter-spacing: 0.02em; }
-    .feat-list p { font-family: var(--sans); font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 380px; }
+    .feat-list .n { font-family: var(--mono); font-size: 12px; color: var(--green); }
+    .feat-list h3 { font-family: var(--display); font-weight: 400; font-size: clamp(32px, 3.6vw, 44px); color: var(--ink); margin: 4px 0 10px; letter-spacing: 0.02em; }
+    .feat-list p { font-family: var(--sans); font-size: 17px; color: var(--muted); line-height: 1.65; max-width: 440px; }
 
-    /* ---------- feature groups ---------- */
-    /* start, not stretch: a group with four items should not be padded out to
-       match a group with eight */
-    .fg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-    .fg-card { background: var(--card); border: 2px solid var(--ink); border-radius: 8px; box-shadow: 4px 4px 0 var(--ink); padding: 28px; }
-    .fg-card:last-child { grid-column: 1 / -1; }
+    /* ---------- bento ---------- */
+    /* Seven cells: the five groups and two photographs, in one asymmetric grid
+       so the whole feature set reads on one screen instead of a stack of
+       equal boxes. Column spans only, so a row is as tall as its tallest card
+       and the photographs fill whatever height they land in. */
+    .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; }
+    .bento-cell { background: var(--card); border: 2px solid var(--ink); border-radius: 8px;
+      box-shadow: 4px 4px 0 var(--ink); padding: 28px; overflow: hidden;
+      display: flex; flex-direction: column; }
+    .b-breaks   { grid-column: span 3; }
+    .b-body     { grid-column: span 3; }
+    .b-photo-a  { grid-column: span 2; }
+    .b-focus    { grid-column: span 2; }
+    .b-day      { grid-column: span 2; }
+    .b-progress { grid-column: span 4; }
+    .b-photo-b  { grid-column: span 2; }
+
+    .bento-photo { padding: 0; }
+    .bento-photo img { width: 100%; height: 100%; min-height: 220px; object-fit: cover; }
+
     .fg-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--green); }
-    .fg-card ul { list-style: none; margin-top: 16px; }
-    .fg-card li { padding: 11px 0; border-top: 1px solid rgba(28,28,28,0.10); }
-    .fg-card li:first-child { border-top: none; padding-top: 0; }
-    .fg-card .nm { font-family: var(--sans); font-size: 14px; font-weight: 600; }
-    .fg-card .ds { font-family: var(--sans); font-size: 14px; color: var(--muted); line-height: 1.7; }
+    /* Cells are tiles, so a short list spreads through its tile rather than
+       leaving a hole under itself. */
+    .bento-cell ul { list-style: none; margin-top: 16px; flex: 1;
+      display: flex; flex-direction: column; justify-content: space-between; }
+    .bento-cell li { padding: 11px 0; border-top: 1px solid rgba(28,28,28,0.10); }
+    .bento-cell li:first-child { border-top: none; padding-top: 0; }
+    .bento-cell .nm { font-family: var(--sans); font-size: 14px; font-weight: 600; }
+    .bento-cell .ds { font-family: var(--sans); font-size: 14px; color: var(--muted); line-height: 1.7; }
+    /* the wide cell reads as a row rather than a long thin list */
+    .b-progress ul { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 28px; align-content: center; }
+    .b-progress li { border-top: none; border-left: 1px solid rgba(28,28,28,0.10); padding: 0 0 0 16px; }
+    .b-progress li:first-child { border-left: none; padding-left: 0; }
 
     /* ---------- stats ---------- */
     .stats { background: var(--ink); padding: 80px 32px; }
@@ -232,9 +256,12 @@
       .pad { padding: 64px 0; }
       .waitlist-row { flex-direction: column; }
       .feat-row { grid-template-columns: 1fr; gap: 28px; }
-      .feat-row.reversed .frame { order: -1; }
-      .fg-grid { grid-template-columns: 1fr; }
-      .fg-card:last-child { grid-column: auto; }
+      .bento { grid-template-columns: 1fr; gap: 16px; }
+      .bento-cell { grid-column: auto !important; }
+      .bento-photo img { min-height: 0; aspect-ratio: 4/3; }
+      .b-progress ul { grid-template-columns: 1fr; gap: 0; }
+      .b-progress li { border-left: none; border-top: 1px solid rgba(28,28,28,0.10); padding: 11px 0 0; }
+      .b-progress li:first-child { border-top: none; padding-top: 0; }
       .stats-inner { flex-direction: column; gap: 30px; }
       .stat-div { width: 60px; height: 2px; }
       .how-grid { grid-template-columns: 1fr; }
@@ -278,22 +305,16 @@
             <h3>Blocks what pulls you away</h3>
             <p>Apps and sites you pick, blocked while you work. Not just your eyes. Your attention. Every other break app stops at your eyes, every blocker stops at your attention, and nothing else does both.</p>
           </div>
-        </div>
-      </div>
-
-      <div class="feat-row reversed reveal">
-        <div class="feat-list">
           <div class="item">
             <div class="n">02</div>
             <h3>Sees you slouch</h3>
             <p>On-device posture detection using Apple's Vision framework. Off until you turn it on. The frame is never stored and never uploaded, so nothing leaves your Mac.</p>
           </div>
         </div>
-        <div class="frame"><img src="images/2.jpg" alt="Cream and orange train in a mountain valley" /></div>
       </div>
 
-      <div class="fg-grid reveal">
-        <div class="fg-card">
+      <div class="bento reveal">
+        <div class="bento-cell b-breaks">
           <div class="fg-label">Breaks</div>
           <ul>
             <li><div class="nm">20-20-20 timer</div><div class="ds">A break every 20 minutes.</div></li>
@@ -305,17 +326,7 @@
           </ul>
         </div>
 
-        <div class="fg-card">
-          <div class="fg-label">Focus</div>
-          <ul>
-            <li><div class="nm">Blocks distracting apps</div><div class="ds">The apps you pick, closed off while you work.</div></li>
-            <li><div class="nm">Blocks distracting websites</div><div class="ds">The sites you pick, closed off while you work.</div></li>
-            <li><div class="nm">Schedule blocks</div><div class="ds">For meetings, lunch, quiet hours.</div></li>
-            <li><div class="nm">Steps aside for calls</div><div class="ds">Pauses automatically when your camera is in use, so it never lands mid-call.</div></li>
-          </ul>
-        </div>
-
-        <div class="fg-card">
+        <div class="bento-cell b-body">
           <div class="fg-label">Body</div>
           <ul>
             <li><div class="nm">Posture detection</div><div class="ds">Uses the camera and Apple's Vision framework, entirely on device, off until you turn it on.</div></li>
@@ -329,7 +340,21 @@
           </ul>
         </div>
 
-        <div class="fg-card">
+        <div class="bento-cell bento-photo b-photo-a">
+          <img src="images/3.jpg" alt="Cream and red train on a track through a green valley" />
+        </div>
+
+        <div class="bento-cell b-focus">
+          <div class="fg-label">Focus</div>
+          <ul>
+            <li><div class="nm">Blocks distracting apps</div><div class="ds">The apps you pick, closed off while you work.</div></li>
+            <li><div class="nm">Blocks distracting websites</div><div class="ds">The sites you pick, closed off while you work.</div></li>
+            <li><div class="nm">Schedule blocks</div><div class="ds">For meetings, lunch, quiet hours.</div></li>
+            <li><div class="nm">Steps aside for calls</div><div class="ds">Pauses automatically when your camera is in use, so it never lands mid-call.</div></li>
+          </ul>
+        </div>
+
+        <div class="bento-cell b-day">
           <div class="fg-label">Day</div>
           <ul>
             <li><div class="nm">Morning challenge</div><div class="ds">Movement before your Mac unlocks.</div></li>
@@ -340,13 +365,17 @@
           </ul>
         </div>
 
-        <div class="fg-card">
+        <div class="bento-cell b-progress">
           <div class="fg-label">Progress</div>
           <ul>
             <li><div class="nm">Stats and streaks</div><div class="ds">So you can see whether any of it is sticking.</div></li>
             <li><div class="nm">Launch at login</div><div class="ds">Starts with your Mac, lives in the menu bar.</div></li>
             <li><div class="nm">Automatic updates</div><div class="ds">Iris keeps itself current.</div></li>
           </ul>
+        </div>
+
+        <div class="bento-cell bento-photo b-photo-b">
+          <img src="images/4.jpg" alt="Green and orange train below snowy mountains" />
         </div>
       </div>
     </div>
