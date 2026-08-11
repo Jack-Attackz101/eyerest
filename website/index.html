@@ -79,9 +79,24 @@
     .waitlist-msg.ok  { color: var(--green); }
     .waitlist-msg.err { color: var(--red); }
 
-    /* one button, centred under the slogan */
-    .hero-cta { display: flex; justify-content: center; margin-top: 32px; opacity: 0; transition: opacity 0.5s ease 0.7s; }
+    /* The signup is the hero's job now, so it gets the solid button and
+       "See how it works" drops to a text link. Only one thing can look
+       primary. */
+    .hero-sub { font-family: var(--sans); font-size: 15px; color: var(--muted); margin-top: 12px;
+      opacity: 0; transition: opacity 0.5s ease 0.6s; }
+    .hero-waitlist { width: 100%; max-width: 460px; margin-top: 26px;
+      opacity: 0; transition: opacity 0.5s ease 0.7s; }
+    .hero-waitlist .wl-submit { width: auto; height: 48px; padding: 0 24px; flex-shrink: 0; }
+    .hero-waitlist .waitlist-msg { margin-top: 8px; }
+    /* the row is display:flex, which would otherwise beat the hidden attribute */
+    .hero-waitlist .waitlist-row[hidden] { display: none; }
+    .hero-note { font-family: var(--mono); font-size: 11px; color: rgba(28,28,28,0.6);
+      opacity: 0; transition: opacity 0.5s ease 0.8s; }
+    .hero-link { font-family: var(--sans); font-size: 14px; color: var(--ink); }
+    .hero-link:hover { text-decoration: underline; }
+    .hero-cta { display: flex; justify-content: center; margin-top: 30px; opacity: 0; transition: opacity 0.5s ease 0.9s; }
     .hero.loaded .hero-logo, .hero.loaded .hero-word, .hero.loaded .hero-headline,
+    .hero.loaded .hero-sub, .hero.loaded .hero-waitlist, .hero.loaded .hero-note,
     .hero.loaded .hero-cta { opacity: 1; }
 
     /* ---------- reveal ---------- */
@@ -231,6 +246,7 @@
       .wrap { padding: 0 20px; }
       .pad { padding: 64px 0; }
       .waitlist-row { flex-direction: column; }
+      .hero-waitlist .wl-submit { width: 100%; }
       .feat-row { grid-template-columns: 1fr; gap: 28px; }
       .feat-row.reversed .frame { order: -1; }
       .fg-grid { grid-template-columns: 1fr; }
@@ -258,9 +274,21 @@
       <img class="hero-logo" src="images/iris-logo-black.png" alt="Iris logo" />
       <h1 class="display hero-word">IRIS</h1>
       <p class="hero-headline">Rest your eyes. Automatically.</p>
+      <p class="hero-sub">a macOS app that makes you look away every 20 minutes, not out yet</p>
+
+      <form class="hero-waitlist" id="hero-form" data-collapse-on-success novalidate>
+        <div class="waitlist-row">
+          <input class="waitlist-input" id="hero-email" type="email" name="email"
+                 placeholder="you@example.com" autocomplete="email"
+                 aria-label="Your email address" required />
+          <button class="wl-submit" type="submit" id="hero-submit">Join the waitlist</button>
+        </div>
+        <p class="waitlist-msg" id="hero-msg" role="status" aria-live="polite"></p>
+      </form>
+      <p class="hero-note">no spam, one email when it ships</p>
 
       <div class="hero-cta">
-        <a class="btn-solid" href="#features">See how it works</a>
+        <a class="hero-link" href="#features">See how it works &#x2193;</a>
       </div>
     </div>
   </header>
@@ -518,44 +546,60 @@
     }, { threshold: 0.5 });
     document.querySelectorAll('[data-count]').forEach((el) => cio.observe(el));
 
-    // waitlist signup
+    // waitlist signup, one code path for both forms: the one in the hero and
+    // the one in the waitlist section. They post to the same endpoint and share
+    // every message. The only difference is what a form does with itself once
+    // it succeeds, which each form declares in its own markup.
     (function () {
-      const form   = document.getElementById('wl-form');
-      const input  = document.getElementById('wl-email');
-      const button = document.getElementById('wl-submit');
-      const msg    = document.getElementById('wl-msg');
-      if (!form || !input || !button || !msg) return;
+      function wire(form) {
+        const input  = form.querySelector('input[type="email"]');
+        const button = form.querySelector('button[type="submit"]');
+        const msg    = form.querySelector('.waitlist-msg');
+        const row    = form.querySelector('.waitlist-row');
+        if (!input || !button || !msg) return;
 
-      const say = (text, kind) => { msg.textContent = text; msg.className = 'waitlist-msg' + (kind ? ' ' + kind : ''); };
+        const say = (text, kind) => {
+          msg.textContent = text;
+          msg.className = 'waitlist-msg' + (kind ? ' ' + kind : '');
+        };
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = input.value.trim();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return say('that does not look like an email address', 'err');
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = input.value.trim();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return say('that does not look like an email address', 'err');
 
-        button.disabled = true;
-        say('adding you...');
-        let data = {};
-        try {
-          const res = await fetch('/api/waitlist', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-          });
-          data = await res.json().catch(() => ({}));
-          if (!res.ok) {
+          button.disabled = true;
+          say('adding you...');
+          let data = {};
+          try {
+            const res = await fetch('/api/waitlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email }),
+            });
+            data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              button.disabled = false;
+              return say(data.error || 'that did not go through, try again', 'err');
+            }
+          } catch {
             button.disabled = false;
-            return say(data.error || 'that did not go through, try again', 'err');
+            return say('network error, try again', 'err');
           }
-        } catch {
-          button.disabled = false;
-          return say('network error, try again', 'err');
-        }
 
-        input.value = '';
-        button.textContent = 'You are on the list';
-        say(data.new === false ? 'you were already on the list' : 'you are on the list', 'ok');
-      });
+          input.value = '';
+          say(data.new === false ? 'you were already on the list' : 'you are on the list', 'ok');
+          // In the hero the box gives way to the confirmation where it stood.
+          // In the card lower down the box stays and the button carries it.
+          if (form.hasAttribute('data-collapse-on-success') && row) row.hidden = true;
+          else button.textContent = 'You are on the list';
+        });
+      }
+
+      ['hero-form', 'wl-form']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean)
+        .forEach(wire);
     })();
 
     // secret admin: click footer logo -> ask for a password -> show the list and
