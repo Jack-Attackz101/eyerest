@@ -232,6 +232,7 @@
     .ap-dl { border-top: 1px solid rgba(28,28,28,0.14); margin-top: 4px; padding-top: 18px; }
     .ap-dl:empty { border: none; margin: 0; padding: 0; }
     .ap-dl-meta { font-family: var(--mono); font-size: 11px; letter-spacing: .03em; color: var(--muted); margin-top: 10px; }
+    .ap-dl-note { font-family: var(--mono); font-size: 11px; letter-spacing: .03em; color: var(--muted); margin-top: 6px; opacity: 0.8; }
     .ap-dl-warn { font-family: var(--mono); font-size: 11px; letter-spacing: .03em; color: var(--red); margin-top: 6px; }
     .download-button { background: var(--ink); color: var(--bg); border: 2px solid var(--ink);
       border-radius: 4px; font-family: var(--sans); font-weight: 600; font-size: 13px;
@@ -660,8 +661,12 @@
 
         const built  = build.builtAt ? day(build.builtAt) : null;
         const served = build.lastModified ? minute(build.lastModified) : null;
+        const size   = build.sizeBytes ? (build.sizeBytes / 1048576).toFixed(1) + ' MB' : null;
         const meta   = [
+          build.sourceLabel || null,
           built  ? 'built ' + built   : 'build date unknown',
+          size,
+          // only the committed file has a meaningful served date, see api/build.js
           served ? 'served ' + served : null,
         ].filter(Boolean).join(' · ');
 
@@ -677,6 +682,7 @@
           '<div class="ap-head">Current build</div>' +
           '<a class="download-button" href="' + esc(build.url) + '" download>Download Iris</a>' +
           '<p class="ap-dl-meta">' + esc(meta) + '</p>' +
+          (build.note ? '<p class="ap-dl-note">' + esc(build.note) + '</p>' : '') +
           (warn ? '<p class="ap-dl-warn">' + esc(warn) + '</p>' : '');
       }
 
