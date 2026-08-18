@@ -14,6 +14,11 @@ import SwiftUI
 /// How long a transient menu-bar nudge stays visible before the icon returns.
 private let nudgeDisplaySeconds: TimeInterval = 6
 
+/// Longest nudge the menu bar will render. A coalesced nudge carries two
+/// actions ("stand up and shake out your wrists"), so the old 22-character
+/// budget cut them mid-word. Wide for a few seconds beats truncated.
+private let nudgeMaxCharacters = 44
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let engine = TimerEngine.shared
@@ -130,17 +135,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         focusBlockerEngine.start()
 
+        // Every non-break nudge asks NudgeBudget before it interrupts. The
+        // challenge, wind-down and desk-reset overlays are owned by controllers
+        // rather than TimerEngine, so the budget asks us about them.
+        NudgeBudget.shared.isOverlayOnScreen = { [weak self] in
+            guard let self else { return false }
+            return self.challengeController.isPresenting
+                || self.windDownController.isPresenting
+                || self.deskResetController.isPresenting
+        }
+
         // MARK: V3 features
 
         // Feature 2: Water reminders
-        waterEngine.onNudge = { [weak self] in
-            self?.showTransientNudge("drink some water")
+        waterEngine.onNudge = {
+            NudgeBudget.shared.request(.water) { [weak self] text in
+                self?.showTransientNudge(text)
+            }
         }
         waterEngine.start()
 
         // Feature 4: Stand-up mode
-        standUpEngine.onNudge = { [weak self] in
-            self?.showTransientNudge("time to stand up")
+        standUpEngine.onNudge = {
+            NudgeBudget.shared.request(.standUp) { [weak self] text in
+                self?.showTransientNudge(text)
+            }
         }
         standUpEngine.start()
 
@@ -151,7 +170,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 if inLateNight && !self.lateNightNudgeFired {
                     self.lateNightNudgeFired = true
-                    self.showTransientNudge("time to wrap up")
+                    NudgeBudget.shared.request(.lateNightWrapUp) { [weak self] text in
+                        self?.showTransientNudge(text)
+                    }
                 }
                 if !inLateNight { self.lateNightNudgeFired = false }
             }
@@ -166,26 +187,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         FlowDetector.shared.start()
 
         // Feature 9: Wrist relief timer
-        wristReliefEngine.onNudge = { [weak self] in
-            self?.showTransientNudge("shake out your wrists")
+        wristReliefEngine.onNudge = {
+            NudgeBudget.shared.request(.wristRelief) { [weak self] text in
+                self?.showTransientNudge(text)
+            }
         }
         wristReliefEngine.start()
 
         // Feature 10: Post-meeting reset
-        engine.onLongCallEnded = { [weak self] in
-            self?.showTransientNudge("look away — 20 seconds")
+        engine.onLongCallEnded = {
+            NudgeBudget.shared.request(.postMeetingReset) { [weak self] text in
+                self?.showTransientNudge(text)
+            }
         }
 
         // Feature 11: Scroll fatigue
-        scrollFatigueEngine.onNudge = { [weak self] in
-            self?.showTransientNudge("rest your wrists")
+        scrollFatigueEngine.onNudge = {
+            NudgeBudget.shared.request(.scrollFatigue) { [weak self] text in
+                self?.showTransientNudge(text)
+            }
         }
         scrollFatigueEngine.start()
 
         // Feature 12: Posture camera
         Task { @MainActor in
-            PostureCameraEngine.shared.onPostureAlert = { [weak self] in
-                self?.showTransientNudge("sit up straight")
+            PostureCameraEngine.shared.onPostureAlert = {
+                NudgeBudget.shared.request(.postureCamera) { [weak self] text in
+                    self?.showTransientNudge(text)
+                }
             }
             if engine.postureCameraEnabled {
                 PostureCameraEngine.shared.start()
@@ -413,6 +442,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - V3 feature actions
 
     /// Shows a transient menu-bar nudge for 8 seconds, then auto-reverts.
+    ///
+    /// Only NudgeBudget reaches this for real nudges. The DEBUG demo rows call
+    /// it directly on purpose, since their whole job is to bypass the gate.
     private func showTransientNudge(_ text: String) {
         beginNudge(text)
         DispatchQueue.main.asyncAfter(deadline: .now() + nudgeDisplaySeconds) { [weak self] in
@@ -433,7 +465,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func checkBrightness() {
         guard engine.brightnessCheckEnabled && engine.isInLateNight else { return }
-        showTransientNudge("lower your brightness")
+        NudgeBudget.shared.request(.brightness) { [weak self] text in
+            self?.showTransientNudge(text)
+        }
     }
 
     /// Feature 7: Wind-down
@@ -478,7 +512,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .font: NSFont.menuBarFont(ofSize: 0),
                 .foregroundColor: NSColor.labelColor,
             ]
-            button.attributedTitle = NSAttributedString(string: String(text.prefix(22)), attributes: attrs)
+            button.attributedTitle = NSAttributedString(string: String(text.prefix(nudgeMaxCharacters)), attributes: attrs)
             NSAnimationContext.runAnimationGroup { ctx in
                 ctx.duration = 0.2
                 button.animator().alphaValue = 1
