@@ -1,5 +1,5 @@
-// Vercel serverless function — waitlist signup + admin list
-// Storage: Vercel KV (Upstash Redis) via REST API — no npm packages needed.
+// Vercel serverless function , waitlist signup + admin list
+// Storage: Vercel KV (Upstash Redis) via REST API , no npm packages needed.
 // Emails:  Resend (optional). Set RESEND_API_KEY + RESEND_FROM in Vercel env vars.
 //
 // Admin:   GET /api/waitlist?pw=XXXX  returns the count AND every email.
@@ -7,7 +7,15 @@
 //          checked in the browser, anyone could read the page source, skip the
 //          check and pull the list. Set ADMIN_PASS in Vercel to change it.
 
-const ADMIN_PASS = process.env.ADMIN_PASS || '4242';
+// Read once, and do NOT fall back to a literal. This used to be
+//   process.env.ADMIN_PASS || <a hardcoded default>
+// which is a published password, because this repo is public. Any deploy
+// target without the variable set silently accepted it. Fail closed instead:
+// a missing secret refuses every request rather than accepting a known one.
+const ADMIN_PASS = process.env.ADMIN_PASS;
+if (!ADMIN_PASS) {
+  console.error('ADMIN_PASS is not set. Every gated request will be refused.');
+}
 
 async function readBody(req) {
   return new Promise((resolve) => {
@@ -30,6 +38,7 @@ async function redis(url, token, ...command) {
 
 /** constant-time-ish compare, so the password cannot be guessed by timing */
 function samePass(given) {
+  if (!ADMIN_PASS) return false;   // no secret configured, nothing can match
   const a = String(given || '');
   const b = ADMIN_PASS;
   if (a.length !== b.length) return false;
@@ -51,7 +60,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (!kvUrl || !kvToken) {
-    return res.status(503).json({ error: 'Storage not configured — add Vercel KV to this project.' });
+    return res.status(503).json({ error: 'Storage not configured , add Vercel KV to this project.' });
   }
 
   // ---- GET: count for anyone, full list only with the password ----

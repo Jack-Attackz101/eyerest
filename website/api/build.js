@@ -35,7 +35,15 @@
 // work that is already in the app, which is the same comparison the DMG
 // freshness CI check makes.
 
-const ADMIN_PASS  = process.env.ADMIN_PASS || '4242';
+// Read once, and do NOT fall back to a literal. This used to be
+//   process.env.ADMIN_PASS || <a hardcoded default>
+// which is a published password, because this repo is public. Any deploy
+// target without the variable set silently accepted it. Fail closed instead:
+// a missing secret refuses every request rather than accepting a known one.
+const ADMIN_PASS = process.env.ADMIN_PASS;
+if (!ADMIN_PASS) {
+  console.error('ADMIN_PASS is not set. Every gated request will be refused.');
+}
 const REPO        = 'Jack-Attackz101/eyerest';
 const DMG_PATH    = '/Iris.dmg';
 const SOURCE_PATH = 'Iris';                 // every .swift file lives under here
@@ -60,6 +68,7 @@ async function cached(key, load) {
 
 /** constant-time-ish compare, so the password cannot be guessed by timing */
 function samePass(given) {
+  if (!ADMIN_PASS) return false;   // no secret configured, nothing can match
   const a = String(given || '');
   const b = ADMIN_PASS;
   if (a.length !== b.length) return false;
