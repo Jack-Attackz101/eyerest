@@ -1,5 +1,5 @@
-// Vercel serverless function — waitlist signup + admin list
-// Storage: Vercel KV (Upstash Redis) via REST API — no npm packages needed.
+// Vercel serverless function: waitlist signup and admin list
+// Storage: Vercel KV (Upstash Redis) via REST API, so no npm packages needed.
 // Emails:  Resend (optional). Set RESEND_API_KEY + RESEND_FROM in Vercel env vars.
 //
 // Admin:   GET /api/waitlist?pw=XXXX  returns the count AND every email.
@@ -7,7 +7,30 @@
 //          checked in the browser, anyone could read the page source, skip the
 //          check and pull the list. Set ADMIN_PASS in Vercel to change it.
 
-const ADMIN_PASS = process.env.ADMIN_PASS || '4242';
+// No fallback. This used to read `process.env.ADMIN_PASS || <a literal>`, and
+// because this repo is public that literal was a published password: any deploy
+// target without the variable set accepted it, silently, and the whole waitlist
+// was readable by anyone who read the source. Setting the variable in Vercel
+// closed that on production, but the pattern would come back on the next preview
+// branch or deploy target, or the day someone removes the variable.
+//
+// So it fails closed. A missing secret refuses every gated request with a 500,
+// which is a visible misconfiguration rather than an invisible open door. A 401
+// would be worse here: it looks exactly like a wrong password, so nobody would
+// know the gate had stopped being a gate. Signing up and the public count do not
+// involve the password, so they keep working either way.
+const ADMIN_PASS = process.env.ADMIN_PASS;
+if (!ADMIN_PASS) {
+  console.error('ADMIN_PASS is not set, refusing every gated request');
+}
+
+/** True when a password is required but none is configured to check against. */
+function gateUnavailable(res) {
+  if (ADMIN_PASS) return false;
+  console.error('ADMIN_PASS is not set, refusing an admin request');
+  res.status(500).json({ error: 'Server misconfigured' });
+  return true;
+}
 
 async function readBody(req) {
   return new Promise((resolve) => {
@@ -30,6 +53,7 @@ async function redis(url, token, ...command) {
 
 /** constant-time-ish compare, so the password cannot be guessed by timing */
 function samePass(given) {
+  if (!ADMIN_PASS) return false;   // no secret configured, so nothing can match
   const a = String(given || '');
   const b = ADMIN_PASS;
   if (a.length !== b.length) return false;
@@ -51,7 +75,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (!kvUrl || !kvToken) {
-    return res.status(503).json({ error: 'Storage not configured — add Vercel KV to this project.' });
+    return res.status(503).json({ error: 'Storage not configured. Add Vercel KV to this project.' });
   }
 
   // ---- GET: count for anyone, full list only with the password ----
@@ -62,6 +86,7 @@ module.exports = async function handler(req, res) {
     const count = (await redis(kvUrl, kvToken, 'SCARD', 'iris:waitlist')) ?? 0;
 
     if (pw === null) return res.json({ count });          // plain count, unchanged
+    if (gateUnavailable(res)) return;                     // before the compare
     if (!samePass(pw)) {
       // deliberately vague, and slow enough to make guessing tedious
       await new Promise((r) => setTimeout(r, 700));
@@ -111,6 +136,7 @@ module.exports = async function handler(req, res) {
 
   // ---- DELETE: remove one address, for pruning test or bad entries ----
   if (req.method === 'DELETE') {
+    if (gateUnavailable(res)) return;                     // before the compare
     const url = new URL(req.url, 'http://x');
     if (!samePass(url.searchParams.get('pw'))) {
       await new Promise((r) => setTimeout(r, 700));

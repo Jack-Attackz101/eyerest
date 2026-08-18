@@ -35,7 +35,21 @@
 // work that is already in the app, which is the same comparison the DMG
 // freshness CI check makes.
 
-const ADMIN_PASS  = process.env.ADMIN_PASS || '4242';
+// No fallback. This used to read `process.env.ADMIN_PASS || <a literal>`, and
+// because this repo is public that literal was a published password: any deploy
+// target without the variable set accepted it, silently. Setting the variable in
+// Vercel closed that on production, but the pattern would come back on the next
+// preview branch or deploy target, or the day someone removes the variable.
+//
+// So it fails closed. A missing secret refuses every gated request with a 500,
+// which is a visible misconfiguration rather than an invisible open door. A 401
+// would be worse here: it looks exactly like a wrong password, so nobody would
+// know the gate had stopped being a gate.
+const ADMIN_PASS  = process.env.ADMIN_PASS;
+if (!ADMIN_PASS) {
+  console.error('ADMIN_PASS is not set, refusing every gated request');
+}
+
 const REPO        = 'Jack-Attackz101/eyerest';
 const DMG_PATH    = '/Iris.dmg';
 const SOURCE_PATH = 'Iris';                 // every .swift file lives under here
@@ -60,6 +74,7 @@ async function cached(key, load) {
 
 /** constant-time-ish compare, so the password cannot be guessed by timing */
 function samePass(given) {
+  if (!ADMIN_PASS) return false;   // no secret configured, so nothing can match
   const a = String(given || '');
   const b = ADMIN_PASS;
   if (a.length !== b.length) return false;
@@ -153,6 +168,13 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Before the compare, not after: with no secret configured there is nothing to
+  // compare against, and this must not be mistakable for a wrong password.
+  if (!ADMIN_PASS) {
+    console.error('ADMIN_PASS is not set, refusing /api/build');
+    return res.status(500).json({ error: 'Server misconfigured' });
+  }
 
   const url = new URL(req.url, 'http://x');
   if (!samePass(url.searchParams.get('pw'))) {
