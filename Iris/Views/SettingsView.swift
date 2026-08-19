@@ -194,6 +194,12 @@ struct SettingsView: View {
                 SettingToggleRow(label: "Count time away as a break", isOn: $engine.idleDetectionEnabled,
                                  icon: "figure.walk.departure", tint: .irisTintSystem,
                                  caption: "Stops the clock when you leave and credits a long absence")
+                SettingToggleRow(label: "Hide breaks from screen sharing", isOn: $engine.hideFromScreenShare,
+                                 icon: "rectangle.on.rectangle.slash", tint: .irisTintSystem,
+                                 caption: "Turn this off to record a demo with the overlay in shot")
+                HotkeyRecorderRow {
+                    (NSApp.delegate as? AppDelegate)?.registerBreakHotkey()
+                }
                 SettingToggleRow(
                     label: "Automatic updates",
                     isOn: Binding(

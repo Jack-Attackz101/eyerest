@@ -210,6 +210,23 @@ final class TimerEngine: ObservableObject {
     /// than after the old timer finally fires.
     var onBlinkSettingChanged: (() -> Void)?
 
+    /// The global shortcut that starts a break now.
+    @Published var breakHotkey: HotkeyCombo {
+        didSet { saveHotkey() }
+    }
+
+    /// Overlays stay out of screen recordings unless someone is deliberately
+    /// demoing Iris, in which case they want them in the recording.
+    @Published var hideFromScreenShare: Bool {
+        didSet {
+            defaults.set(hideFromScreenShare, forKey: Keys.hideFromScreenShare)
+            onSharingPolicyChanged?()
+        }
+    }
+
+    /// Set by AppDelegate, so the change reaches windows that already exist.
+    var onSharingPolicyChanged: (() -> Void)?
+
     /// Count the time away from the keyboard as rest, rather than firing a break
     /// the moment someone sits back down from lunch.
     @Published var idleDetectionEnabled: Bool {
@@ -298,6 +315,8 @@ final class TimerEngine: ObservableObject {
         static let blinkStyle = "iris.blinkStyle"
         static let blinkInterval = "iris.blinkIntervalSeconds"
         static let idleDetection = "iris.idleDetectionEnabled"
+        static let breakHotkey = "iris.breakHotkey"
+        static let hideFromScreenShare = "iris.hideFromScreenShare"
     }
 
     private init() {
@@ -330,6 +349,7 @@ final class TimerEngine: ObservableObject {
             Keys.blinkStyle: BlinkStyle.off.rawValue,
             Keys.blinkInterval: 20,
             Keys.idleDetection: true,
+            Keys.hideFromScreenShare: true,
         ])
 
         intervalMinutes = Self.clamp(defaults.integer(forKey: Keys.interval), 5...120)
@@ -377,6 +397,13 @@ final class TimerEngine: ObservableObject {
         let storedBlinkInterval = defaults.integer(forKey: Keys.blinkInterval)
         blinkIntervalSeconds = BlinkEngine.allowedIntervals.contains(storedBlinkInterval) ? storedBlinkInterval : 20
         idleDetectionEnabled = defaults.object(forKey: Keys.idleDetection) as? Bool ?? true
+        hideFromScreenShare = defaults.object(forKey: Keys.hideFromScreenShare) as? Bool ?? true
+        if let data = defaults.data(forKey: Keys.breakHotkey),
+           let stored = try? JSONDecoder().decode(HotkeyCombo.self, from: data) {
+            breakHotkey = stored
+        } else {
+            breakHotkey = .optionCommandB
+        }
 
         syncLoginItemStateFromSystem()
         registerSleepWakeObservers()
@@ -750,6 +777,12 @@ final class TimerEngine: ObservableObject {
     }
 
     // MARK: - Persistence helpers
+
+    private func saveHotkey() {
+        if let data = try? JSONEncoder().encode(breakHotkey) {
+            defaults.set(data, forKey: Keys.breakHotkey)
+        }
+    }
 
     private func saveScheduleBlocks() {
         if let data = try? JSONEncoder().encode(scheduleBlocks) {

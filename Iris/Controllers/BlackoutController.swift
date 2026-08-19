@@ -88,6 +88,12 @@ final class BlackoutController {
         }
     }
 
+    /// Apply the current screen-sharing policy to panels that already exist.
+    func applySharingPolicy() {
+        let type: NSWindow.SharingType = engine.hideFromScreenShare ? .none : .readOnly
+        panels.forEach { $0.sharingType = type }
+    }
+
     /// Box breathing, when it is on and the rest is long enough for a whole lap.
     /// A partial lap is worse than none, so short rests keep the posture prompt.
     private func prepareBoxBreathing() {
@@ -167,6 +173,9 @@ final class BlackoutController {
         panel.backgroundColor = .black
         panel.hasShadow = false
         panel.hidesOnDeactivate = false
+        // Keep the blackout out of screen shares and recordings, unless someone
+        // is deliberately demoing Iris and wants it in the frame.
+        panel.sharingType = engine.hideFromScreenShare ? .none : .readOnly
 
         let host = NSHostingView(rootView: BlackoutView(model: model).environmentObject(engine))
         host.frame = NSRect(origin: .zero, size: screen.frame.size)

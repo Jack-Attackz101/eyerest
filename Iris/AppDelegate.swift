@@ -147,6 +147,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         engine.onBlinkSettingChanged = { [weak self] in self?.blinkEngine.reschedule() }
         blinkEngine.start()
 
+        // A global shortcut that starts a break now. Registered here so a failure
+        // can be surfaced in settings rather than being silent.
+        GlobalHotkey.shared.onFire = { [weak self] in self?.engine.restNow() }
+        registerBreakHotkey()
+
+        // Keep every overlay out of screen recordings, or deliberately in them.
+        engine.onSharingPolicyChanged = { [weak self] in self?.applySharingPolicy() }
+        applySharingPolicy()
+
         focusBlockerEngine.shouldSuppress = { [weak self] in
             guard let self else { return false }
             return challengeController.isPresenting || engine.timerState == .resting
@@ -255,6 +264,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             selector: #selector(handleDemoChallenge),
             name: .irisDemoChallenge, object: nil)
 #endif
+    }
+
+    /// Register the configured shortcut and remember why if it will not take.
+    func registerBreakHotkey() {
+        let failure = GlobalHotkey.shared.register(engine.breakHotkey)
+        HotkeyStatus.shared.failure = failure
+        if let failure {
+            NSLog("Iris hotkey: %@ could not be registered, %@",
+                  engine.breakHotkey.displayString, failure.message)
+        }
+    }
+
+    private func applySharingPolicy() {
+        warningController?.applySharingPolicy()
+        blackoutController?.applySharingPolicy()
+        blockerController?.applySharingPolicy()
     }
 
     // MARK: - License gate
