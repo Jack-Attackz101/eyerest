@@ -35,6 +35,8 @@
 // work that is already in the app, which is the same comparison the DMG
 // freshness CI check makes.
 
+const rateLimit = require('./_ratelimit.js');
+
 // No fallback. This used to read `process.env.ADMIN_PASS || <a literal>`, and
 // because this repo is public that literal was a published password: any deploy
 // target without the variable set accepted it, silently. Setting the variable in
@@ -176,12 +178,19 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Server misconfigured' });
   }
 
+  // Five wrong answers from one IP and that IP waits fifteen minutes. 429 rather
+  // than 401, so a lockout is distinguishable from a wrong password.
+  if (await rateLimit.refuseIfLockedOut(req, res)) return;
+
   const url = new URL(req.url, 'http://x');
+  const ip = rateLimit.clientIP(req);
   if (!samePass(url.searchParams.get('pw'))) {
+    await rateLimit.recordFailure(ip);
     // deliberately vague, and slow enough to make guessing tedious
     await new Promise((r) => setTimeout(r, 700));
     return res.status(401).json({ error: 'Wrong password' });
   }
+  await rateLimit.clearFailures(ip);
 
   const [release, served, dmgCommitAt, sourceAt] = await Promise.all([
     latestReleaseDmg(),
