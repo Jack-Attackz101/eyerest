@@ -2,11 +2,15 @@
 //  WarningPillView.swift
 //  Iris
 //
-//  Compact horizontal pill that wraps the notch — one row:
+//  Compact horizontal pill that wraps the notch, one row:
 //  [pause button | MM:SS countdown | depleting ring].
-//  On notch Macs the pill is flush with the physical screen top
-//  (top corners squared off). On non-notch Macs it floats 8pt below
-//  the menu bar, fully rounded.
+//
+//  The pill is flush with the physical top of the display and square across the
+//  top on every Mac, notch or not. It used to float 8pt down and fully rounded
+//  when no notch was detected, which is what produced the grey strip above it
+//  and the rounded top corners in the screenshot from Jack's machine: his screen
+//  reports safeAreaInsets.top == 0, so the fallback was rendering. Whether the
+//  hardware has a notch now decides the pill's width, and nothing else.
 //
 
 import SwiftUI
@@ -61,15 +65,23 @@ struct NotchPillShape: Shape {
 
 // MARK: - Metrics
 
-private enum M {
+/// Shared with WarningPillController, which sizes the panel from the same
+/// numbers. When they disagree the pill floats inside a larger transparent
+/// panel, which is one of the ways this went wrong before.
+enum PillMetrics {
     static let pillH: CGFloat = 44       // total pill height
     static let sideExt: CGFloat = 55     // extension on each side of notch
-    static let botR: CGFloat = 20        // notch-pill bottom corner radius
-    static let fallW: CGFloat = 240      // non-notch pill width
-    static let fallR: CGFloat = 22       // non-notch corner radius
-    static let fallGap: CGFloat = 8      // gap from screen top (non-notch)
+    static let botR: CGFloat = 20        // bottom corner radius, both cases
+    static let fallW: CGFloat = 240      // fixed width when there is no notch
     static let countdownDrop: CGFloat = 4 // pushes text below camera zone (notch only)
+
+    // There is deliberately no gap constant and no top-corner radius constant.
+    // The pill hangs from the physical top edge on every Mac, so both would be
+    // zero, and a knob that must always be zero is a knob someone eventually
+    // sets back to 8.
 }
+
+private typealias M = PillMetrics
 
 // MARK: - View
 
@@ -106,19 +118,14 @@ struct WarningPillView: View {
         pillBackground
             .frame(width: pillWidth, height: pillHeight)
             .overlay(pillContent.opacity(contentVisible ? 1 : 0))
-            .shadow(color: model.hasNotch ? .clear : .black.opacity(0.28),
-                    radius: model.hasNotch ? 0 : 12, x: 0, y: 3)
             .animation(growAnim, value: model.expanded)
             .animation(.easeInOut(duration: 0.1), value: model.flashing)
     }
 
-    @ViewBuilder
+    /// Square across the top, rounded below, on every Mac. A shadow would show
+    /// as a smudge above the pill against the screen edge, so there is none.
     private var pillBackground: some View {
-        if model.hasNotch {
-            NotchPillShape(topRadius: 0, bottomRadius: M.botR).fill(fillColor)
-        } else {
-            RoundedRectangle(cornerRadius: M.fallR, style: .continuous).fill(fillColor)
-        }
+        NotchPillShape(topRadius: 0, bottomRadius: M.botR).fill(fillColor)
     }
 
     // MARK: - Content row
@@ -195,7 +202,8 @@ struct WarningPillView: View {
 
     private var yOffset: CGFloat {
         guard !model.hasNotch else { return 0 }
-        return model.expanded ? M.fallGap : -(M.pillH + M.fallGap * 2)
+        // Flush when shown, fully above the top edge when hidden.
+        return model.expanded ? 0 : -M.pillH
     }
 
     // MARK: - Animations
