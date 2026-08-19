@@ -36,6 +36,14 @@ struct HabitsSettingsSection: View {
                 }
             }
 
+            // Box breathing during breaks. Only offered when a full 16 second
+            // lap fits in the rest, since a truncated cycle is worse than none.
+            SettingToggleRow(label: "Box breathing during breaks",
+                             isOn: $engine.boxBreathingEnabled,
+                             caption: BoxBreathing.fits(restDuration: engine.restDuration)
+                                 ? "Four seconds in, four hold, four out, four hold"
+                                 : "Needs a rest of 16 seconds or longer")
+
             // Feature 2: Water reminders
             SettingToggleRow(label: "Water reminders", isOn: $engine.waterRemindersEnabled)
 

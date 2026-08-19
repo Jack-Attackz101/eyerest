@@ -164,6 +164,17 @@ final class TimerEngine: ObservableObject {
         didSet { defaults.set(postureCameraEnabled, forKey: Keys.postureCamera) }
     }
 
+    /// Guided box breathing during a break. Off by default: it changes what a
+    /// break is, so it should be asked for.
+    @Published var boxBreathingEnabled: Bool {
+        didSet { defaults.set(boxBreathingEnabled, forKey: Keys.boxBreathing) }
+    }
+
+    /// Which look the break overlay takes, or .random for one per break.
+    @Published var breakTheme: BreakTheme {
+        didSet { defaults.set(breakTheme.rawValue, forKey: Keys.breakTheme) }
+    }
+
     /// Set by WaterReminderEngine when the threshold is hit; cleared by acknowledgeWaterDrink().
     @Published var waterNudgePending: Bool = false
 
@@ -232,6 +243,8 @@ final class TimerEngine: ObservableObject {
         static let postMeetingReset = "iris.postMeetingResetEnabled"
         static let scrollFatigue = "iris.scrollFatigueEnabled"
         static let postureCamera = "iris.postureCameraEnabled"
+        static let boxBreathing = "iris.boxBreathingEnabled"
+        static let breakTheme = "iris.breakTheme"
     }
 
     private init() {
@@ -259,6 +272,8 @@ final class TimerEngine: ObservableObject {
             Keys.postMeetingReset: false,
             Keys.scrollFatigue: false,
             Keys.postureCamera: false,
+            Keys.boxBreathing: false,
+            Keys.breakTheme: BreakTheme.paper.rawValue,
         ])
 
         intervalMinutes = Self.clamp(defaults.integer(forKey: Keys.interval), 5...120)
@@ -298,6 +313,9 @@ final class TimerEngine: ObservableObject {
         postMeetingResetEnabled = defaults.bool(forKey: Keys.postMeetingReset)
         scrollFatigueEnabled = defaults.bool(forKey: Keys.scrollFatigue)
         postureCameraEnabled = defaults.bool(forKey: Keys.postureCamera)
+        boxBreathingEnabled = defaults.bool(forKey: Keys.boxBreathing)
+        let rawTheme = defaults.string(forKey: Keys.breakTheme) ?? BreakTheme.paper.rawValue
+        breakTheme = BreakTheme(rawValue: rawTheme) ?? .paper
 
         syncLoginItemStateFromSystem()
         registerSleepWakeObservers()
