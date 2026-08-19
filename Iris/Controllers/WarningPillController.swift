@@ -11,17 +11,34 @@
 import AppKit
 import SwiftUI
 
+/// A panel that is allowed to sit over the menu bar.
+///
+/// AppKit constrains every window's frame so it does not cover the menu bar,
+/// silently, by clamping to the screen's visible frame. So positioning the panel
+/// at `screen.frame.maxY - height` was not enough: the frame came back moved
+/// down by the menu bar height, which is where most of the strip above the pill
+/// came from. Measured on a 1470x956 screen, the panel asked for y 912 and was
+/// given 879, exactly the 33pt the menu bar occupies.
+private final class PillPanel: NSPanel {
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        frameRect
+    }
+}
+
 final class WarningPillController {
 
     private let engine: TimerEngine
     private let model = WarningPillModel()
-    private let panel: NSPanel
+    private let panel: PillPanel
     private let host: NSHostingView<AnyView>
+    /// Last logged geometry signature, so the diagnostic prints once rather than
+    /// on every warning window.
+    private var lastGeometryLog = ""
 
     init(engine: TimerEngine) {
         self.engine = engine
 
-        panel = NSPanel(
+        panel = PillPanel(
             contentRect: NSRect(x: 0, y: 0, width: 360, height: 120),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
@@ -81,10 +98,13 @@ final class WarningPillController {
 
     // MARK: - Geometry
 
+    /// The panel is exactly the pill. It used to be 260x56 for the non-notch
+    /// case, 56 being "8pt gap + 44pt pill + 4pt margin", so even with the panel
+    /// flush against the top the pill inside it was not.
     private var panelSize: NSSize {
         model.hasNotch
-            ? NSSize(width: model.notchWidth + 110, height: 44)
-            : NSSize(width: 260, height: 56)  // 56 = 8pt gap + 44pt pill + 4pt margin
+            ? NSSize(width: model.notchWidth + PillMetrics.sideExt * 2, height: PillMetrics.pillH)
+            : NSSize(width: PillMetrics.fallW, height: PillMetrics.pillH)
     }
 
     /// The screen the pill belongs on.
@@ -92,16 +112,20 @@ final class WarningPillController {
     /// `NSScreen.main` is whichever screen currently holds the key window, not
     /// the built-in display. On a Mac plugged into an external monitor, if the
     /// focused window was on the external screen then `detectGeometry()` read
-    /// that screen's `safeAreaInsets.top`, got 0, set `hasNotch = false`, and the
-    /// pill rendered as the narrow 240pt floating fallback with a shadow and an
-    /// 8pt gap, positioned on the external monitor. That is the "detached and
-    /// too narrow" pill. Prefer a screen that actually has a notch.
+    /// that screen's `safeAreaInsets.top`, got 0, and the pill rendered narrow on
+    /// the external monitor instead of wrapping the notch. Prefer a screen that
+    /// actually has a notch. The pill is flush either way now, so getting this
+    /// wrong costs the notch-width sizing rather than the whole look.
     private var pillScreen: NSScreen? {
         NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) ?? NSScreen.main
     }
 
     private func detectGeometry() {
-        guard let screen = pillScreen else { model.hasNotch = false; return }
+        guard let screen = pillScreen else {
+            model.hasNotch = false
+            logGeometry(screen: nil)
+            return
+        }
         let top = screen.safeAreaInsets.top
         if top > 0 {
             model.hasNotch = true
@@ -111,15 +135,45 @@ final class WarningPillController {
             let notchW = screen.frame.width - leftW - rightW
             model.notchWidth = notchW > 40 ? notchW : 200
         } else {
+            // No notch. The pill is a plain tab hanging off the top edge, and
+            // hasNotch now decides its width and nothing else.
             model.hasNotch = false
         }
+        logGeometry(screen: screen)
+    }
+
+    /// What was detected, once, so it is possible to tell from the outside which
+    /// branch ran. There was no way to do that when the pill came out wrong on
+    /// Jack's machine, which is why the cause was guessed at rather than read.
+    /// Logged again only if the answer changes, for example on a display change.
+    private func logGeometry(screen: NSScreen?) {
+        guard let screen else {
+            if lastGeometryLog != "no-screen" {
+                lastGeometryLog = "no-screen"
+                NSLog("Iris pill: no screen available, falling back to no notch")
+            }
+            return
+        }
+        let signature = "\(screen.localizedName)|\(NSStringFromRect(screen.frame))|\(screen.safeAreaInsets.top)|\(model.hasNotch)"
+        guard signature != lastGeometryLog else { return }
+        lastGeometryLog = signature
+        NSLog("""
+              Iris pill geometry: screen \"%@\", frame %@, safeAreaInsets.top %.1f, \
+              hasNotch %@, pill %@
+              """,
+              screen.localizedName,
+              NSStringFromRect(screen.frame),
+              screen.safeAreaInsets.top,
+              model.hasNotch ? "true" : "false",
+              NSStringFromSize(panelSize))
     }
 
     private func positionPanel() {
         guard let screen = pillScreen else { return }
         let size = panelSize
-        // Panel top edge flush with the physical top of the screen, centered on
-        // the (centered) notch so the pill's top lines up with the notch bottom.
+        // Flush with the physical top of the display: frame, never visibleFrame,
+        // because visibleFrame stops below the menu bar and that is exactly the
+        // gap this pill is not supposed to have.
         let origin = NSPoint(
             x: screen.frame.midX - size.width / 2,
             y: screen.frame.maxY - size.height
