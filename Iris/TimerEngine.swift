@@ -175,6 +175,25 @@ final class TimerEngine: ObservableObject {
         didSet { defaults.set(breakTheme.rawValue, forKey: Keys.breakTheme) }
     }
 
+    /// Blink reminders. Off by default and raised in onboarding, because a cue
+    /// every twenty seconds on first launch, unasked, would be alarming.
+    @Published var blinkStyle: BlinkStyle {
+        didSet {
+            defaults.set(blinkStyle.rawValue, forKey: Keys.blinkStyle)
+            onBlinkSettingChanged?()
+        }
+    }
+    @Published var blinkIntervalSeconds: Int {
+        didSet {
+            defaults.set(blinkIntervalSeconds, forKey: Keys.blinkInterval)
+            onBlinkSettingChanged?()
+        }
+    }
+
+    /// Set by AppDelegate so a changed interval or style takes effect now rather
+    /// than after the old timer finally fires.
+    var onBlinkSettingChanged: (() -> Void)?
+
     /// Set by WaterReminderEngine when the threshold is hit; cleared by acknowledgeWaterDrink().
     @Published var waterNudgePending: Bool = false
 
@@ -245,6 +264,8 @@ final class TimerEngine: ObservableObject {
         static let postureCamera = "iris.postureCameraEnabled"
         static let boxBreathing = "iris.boxBreathingEnabled"
         static let breakTheme = "iris.breakTheme"
+        static let blinkStyle = "iris.blinkStyle"
+        static let blinkInterval = "iris.blinkIntervalSeconds"
     }
 
     private init() {
@@ -274,6 +295,8 @@ final class TimerEngine: ObservableObject {
             Keys.postureCamera: false,
             Keys.boxBreathing: false,
             Keys.breakTheme: BreakTheme.paper.rawValue,
+            Keys.blinkStyle: BlinkStyle.off.rawValue,
+            Keys.blinkInterval: 20,
         ])
 
         intervalMinutes = Self.clamp(defaults.integer(forKey: Keys.interval), 5...120)
@@ -316,6 +339,10 @@ final class TimerEngine: ObservableObject {
         boxBreathingEnabled = defaults.bool(forKey: Keys.boxBreathing)
         let rawTheme = defaults.string(forKey: Keys.breakTheme) ?? BreakTheme.paper.rawValue
         breakTheme = BreakTheme(rawValue: rawTheme) ?? .paper
+        let rawBlink = defaults.string(forKey: Keys.blinkStyle) ?? BlinkStyle.off.rawValue
+        blinkStyle = BlinkStyle(rawValue: rawBlink) ?? .off
+        let storedBlinkInterval = defaults.integer(forKey: Keys.blinkInterval)
+        blinkIntervalSeconds = BlinkEngine.allowedIntervals.contains(storedBlinkInterval) ? storedBlinkInterval : 20
 
         syncLoginItemStateFromSystem()
         registerSleepWakeObservers()

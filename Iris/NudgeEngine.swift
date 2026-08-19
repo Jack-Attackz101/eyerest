@@ -6,6 +6,12 @@
 //  rotation index, and the next-nudge timer. The actual menu-bar mutation
 //  happens in AppDelegate via the onShow / onHide callbacks.
 //
+//  These go through NudgeBudget like everything else. They are periodic rather
+//  than event-driven, so a refusal cannot simply drop the nudge: that would end
+//  the series. A refused nudge reschedules instead, and because the budget can
+//  refuse late, when its coalescing window closes, the reschedule has to be
+//  driven by the refusal callback rather than by the return of a call.
+//
 
 import Foundation
 import AppKit
@@ -99,19 +105,29 @@ final class NudgeEngine {
             scheduleNext()
             return
         }
-        guard engine.timerState == .counting, !engine.isSuspended else {
-            scheduleTimer?.invalidate()
-            scheduleTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
-                self?.nudgeTimerFired()
-            }
-            return
+        NudgeBudget.shared.request(.posture, text: nextNudgeText()) { [weak self] text in
+            self?.showNudge(text)
+        } onRefused: { [weak self] in
+            // Not now. Try again shortly rather than losing the series.
+            self?.retrySoon()
         }
-        showNudge()
     }
 
-    private func showNudge() {
+    /// The budget said no. Come back in half a minute, which is what this engine
+    /// already did when the timer state was wrong.
+    private func retrySoon() {
+        guard !isNudgeVisible else { return }
+        scheduleTimer?.invalidate()
+        scheduleTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
+            self?.nudgeTimerFired()
+        }
+    }
+
+    /// The budget granted it. The text comes from the budget, since it may be a
+    /// combined line covering another source too.
+    private func showNudge(_ text: String) {
         isNudgeVisible = true
-        onShow?(nextNudgeText())
+        onShow?(String(text.prefix(44)))
         revertTimer?.invalidate()
         revertTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: false) { [weak self] _ in
             guard let self, self.isNudgeVisible else { return }
@@ -122,12 +138,15 @@ final class NudgeEngine {
         }
     }
 
-    private func nextNudgeText() -> String {
+    /// Kept for the rotation, which the budget does not own: the budget knows
+    /// one line for posture nudges, this knows the eight this app rotates
+    /// through. Used by AppDelegate when it asks the budget for a nudge.
+    func nextNudgeText() -> String {
         let count = Self.nudges.count
         let raw   = defaults.integer(forKey: Keys.nudgeIndex)
         let index = ((raw % count) + count) % count
         defaults.set((index + 1) % count, forKey: Keys.nudgeIndex)
-        return String(Self.nudges[index].prefix(22))
+        return Self.nudges[index]
     }
 
     // MARK: - Sleep / wake

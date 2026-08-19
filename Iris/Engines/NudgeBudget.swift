@@ -105,6 +105,7 @@ final class NudgeBudget: ObservableObject {
         case scrollFatigue
         case water
         case standUp
+        case posture
         case postMeetingReset
         case lateNightWrapUp
         case brightness
@@ -124,6 +125,7 @@ final class NudgeBudget: ObservableObject {
             case .scrollFatigue:    return "rest your wrists"
             case .water:            return "drink some water"
             case .standUp:          return "time to stand up"
+            case .posture:          return "sit up straight"
             case .postMeetingReset: return "look away for 20 seconds"
             case .lateNightWrapUp:  return "time to wrap up"
             case .brightness:       return "lower your brightness"
@@ -141,6 +143,7 @@ final class NudgeBudget: ObservableObject {
             case .scrollFatigue:    return "rest your wrists"
             case .water:            return "drink some water"
             case .standUp:          return "stand up"
+            case .posture:          return "sit up straight"
             case .postMeetingReset: return "look away"
             case .lateNightWrapUp:  return "wrap up"
             case .brightness:       return "dim your screen"
@@ -155,6 +158,7 @@ final class NudgeBudget: ObservableObject {
             case .scrollFatigue:    return "Scroll fatigue"
             case .water:            return "Water"
             case .standUp:          return "Stand up"
+            case .posture:          return "Posture nudges"
             case .postMeetingReset: return "Post-meeting"
             case .lateNightWrapUp:  return "Late night"
             case .brightness:       return "Brightness"
@@ -189,6 +193,10 @@ final class NudgeBudget: ObservableObject {
 
     /// Presenters collected in the open coalescing window.
     private var pending: [Source: (String) -> Void] = [:]
+    /// What to call when a source that cares is refused.
+    private var refusalHandlers: [Source: () -> Void] = [:]
+    /// Caller-supplied lines for the solo case, by source.
+    private var customTexts: [Source: String] = [:]
     private var flushTimer: Timer?
 
     /// When the last nudge was actually shown, and the ones inside the hour.
@@ -199,13 +207,33 @@ final class NudgeBudget: ObservableObject {
 
     // MARK: - The one call
 
+    /// Ask to interrupt, and be told when the answer is no.
+    ///
+    /// Most callers are event-driven: something happened, and if this is a bad
+    /// moment the nudge is simply dropped. Periodic sources are different. A
+    /// posture nudge that gets refused has to go back in the queue, or refusing
+    /// one silently ends the whole series, so those pass `onRefused` and
+    /// reschedule themselves. The refusal may arrive later than the call, since
+    /// a request can be turned down when its coalescing window closes.
+    func request(_ source: Source,
+                 text: String? = nil,
+                 present: @escaping (String) -> Void,
+                 onRefused: @escaping () -> Void) {
+        refusalHandlers[source] = onRefused
+        request(source, text: text, present: present)
+    }
+
     /// Ask to interrupt. `present` runs only if the request is granted, and is
     /// handed the exact text to show, which may be a combined line covering
     /// another source as well.
-    func request(_ source: Source, present: @escaping (String) -> Void) {
+    /// `text` replaces the source's own line when this nudge ends up on screen
+    /// alone. Posture nudges rotate through eight lines, and the budget should
+    /// not have to know them. When two nudges merge, the terse `actionPhrase` is
+    /// used regardless, because two full lines do not fit the menu bar.
+    func request(_ source: Source, text: String? = nil, present: @escaping (String) -> Void) {
         guard Thread.isMainThread else {
             DispatchQueue.main.async { [weak self] in
-                self?.request(source, present: present)
+                self?.request(source, text: text, present: present)
             }
             return
         }
@@ -221,6 +249,7 @@ final class NudgeBudget: ObservableObject {
         }
 
         pending[source] = present
+        customTexts[source] = text
         if flushTimer == nil { startFlushTimer() }
     }
 
@@ -262,7 +291,9 @@ final class NudgeBudget: ObservableObject {
         flushTimer = nil
 
         let group = pending
+        let texts = customTexts
         pending = [:]
+        customTexts = [:]
         guard !group.isEmpty else { return }
 
         let now = Date()
@@ -281,13 +312,13 @@ final class NudgeBudget: ObservableObject {
         shownDates.removeAll { now.timeIntervalSince($0) >= Self.hourWindow }
         for winner in winners { grant(winner) }
 
-        group[presenter]?(Self.combinedText(for: winners))
+        group[presenter]?(Self.combinedText(for: winners, custom: texts))
     }
 
     /// One nudge, at most two actions.
-    static func combinedText(for sources: [Source]) -> String {
+    static func combinedText(for sources: [Source], custom: [Source: String] = [:]) -> String {
         guard let first = sources.first else { return "" }
-        guard sources.count > 1 else { return first.text }
+        guard sources.count > 1 else { return custom[first] ?? first.text }
         return sources.map(\.actionPhrase).joined(separator: " and ")
     }
 
@@ -331,6 +362,7 @@ final class NudgeBudget: ObservableObject {
 #endif
 
     private func grant(_ source: Source) {
+        clearRefusal(source)
 #if DEBUG
         var tally = tallies[source] ?? Tally()
         tally.granted += 1
@@ -339,6 +371,16 @@ final class NudgeBudget: ObservableObject {
     }
 
     private func deny(_ source: Source, _ reason: DenialReason) {
+        if let handler = refusalHandlers.removeValue(forKey: source) { handler() }
+        record(denial: source, reason)
+    }
+
+    /// A granted source no longer needs its refusal handler.
+    private func clearRefusal(_ source: Source) {
+        refusalHandlers.removeValue(forKey: source)
+    }
+
+    private func record(denial source: Source, _ reason: DenialReason) {
 #if DEBUG
         var tally = tallies[source] ?? Tally()
         tally.denied += 1
