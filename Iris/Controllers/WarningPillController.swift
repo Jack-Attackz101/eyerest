@@ -103,8 +103,9 @@ final class WarningPillController {
     /// flush against the top the pill inside it was not.
     private var panelSize: NSSize {
         model.hasNotch
-            ? NSSize(width: model.notchWidth + PillMetrics.sideExt * 2, height: PillMetrics.pillH)
-            : NSSize(width: PillMetrics.fallW, height: PillMetrics.pillH)
+            ? NSSize(width: model.notchWidth + PillMetrics.sideExt * 2 + PillMetrics.snoozeW,
+                     height: PillMetrics.pillH)
+            : NSSize(width: PillMetrics.fallW + PillMetrics.snoozeW, height: PillMetrics.pillH)
     }
 
     /// The screen the pill belongs on.

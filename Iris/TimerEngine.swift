@@ -10,6 +10,7 @@
 import Foundation
 import Combine
 import AppKit
+import CoreGraphics
 import ServiceManagement
 
 final class TimerEngine: ObservableObject {
@@ -94,6 +95,21 @@ final class TimerEngine: ObservableObject {
     /// The longest a break can ever be postponed. Past this it fires regardless,
     /// because a break you can dodge indefinitely is not a break.
     static let maxDeferralSeconds = 120
+
+    // MARK: - Idle and snooze tuning
+
+    /// Idle longer than this stops the countdown entirely. Short of it, nothing
+    /// happens, so pausing for thirty seconds cannot be used to dodge breaks.
+    static let idleStopSeconds: TimeInterval = 5 * 60
+
+    /// One snooze is worth this many minutes, in the same units as the interval,
+    /// so a fast-cycle debug run snoozes by five seconds rather than five real
+    /// minutes.
+    static let snoozeMinutes = 5
+
+    /// And there are only ever this many per cycle. There is deliberately no
+    /// skip on the break itself: once the blackout is up it stays up.
+    static let maxSnoozesPerCycle = 2
     @Published var postureNudgesEnabled: Bool {
         didSet { defaults.set(postureNudgesEnabled, forKey: Keys.postureNudges) }
     }
@@ -194,6 +210,18 @@ final class TimerEngine: ObservableObject {
     /// than after the old timer finally fires.
     var onBlinkSettingChanged: (() -> Void)?
 
+    /// Count the time away from the keyboard as rest, rather than firing a break
+    /// the moment someone sits back down from lunch.
+    @Published var idleDetectionEnabled: Bool {
+        didSet { defaults.set(idleDetectionEnabled, forKey: Keys.idleDetection) }
+    }
+
+    /// True while the countdown is held because nobody is there.
+    @Published private(set) var isIdlePaused: Bool = false
+
+    /// Snoozes used in the current break cycle. Reset when a break happens.
+    @Published private(set) var snoozesUsed: Int = 0
+
     /// Set by WaterReminderEngine when the threshold is hit; cleared by acknowledgeWaterDrink().
     @Published var waterNudgePending: Bool = false
 
@@ -209,6 +237,9 @@ final class TimerEngine: ObservableObject {
     private var isSyncingLoginItem = false
     private var scheduledEndDate: Date?
     private var callActiveDate: Date?
+    /// Set while idle passes the rest duration, so the break is credited once
+    /// when input returns rather than on every idle tick.
+    private var idleCreditPending = false
 
     private var unitMultiplier: Int { DebugConfig.fastCycle ? 1 : 60 }
 
@@ -266,6 +297,7 @@ final class TimerEngine: ObservableObject {
         static let breakTheme = "iris.breakTheme"
         static let blinkStyle = "iris.blinkStyle"
         static let blinkInterval = "iris.blinkIntervalSeconds"
+        static let idleDetection = "iris.idleDetectionEnabled"
     }
 
     private init() {
@@ -297,6 +329,7 @@ final class TimerEngine: ObservableObject {
             Keys.breakTheme: BreakTheme.paper.rawValue,
             Keys.blinkStyle: BlinkStyle.off.rawValue,
             Keys.blinkInterval: 20,
+            Keys.idleDetection: true,
         ])
 
         intervalMinutes = Self.clamp(defaults.integer(forKey: Keys.interval), 5...120)
@@ -343,6 +376,7 @@ final class TimerEngine: ObservableObject {
         blinkStyle = BlinkStyle(rawValue: rawBlink) ?? .off
         let storedBlinkInterval = defaults.integer(forKey: Keys.blinkInterval)
         blinkIntervalSeconds = BlinkEngine.allowedIntervals.contains(storedBlinkInterval) ? storedBlinkInterval : 20
+        idleDetectionEnabled = defaults.object(forKey: Keys.idleDetection) as? Bool ?? true
 
         syncLoginItemStateFromSystem()
         registerSleepWakeObservers()
@@ -369,6 +403,7 @@ final class TimerEngine: ObservableObject {
     private func tick() {
         updateSuspensionStates()
         guard !isSuspended else { return }
+        if handleIdle() { return }
 
         switch timerState {
         case .counting, .warning:
@@ -397,6 +432,54 @@ final class TimerEngine: ObservableObject {
         case .idle, .scheduledPause:
             break
         }
+    }
+
+    // MARK: - Idle
+    //
+    // Without this, an hour at lunch teaches Iris nothing and it fires a break
+    // the moment you sit down. Two thresholds, and nothing in between: idle for
+    // longer than a whole rest counts as a rest that happened, and idle for
+    // longer than five minutes stops the clock until input returns. A brief idle
+    // does nothing at all, deliberately, or pausing for thirty seconds would be
+    // a way to dodge breaks forever.
+
+    /// Seconds since the last human input, system wide.
+    private var systemIdleSeconds: TimeInterval {
+        CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: .init(rawValue: ~0)!)
+    }
+
+    /// Returns true when the tick should stop here, because the countdown is
+    /// held.
+    private func handleIdle() -> Bool {
+        guard idleDetectionEnabled, timerState == .counting || timerState == .warning else {
+            if isIdlePaused { isIdlePaused = false }
+            return false
+        }
+
+        let idle = systemIdleSeconds
+
+        // Back from a long absence. If they were away for at least as long as a
+        // rest, that was a rest: credit it, record it so the stats stay honest,
+        // and start the interval again.
+        if isIdlePaused, idle < 1 {
+            isIdlePaused = false
+            if idleCreditPending {
+                idleCreditPending = false
+                StatsEngine.shared.recordNaturalBreak()
+                beginCounting()
+            }
+            return false
+        }
+
+        guard idle >= Self.idleStopSeconds else {
+            if isIdlePaused { isIdlePaused = false }
+            return false
+        }
+
+        // Nobody is there. Hold the countdown where it is.
+        if !isIdlePaused { isIdlePaused = true }
+        if idle >= Double(restDuration) { idleCreditPending = true }
+        return true
     }
 
     /// A detected call is currently auto-pausing Iris (i.e. auto-pause is on, a
@@ -439,6 +522,7 @@ final class TimerEngine: ObservableObject {
         activeRestDuration = restDuration
         restTimeRemaining = restDuration
         timerState = .resting
+        snoozesUsed = 0          // the allowance is per break cycle
     }
 
     private func endRest() {
@@ -456,6 +540,25 @@ final class TimerEngine: ObservableObject {
 
     func togglePause() {
         isPaused.toggle()
+    }
+
+    // MARK: - Snooze
+
+    /// Whether another five minutes is available in this cycle.
+    var canSnooze: Bool { snoozesUsed < Self.maxSnoozesPerCycle }
+
+    /// Push the break back five minutes. Lives on the warning pill only, and
+    /// never on the break overlay.
+    @discardableResult
+    func snooze() -> Bool {
+        guard canSnooze, timerState == .warning || timerState == .counting else { return false }
+        snoozesUsed += 1
+        timeRemaining += Double(Self.snoozeMinutes * unitMultiplier)
+        deferredSeconds = 0
+        if timerState == .warning, timeRemaining > Double(warningMinutes * unitMultiplier) {
+            timerState = .counting
+        }
+        return true
     }
 
     // MARK: - Suspension evaluation (calls / quiet hours / schedule blocks)

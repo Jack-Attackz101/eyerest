@@ -191,6 +191,9 @@ struct SettingsView: View {
                 SettingToggleRow(label: "Wait for a natural gap", isOn: $engine.waitForNaturalGap,
                                  icon: "hand.raised.fill", tint: .irisTintSystem,
                                  caption: "Holds a break up to 2 min if you are typing")
+                SettingToggleRow(label: "Count time away as a break", isOn: $engine.idleDetectionEnabled,
+                                 icon: "figure.walk.departure", tint: .irisTintSystem,
+                                 caption: "Stops the clock when you leave and credits a long absence")
                 SettingToggleRow(
                     label: "Automatic updates",
                     isOn: Binding(
