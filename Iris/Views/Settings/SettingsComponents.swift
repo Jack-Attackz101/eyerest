@@ -98,7 +98,12 @@ struct SettingRow<Content: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) { content }
-                .frame(height: 44)
+                // minHeight, not height: a caption that wraps to two lines used
+                // to be clipped to one and truncated with an ellipsis, which is
+                // how "Hide breaks from screen sharing" became "Hide breaks
+                // from screen...". The row grows instead.
+                .frame(minHeight: 44)
+                .padding(.vertical, 4)
                 .padding(.horizontal, 12)
             Rectangle()
                 .fill(Color.irisDivider)
@@ -114,26 +119,48 @@ struct SettingToggleRow: View {
     var icon: String? = nil
     var tint: Color = .irisAccent
     var caption: String? = nil
+    /// What turning this on will actually do, for anything that asks the system
+    /// for permission or reaches outside the app. Shown whether it is on or off,
+    /// because the point is to say so before it happens rather than after.
+    var permissionNote: String? = nil
 
     var body: some View {
-        SettingRow {
-            if let icon = icon { RowIcon(systemName: icon, tint: tint) }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(label)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.92))
-                if let caption = caption {
-                    Text(caption)
+        VStack(alignment: .leading, spacing: 0) {
+            SettingRow {
+                if let icon = icon { RowIcon(systemName: icon, tint: tint) }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(label)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.92))
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let caption = caption {
+                        Text(caption)
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.irisTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer(minLength: 8)
+                Toggle("", isOn: $isOn)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .tint(tint)
+                    .controlSize(.small)
+            }
+            if let permissionNote {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 9))
+                        .foregroundStyle(tint.opacity(0.8))
+                    Text(permissionNote)
                         .font(.system(size: 10))
                         .foregroundStyle(Color.irisTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .padding(.horizontal, 12)
+                .padding(.top, 6)
+                .padding(.bottom, 10)
             }
-            Spacer(minLength: 8)
-            Toggle("", isOn: $isOn)
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .tint(tint)
-                .controlSize(.small)
         }
     }
 }
@@ -178,15 +205,19 @@ struct SettingStepperRow: View {
 
 /// The four groups the settings panel is split into.
 enum SettingsTab: String, CaseIterable, Identifiable {
-    case timer, focus, wellness, system
+    case timer, focus, wellness, routines, system
 
     var id: String { rawValue }
 
+    /// Five labels across 320pt leaves about 61pt each, so these stay one short
+    /// word. "Routines" does not fit at 9pt in that width; "Rituals" does, and
+    /// it is what these settings actually are.
     var label: String {
         switch self {
         case .timer:    return "Timer"
         case .focus:    return "Focus"
         case .wellness: return "Body"
+        case .routines: return "Rituals"
         case .system:   return "App"
         }
     }
@@ -196,6 +227,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .timer:    return "timer"
         case .focus:    return "moon.fill"
         case .wellness: return "figure.walk"
+        case .routines: return "sunrise.fill"
         case .system:   return "gearshape.fill"
         }
     }
@@ -205,6 +237,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .timer:    return .irisTintTimer
         case .focus:    return .irisTintFocus
         case .wellness: return .irisTintWellness
+        case .routines: return .irisTintSchedule
         case .system:   return .irisTintSystem
         }
     }

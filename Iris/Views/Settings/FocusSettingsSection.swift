@@ -18,19 +18,98 @@ struct FocusSettingsSection: View {
     @State private var showAXWarning = !AXIsProcessTrusted()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SectionHeader(title: "Focus Blocker")
-
-            SettingToggleRow(label: "Block distracting apps & sites", isOn: $engine.focusBlockerEnabled)
+        VStack(alignment: .leading, spacing: 12) {
+            hero
 
             if engine.focusBlockerEnabled {
-                blocklist
-                addRow
-                if showAXWarning && hasWebsites {
-                    axWarningRow
+                SettingsCard {
+                    blocklist
+                    addRow
+                    if showAXWarning && hasWebsites {
+                        axWarningRow
+                    }
                 }
             }
         }
+    }
+
+    /// The blocker is the one thing no competitor has, and in the old panel it
+    /// was a checkbox that looked exactly like "Sound cues". This is the only
+    /// control in the app that gets its own card, its own state line and a count
+    /// of what it is holding back.
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 11) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(Color.irisTintFocus.opacity(engine.focusBlockerEnabled ? 0.22 : 0.12))
+                        .frame(width: 38, height: 38)
+                    Image(systemName: engine.focusBlockerEnabled ? "shield.lefthalf.filled" : "shield")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Color.irisTintFocus)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Focus blocker")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Text(stateLine)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.irisTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                Toggle("", isOn: $engine.focusBlockerEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .tint(Color.irisTintFocus)
+                    .controlSize(.small)
+            }
+            .padding(14)
+
+            if engine.focusBlockerEnabled && !engine.blockedItems.isEmpty {
+                Text(previewLine)
+                    .font(.system(size: 10))
+                    .monospaced()
+                    .foregroundStyle(Color.irisTertiary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 12)
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.irisCard)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(engine.focusBlockerEnabled
+                        ? Color.irisTintFocus.opacity(0.45)
+                        : Color.white.opacity(0.06),
+                        lineWidth: 1)
+        )
+    }
+
+    /// What it is doing right now, in words rather than a switch position.
+    private var stateLine: String {
+        guard engine.focusBlockerEnabled else {
+            return "Off. Apps and sites you pick stay reachable."
+        }
+        let enabled = engine.blockedItems.filter(\.isEnabled).count
+        guard enabled > 0 else { return "On, but nothing is on the list yet." }
+        return "Blocking \(enabled) \(enabled == 1 ? "app or site" : "apps and sites") while you work."
+    }
+
+    /// The first few by name, so the list is legible without opening it.
+    private var previewLine: String {
+        let names = engine.blockedItems.filter(\.isEnabled).map(\.name)
+        guard !names.isEmpty else { return "" }
+        let shown = names.prefix(3).joined(separator: ", ")
+        let extra = names.count - min(names.count, 3)
+        return extra > 0 ? "\(shown) and \(extra) more" : shown
     }
 
     // MARK: - Subviews

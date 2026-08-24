@@ -20,7 +20,15 @@ struct SettingsView: View {
     @EnvironmentObject private var engine: TimerEngine
     @Binding var showSettings: Bool
 
-    @State private var tab: SettingsTab = .timer
+    @State private var tab: SettingsTab
+
+    /// `initialTab` defaults to Timer, so the popover's call site is unchanged.
+    /// It exists so a single tab can be opened directly, which is how the review
+    /// screenshots are taken.
+    init(showSettings: Binding<Bool>, initialTab: SettingsTab = .timer) {
+        _showSettings = showSettings
+        _tab = State(initialValue: initialTab)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,6 +44,7 @@ struct SettingsView: View {
                     case .timer:    timerTab
                     case .focus:    focusTab
                     case .wellness: wellnessTab
+                    case .routines: routinesTab
                     case .system:   systemTab
                     }
                 }
@@ -74,18 +83,22 @@ struct SettingsView: View {
 
     private var timerTab: some View {
         VStack(alignment: .leading, spacing: 14) {
+            // What Iris will actually do, in one line, before any controls.
+            SettingsSummary(engine: engine)
+
+            SectionHeader(title: "The cycle")
             SettingsCard {
-                SettingStepperRow(label: "Break every", value: $engine.intervalMinutes,
-                                  range: 5...120, step: 5,
-                                  display: "\(engine.intervalMinutes) min",
+                SettingsChoiceRow(label: "Break every", value: $engine.intervalMinutes,
+                                  choices: [15, 20, 30, 45], range: 5...120, step: 5,
+                                  format: { "\($0) min" },
                                   icon: "clock.fill", tint: .irisTintTimer)
-                SettingStepperRow(label: "Warn me", value: $engine.warningMinutes,
-                                  range: 1...5, step: 1,
-                                  display: "\(engine.warningMinutes) min before",
+                SettingsChoiceRow(label: "Warn me", value: $engine.warningMinutes,
+                                  choices: [1, 2, 3, 5], range: 1...5, step: 1,
+                                  format: { "\($0) min" },
                                   icon: "bell.fill", tint: .irisTintTimer)
-                SettingStepperRow(label: "Rest for", value: $engine.restDuration,
-                                  range: 10...60, step: 5,
-                                  display: "\(engine.restDuration) sec",
+                SettingsChoiceRow(label: "Rest for", value: $engine.restDuration,
+                                  choices: [20, 30, 45, 60], range: 10...60, step: 5,
+                                  format: { "\($0) sec" },
                                   icon: "eye.fill", tint: .irisTintTimer)
             }
 
@@ -149,8 +162,12 @@ struct SettingsView: View {
 
     // MARK: - Body tab
 
+    /// Body is the ongoing physical stuff only. The scheduled rituals moved to
+    /// their own tab, which is what turned this from one long stack into
+    /// something you can scan.
     private var wellnessTab: some View {
         VStack(alignment: .leading, spacing: 14) {
+            SectionHeader(title: "Posture")
             SettingsCard {
                 SettingToggleRow(label: "Posture nudges", isOn: $engine.postureNudgesEnabled,
                                  icon: "figure.stand", tint: .irisTintWellness)
@@ -171,10 +188,47 @@ struct SettingsView: View {
                         .controlSize(.small)
                     }
                 }
-                ChallengeSettingsSection()
             }
 
             HabitsSettingsSection()
+        }
+    }
+
+    /// The fifth tab. Wind down, desk reset, the morning challenge and the late
+    /// night guard are scheduled rituals rather than continuous behaviour, so
+    /// they belong together and not in the middle of the everyday switches.
+    private var routinesTab: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            SectionHeader(title: "Morning")
+            SettingsCard {
+                ChallengeSettingsSection()
+            }
+
+            SectionHeader(title: "Evening")
+            SettingsCard {
+                SettingToggleRow(label: "Late-night guard", isOn: $engine.lateNightGuardEnabled,
+                                 icon: "moon.stars.fill", tint: .irisTintSchedule,
+                                 caption: "Shortens the interval to 15 minutes after dark")
+                if engine.lateNightGuardEnabled {
+                    SettingsChoiceRow(label: "After", value: $engine.lateNightHour,
+                                      choices: [20, 21, 22, 23], range: 18...23, step: 1,
+                                      format: { "\($0):00" },
+                                      icon: "clock", tint: .irisTintSchedule)
+                }
+                SettingToggleRow(label: "Brightness check", isOn: $engine.brightnessCheckEnabled,
+                                 icon: "sun.min.fill", tint: .irisTintSchedule,
+                                 caption: "A reminder to turn the screen down in the evening")
+            }
+
+            SectionHeader(title: "End of day")
+            SettingsCard {
+                SettingToggleRow(label: "End-of-day wind-down", isOn: $engine.windDownEnabled,
+                                 icon: "figure.mind.and.body", tint: .irisTintSchedule,
+                                 caption: "A guided minute to close the day")
+                SettingToggleRow(label: "Desk reset checklist", isOn: $engine.deskResetEnabled,
+                                 icon: "checklist", tint: .irisTintSchedule,
+                                 caption: "A short list for the desk around you")
+            }
         }
     }
 
@@ -182,6 +236,7 @@ struct SettingsView: View {
 
     private var systemTab: some View {
         VStack(alignment: .leading, spacing: 14) {
+            SectionHeader(title: "Behaviour")
             SettingsCard {
                 SettingToggleRow(label: "Launch at login", isOn: $engine.launchAtLogin,
                                  icon: "power", tint: .irisTintSystem)
@@ -191,15 +246,19 @@ struct SettingsView: View {
                 SettingToggleRow(label: "Wait for a natural gap", isOn: $engine.waitForNaturalGap,
                                  icon: "hand.raised.fill", tint: .irisTintSystem,
                                  caption: "Holds a break up to 2 min if you are typing")
-                SettingToggleRow(label: "Count time away as a break", isOn: $engine.idleDetectionEnabled,
+                SettingToggleRow(label: "Count time away", isOn: $engine.idleDetectionEnabled,
                                  icon: "figure.walk.departure", tint: .irisTintSystem,
-                                 caption: "Stops the clock when you leave and credits a long absence")
-                SettingToggleRow(label: "Hide breaks from screen sharing", isOn: $engine.hideFromScreenShare,
+                                 caption: "Stops the clock when you leave, and a long absence counts as a break")
+                SettingToggleRow(label: "Hide from screen sharing", isOn: $engine.hideFromScreenShare,
                                  icon: "rectangle.on.rectangle.slash", tint: .irisTintSystem,
-                                 caption: "Turn this off to record a demo with the overlay in shot")
+                                 caption: "Turn off to record a demo with the overlay in shot")
                 HotkeyRecorderRow {
                     (NSApp.delegate as? AppDelegate)?.registerBreakHotkey()
                 }
+            }
+
+            SectionHeader(title: "Updates")
+            SettingsCard {
                 SettingToggleRow(
                     label: "Automatic updates",
                     isOn: Binding(
