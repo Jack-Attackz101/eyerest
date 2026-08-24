@@ -19,6 +19,12 @@ final class BlockerController {
 
     private var model: BlockerOverlayModel?
     private var panels: [NSPanel] = []
+
+    /// Apply the current screen-sharing policy to panels that already exist.
+    func applySharingPolicy() {
+        let type: NSWindow.SharingType = TimerEngine.shared.hideFromScreenShare ? .none : .readOnly
+        panels.forEach { $0.sharingType = type }
+    }
     private var autoDismissTimer: Timer?
     private var pendingLetMeIn: (() -> Void)?
 
@@ -95,6 +101,8 @@ final class BlockerController {
         panel.backgroundColor = .black
         panel.hasShadow = false
         panel.hidesOnDeactivate = false
+        // Same policy as the blackout: out of recordings by default.
+        panel.sharingType = TimerEngine.shared.hideFromScreenShare ? .none : .readOnly
 
         let host = NSHostingView(rootView: BlockerOverlayView(model: model))
         host.frame = NSRect(origin: .zero, size: screen.frame.size)

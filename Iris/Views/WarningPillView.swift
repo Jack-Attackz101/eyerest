@@ -71,6 +71,7 @@ struct NotchPillShape: Shape {
 enum PillMetrics {
     static let pillH: CGFloat = 44       // total pill height
     static let sideExt: CGFloat = 55     // extension on each side of notch
+    static let snoozeW: CGFloat = 84     // the snooze control, when it is offered
     static let botR: CGFloat = 20        // bottom corner radius, both cases
     static let fallW: CGFloat = 240      // fixed width when there is no notch
     static let countdownDrop: CGFloat = 4 // pushes text below camera zone (notch only)
@@ -144,8 +145,31 @@ struct WarningPillView: View {
             // Right 55pt: depleting ring
             progressRing
                 .frame(width: M.sideExt)
+
+            // Snooze hangs off the right, only while the pill is expanded, and
+            // only here. There is deliberately none on the break overlay.
+            if model.expanded {
+                snoozeButton
+                    .frame(width: M.snoozeW)
+            }
         }
         .frame(width: pillWidth, height: M.pillH)
+    }
+
+    /// Plus five minutes, twice per cycle. After that it says so rather than
+    /// disappearing, because a control that vanishes looks like a bug.
+    private var snoozeButton: some View {
+        Button { engine.snooze() } label: {
+            Text(engine.canSnooze ? "+5 min" : "next one is happening")
+                .font(.system(size: engine.canSnooze ? 12 : 9, weight: .medium))
+                .foregroundStyle(.white.opacity(engine.canSnooze ? 0.92 : 0.45))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .disabled(!engine.canSnooze)
+        .help(engine.canSnooze ? "Push this break back five minutes" : "Two snoozes is the limit")
     }
 
     // MARK: - Elements
@@ -190,8 +214,8 @@ struct WarningPillView: View {
 
     private var pillWidth: CGFloat {
         model.hasNotch
-            ? (model.expanded ? model.notchWidth + M.sideExt * 2 : model.notchWidth)
-            : M.fallW
+            ? (model.expanded ? model.notchWidth + M.sideExt * 2 + M.snoozeW : model.notchWidth)
+            : M.fallW + M.snoozeW
     }
 
     private var pillHeight: CGFloat {

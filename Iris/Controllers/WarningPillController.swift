@@ -53,6 +53,8 @@ final class WarningPillController {
         panel.ignoresMouseEvents = false
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
 
+        panel.sharingType = engine.hideFromScreenShare ? .none : .readOnly
+
         host = NSHostingView(rootView: AnyView(WarningPillView(model: model).environmentObject(engine)))
         host.autoresizingMask = [.width, .height]
         panel.contentView = host
@@ -60,7 +62,13 @@ final class WarningPillController {
 
     // MARK: - Show / collapse
 
+    /// Apply the current screen-sharing policy.
+    func applySharingPolicy() {
+        panel.sharingType = engine.hideFromScreenShare ? .none : .readOnly
+    }
+
     func show() {
+        applySharingPolicy()
         detectGeometry()
         model.reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         model.flashing = false
@@ -103,8 +111,9 @@ final class WarningPillController {
     /// flush against the top the pill inside it was not.
     private var panelSize: NSSize {
         model.hasNotch
-            ? NSSize(width: model.notchWidth + PillMetrics.sideExt * 2, height: PillMetrics.pillH)
-            : NSSize(width: PillMetrics.fallW, height: PillMetrics.pillH)
+            ? NSSize(width: model.notchWidth + PillMetrics.sideExt * 2 + PillMetrics.snoozeW,
+                     height: PillMetrics.pillH)
+            : NSSize(width: PillMetrics.fallW + PillMetrics.snoozeW, height: PillMetrics.pillH)
     }
 
     /// The screen the pill belongs on.

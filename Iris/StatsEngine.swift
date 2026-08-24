@@ -64,6 +64,14 @@ final class StatsEngine: ObservableObject {
     // MARK: - Public API
 
     /// Record one completed break.
+    /// A break that happened because the user walked away rather than because
+    /// Iris blacked the screen out. Counted the same, because from the eyes'
+    /// point of view it is the same, and leaving it out would make the stats
+    /// quietly pessimistic.
+    func recordNaturalBreak() {
+        recordBreak()
+    }
+
     func recordBreak() {
         refreshForToday()
         breaksToday += 1

@@ -7,6 +7,8 @@
 //          checked in the browser, anyone could read the page source, skip the
 //          check and pull the list. Set ADMIN_PASS in Vercel to change it.
 
+const rateLimit = require('./_ratelimit.js');
+
 // No fallback. This used to read `process.env.ADMIN_PASS || <a literal>`, and
 // because this repo is public that literal was a published password: any deploy
 // target without the variable set accepted it, silently, and the whole waitlist
@@ -87,11 +89,16 @@ module.exports = async function handler(req, res) {
 
     if (pw === null) return res.json({ count });          // plain count, unchanged
     if (gateUnavailable(res)) return;                     // before the compare
+    if (await rateLimit.refuseIfLockedOut(req, res)) return;
+
+    const ip = rateLimit.clientIP(req);
     if (!samePass(pw)) {
+      await rateLimit.recordFailure(ip);
       // deliberately vague, and slow enough to make guessing tedious
       await new Promise((r) => setTimeout(r, 700));
       return res.status(401).json({ error: 'Wrong password' });
     }
+    await rateLimit.clearFailures(ip);
 
     const emails = (await redis(kvUrl, kvToken, 'SMEMBERS', 'iris:waitlist')) || [];
     emails.sort();
@@ -137,11 +144,16 @@ module.exports = async function handler(req, res) {
   // ---- DELETE: remove one address, for pruning test or bad entries ----
   if (req.method === 'DELETE') {
     if (gateUnavailable(res)) return;                     // before the compare
+    if (await rateLimit.refuseIfLockedOut(req, res)) return;
+
     const url = new URL(req.url, 'http://x');
+    const ip = rateLimit.clientIP(req);
     if (!samePass(url.searchParams.get('pw'))) {
+      await rateLimit.recordFailure(ip);
       await new Promise((r) => setTimeout(r, 700));
       return res.status(401).json({ error: 'Wrong password' });
     }
+    await rateLimit.clearFailures(ip);
     const body  = await readBody(req);
     const email = (body.email || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ error: 'No email given' });

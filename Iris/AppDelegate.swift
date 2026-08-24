@@ -34,6 +34,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let standUpEngine = StandUpEngine()
     private let wristReliefEngine = WristReliefEngine()
     private let scrollFatigueEngine = ScrollFatigueEngine()
+    private let blinkEngine = BlinkEngine()
+    private let blinkCue = BlinkCueController()
 
     private var statusItem: NSStatusItem!
     private var dashboardPanel: DashboardPanelController!
@@ -128,6 +130,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         nudgeEngine.onShow = { [weak self] text in self?.beginNudge(text) }
         nudgeEngine.onHide = { [weak self] in self?.endNudge(animated: true) }
         nudgeEngine.start()
+
+        // Blink reminders. Deliberately not through NudgeBudget: several a
+        // minute would eat the whole budget. They get their own quiet path and
+        // their own suppression rules instead.
+        blinkEngine.isOverlayOnScreen = { [weak self] in
+            guard let self else { return false }
+            return self.challengeController.isPresenting
+                || self.windDownController.isPresenting
+                || self.deskResetController.isPresenting
+        }
+        blinkEngine.onCue = { [weak self] in
+            guard let self else { return }
+            self.blinkCue.fire(style: self.engine.blinkStyle, soundEnabled: self.engine.soundEnabled)
+        }
+        engine.onBlinkSettingChanged = { [weak self] in self?.blinkEngine.reschedule() }
+        blinkEngine.start()
+
+        // A global shortcut that starts a break now. Registered here so a failure
+        // can be surfaced in settings rather than being silent.
+        GlobalHotkey.shared.onFire = { [weak self] in self?.engine.restNow() }
+        registerBreakHotkey()
+
+        // Keep every overlay out of screen recordings, or deliberately in them.
+        engine.onSharingPolicyChanged = { [weak self] in self?.applySharingPolicy() }
+        applySharingPolicy()
 
         focusBlockerEngine.shouldSuppress = { [weak self] in
             guard let self else { return false }
@@ -237,6 +264,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             selector: #selector(handleDemoChallenge),
             name: .irisDemoChallenge, object: nil)
 #endif
+    }
+
+    /// Register the configured shortcut and remember why if it will not take.
+    func registerBreakHotkey() {
+        let failure = GlobalHotkey.shared.register(engine.breakHotkey)
+        HotkeyStatus.shared.failure = failure
+        if let failure {
+            NSLog("Iris hotkey: %@ could not be registered, %@",
+                  engine.breakHotkey.displayString, failure.message)
+        }
+    }
+
+    private func applySharingPolicy() {
+        warningController?.applySharingPolicy()
+        blackoutController?.applySharingPolicy()
+        blockerController?.applySharingPolicy()
     }
 
     // MARK: - License gate

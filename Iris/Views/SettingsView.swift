@@ -89,6 +89,29 @@ struct SettingsView: View {
                                   icon: "eye.fill", tint: .irisTintTimer)
             }
 
+            SectionHeader(title: "Break screen")
+            SettingsCard {
+                SettingRow {
+                    RowIcon(systemName: "paintpalette.fill", tint: .irisTintTimer)
+                    Text("Theme")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.92))
+                    Spacer(minLength: 8)
+                    Picker("", selection: $engine.breakTheme) {
+                        ForEach(BreakTheme.allCases) { theme in
+                            HStack(spacing: 6) {
+                                swatch(theme)
+                                Text(theme.label)
+                            }
+                            .tag(theme)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                }
+            }
+
             SectionHeader(title: "Sound")
             SettingsCard {
                 SettingToggleRow(label: "Sound cues", isOn: $engine.soundEnabled,
@@ -102,6 +125,18 @@ struct SettingsView: View {
                 ScheduleSettingsSection()
             }
         }
+    }
+
+    /// A dot of the theme's own background, so the picker shows the look rather
+    /// than only naming it.
+    private func swatch(_ theme: BreakTheme) -> some View {
+        Circle()
+            .fill(theme == .random
+                  ? AnyShapeStyle(AngularGradient(colors: BreakTheme.concrete.map(\.backgroundTop),
+                                                  center: .center))
+                  : AnyShapeStyle(theme.backgroundTop))
+            .frame(width: 10, height: 10)
+            .overlay(Circle().stroke(.white.opacity(0.25), lineWidth: 0.5))
     }
 
     // MARK: - Focus tab
@@ -156,6 +191,15 @@ struct SettingsView: View {
                 SettingToggleRow(label: "Wait for a natural gap", isOn: $engine.waitForNaturalGap,
                                  icon: "hand.raised.fill", tint: .irisTintSystem,
                                  caption: "Holds a break up to 2 min if you are typing")
+                SettingToggleRow(label: "Count time away as a break", isOn: $engine.idleDetectionEnabled,
+                                 icon: "figure.walk.departure", tint: .irisTintSystem,
+                                 caption: "Stops the clock when you leave and credits a long absence")
+                SettingToggleRow(label: "Hide breaks from screen sharing", isOn: $engine.hideFromScreenShare,
+                                 icon: "rectangle.on.rectangle.slash", tint: .irisTintSystem,
+                                 caption: "Turn this off to record a demo with the overlay in shot")
+                HotkeyRecorderRow {
+                    (NSApp.delegate as? AppDelegate)?.registerBreakHotkey()
+                }
                 SettingToggleRow(
                     label: "Automatic updates",
                     isOn: Binding(

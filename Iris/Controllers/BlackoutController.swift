@@ -22,6 +22,9 @@ final class BlackoutController {
     private var panels: [NSPanel] = []
     private var eventMonitor: Any?
     private var isActive = false
+    /// Drives the breathing lap. One timer for every display, since all the
+    /// panels share one model.
+    private var breathTimer: Timer?
 
     init(engine: TimerEngine) {
         self.engine = engine
@@ -40,9 +43,14 @@ final class BlackoutController {
         rebuildPanels()
 
         model.fadeDuration = 0.6
+        model.reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        // Resolve the theme once per break: "random each break" must not
+        // reshuffle mid-rest, and every display has to agree.
+        model.theme = engine.breakTheme.resolved()
         startEventMonitor()
         prepareStretchCard()
         preparePosturePrompt()
+        prepareBoxBreathing()
 
         // Flip visibility next runloop so the 0 -> 1 opacity fade actually plays.
         DispatchQueue.main.async { [weak self] in
@@ -80,8 +88,48 @@ final class BlackoutController {
         }
     }
 
+    /// Apply the current screen-sharing policy to panels that already exist.
+    func applySharingPolicy() {
+        let type: NSWindow.SharingType = engine.hideFromScreenShare ? .none : .readOnly
+        panels.forEach { $0.sharingType = type }
+    }
+
+    /// Box breathing, when it is on and the rest is long enough for a whole lap.
+    /// A partial lap is worse than none, so short rests keep the posture prompt.
+    private func prepareBoxBreathing() {
+        breathTimer?.invalidate()
+        breathTimer = nil
+        model.breathElapsed = 0
+        model.showBreathing = false
+
+        guard engine.boxBreathingEnabled, BoxBreathing.fits(restDuration: engine.restDuration) else { return }
+        // Wait out the stretch card if there is one, then only start if a full
+        // lap still fits in what is left of the rest.
+        let delay: TimeInterval = engine.stretchCardsEnabled ? 15.0 : 0
+        let remainingAfterDelay = Double(engine.restDuration) - delay
+        guard remainingAfterDelay >= BoxBreathing.cycleSeconds else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self, self.isActive else { return }
+            self.model.showBreathing = true
+            let started = Date()
+            // 1/30s so the dot moves smoothly and reaches each corner on the
+            // second. Under Reduce Motion the dot is not drawn, but the phase
+            // word still has to change every 4 seconds, so the clock runs on.
+            let timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+                guard let self, self.isActive else { return }
+                self.model.breathElapsed = Date().timeIntervalSince(started)
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            self.breathTimer = timer
+        }
+    }
+
     func hide() {
         isActive = false
+        breathTimer?.invalidate()
+        breathTimer = nil
+        model.showBreathing = false
         model.fadeDuration = 0.8
         model.visible = false
         model.showPrompt = false
@@ -125,6 +173,9 @@ final class BlackoutController {
         panel.backgroundColor = .black
         panel.hasShadow = false
         panel.hidesOnDeactivate = false
+        // Keep the blackout out of screen shares and recordings, unless someone
+        // is deliberately demoing Iris and wants it in the frame.
+        panel.sharingType = engine.hideFromScreenShare ? .none : .readOnly
 
         let host = NSHostingView(rootView: BlackoutView(model: model).environmentObject(engine))
         host.frame = NSRect(origin: .zero, size: screen.frame.size)

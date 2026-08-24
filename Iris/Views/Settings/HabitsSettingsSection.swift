@@ -36,6 +36,46 @@ struct HabitsSettingsSection: View {
                 }
             }
 
+            // Blink reminders. Its own quiet path, not the nudge budget.
+            SettingRow {
+                Text("Blink reminders")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.irisSecondary)
+                Spacer()
+                Picker("", selection: $engine.blinkStyle) {
+                    ForEach(BlinkStyle.allCases) { style in
+                        Text(style.label).tag(style)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .controlSize(.small)
+            }
+            if engine.blinkStyle != .off {
+                SettingRow {
+                    Text("Blink every")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.irisSecondary)
+                    Spacer()
+                    Picker("", selection: $engine.blinkIntervalSeconds) {
+                        ForEach(BlinkEngine.allowedIntervals, id: \.self) { seconds in
+                            Text("\(seconds) sec").tag(seconds)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                }
+            }
+
+            // Box breathing during breaks. Only offered when a full 16 second
+            // lap fits in the rest, since a truncated cycle is worse than none.
+            SettingToggleRow(label: "Box breathing during breaks",
+                             isOn: $engine.boxBreathingEnabled,
+                             caption: BoxBreathing.fits(restDuration: engine.restDuration)
+                                 ? "Four seconds in, four hold, four out, four hold"
+                                 : "Needs a rest of 16 seconds or longer")
+
             // Feature 2: Water reminders
             SettingToggleRow(label: "Water reminders", isOn: $engine.waterRemindersEnabled)
 
