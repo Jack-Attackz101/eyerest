@@ -13,7 +13,10 @@ struct ChallengeSettingsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SettingToggleRow(label: "Physical challenge", isOn: $engine.challenge.isEnabled)
+            SettingToggleRow(label: "Physical challenge",
+                             isOn: $engine.challenge.isEnabled,
+                             icon: "figure.run", tint: .irisTintSchedule,
+                             caption: "Movement before your Mac unlocks")
 
             if engine.challenge.isEnabled {
                 exercisePicker

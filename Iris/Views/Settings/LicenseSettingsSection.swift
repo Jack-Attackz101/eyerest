@@ -80,7 +80,7 @@ struct LicenseSettingsSection: View {
                 }
                 if networkError {
                     SettingRow {
-                        Text("No internet. Key accepted offline — will verify next launch.")
+                        Text("No internet. Key accepted offline, and will verify next launch.")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                     }
