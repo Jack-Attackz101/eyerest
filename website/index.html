@@ -256,7 +256,13 @@
     .ap-dl { border-top: 1px solid rgba(28,28,28,0.14); margin-top: 4px; padding-top: 18px; }
     .ap-dl:empty { border: none; margin: 0; padding: 0; }
     .ap-dl-meta { font-family: var(--mono); font-size: 11px; letter-spacing: .03em; color: var(--muted); margin-top: 10px; }
-    .ap-dl-note { font-family: var(--mono); font-size: 11px; letter-spacing: .03em; color: var(--muted); margin-top: 6px; opacity: 0.8; }
+    .ap-dl-source { font-family: var(--mono); font-size: 12px; letter-spacing: .03em;
+      font-weight: 500; margin-bottom: 10px; }
+    .ap-dl-source.ok  { color: var(--green); }
+    .ap-dl-source.bad { color: var(--red); }
+    .ap-dl-hint { color: rgba(28,28,28,0.45); }
+    .ap-dl-warn.strong { font-weight: 600; background: rgba(200,75,47,0.10);
+      border-left: 3px solid var(--red); padding: 8px 10px; margin-top: 8px; }
     .ap-dl-warn { font-family: var(--mono); font-size: 11px; letter-spacing: .03em; color: var(--red); margin-top: 6px; }
     .download-button { background: var(--ink); color: var(--bg); border: 2px solid var(--ink);
       border-radius: 4px; font-family: var(--sans); font-weight: 600; font-size: 13px;
@@ -691,28 +697,47 @@
         const built  = build.builtAt ? day(build.builtAt) : null;
         const served = build.lastModified ? minute(build.lastModified) : null;
         const size   = build.sizeBytes ? (build.sizeBytes / 1048576).toFixed(1) + ' MB' : null;
-        const meta   = [
-          build.sourceLabel || null,
-          built  ? 'built ' + built   : 'build date unknown',
+
+        // The source goes on its own line, in the source's own colour, because
+        // it is the thing that was easy to miss when it was one clause in a
+        // grey run of text.
+        const isRelease = build.source === 'release';
+        const sourceLine = esc(build.sourceLabel || 'unknown source');
+        const meta = [
+          built ? 'built ' + built : 'build date unknown',
           size,
           // only the committed file has a meaningful served date, see api/build.js
           served ? 'served ' + served : null,
         ].filter(Boolean).join(' · ');
 
+        // Falling back is a problem once a release exists, so it reads as one.
+        let fallbackLine = '';
+        if (build.fallback) {
+          fallbackLine = build.fallback.severity === 'no-release'
+            ? 'No release published yet. This is the hand-committed file, which goes stale silently.'
+            : 'Could not use the release: ' + build.fallback.reason + '. This is the fallback, not what shipped.';
+        }
+
         let warn = '';
         if (build.stale) {
-          warn = 'This build is ' + Math.round(build.daysBehind) +
-                 ' days behind the source. Rebuild it before sharing it.';
+          const d = build.staleDays;
+          warn = 'STALE: this build is ' + d + (d === 1 ? ' day' : ' days') +
+                 ' behind the newest change to the app. Do not record with it.';
         } else if (build.daysBehind === null) {
-          warn = 'Could not check it against the source.';
+          warn = 'Could not check this against the source.';
         }
 
         host.innerHTML =
           '<div class="ap-head">Current build</div>' +
+          '<p class="ap-dl-source ' + (isRelease ? 'ok' : 'bad') + '">' + sourceLine + '</p>' +
           '<a class="download-button" href="' + esc(build.url) + '" download>Download Iris</a>' +
           '<p class="ap-dl-meta">' + esc(meta) + '</p>' +
-          (build.note ? '<p class="ap-dl-note">' + esc(build.note) + '</p>' : '') +
-          (warn ? '<p class="ap-dl-warn">' + esc(warn) + '</p>' : '');
+          (build.sha256
+            ? '<p class="ap-dl-meta">sha256 ' + esc(build.sha256) +
+              '<br><span class="ap-dl-hint">compare with: shasum -a 256 Iris.dmg | cut -c1-12</span></p>'
+            : '') +
+          (fallbackLine ? '<p class="ap-dl-warn">' + esc(fallbackLine) + '</p>' : '') +
+          (warn ? '<p class="ap-dl-warn strong">' + esc(warn) + '</p>' : '');
       }
 
       async function load(pw) {
