@@ -35,7 +35,11 @@
 // work that is already in the app, which is the same comparison the DMG
 // freshness CI check makes.
 
+const crypto = require('crypto');
 const rateLimit = require('./_ratelimit.js');
+
+/// A DMG is tens of megabytes; anything past this is not one of ours.
+const MAX_HASH_BYTES = 200 * 1024 * 1024;
 
 // No fallback. This used to read `process.env.ADMIN_PASS || <a literal>`, and
 // because this repo is public that literal was a published password: any deploy
@@ -56,7 +60,9 @@ const REPO        = 'Jack-Attackz101/eyerest';
 const DMG_PATH    = '/Iris.dmg';
 const SOURCE_PATH = 'Iris';                 // every .swift file lives under here
 const DMG_REPO_PATH = 'website/Iris.dmg';
-const STALE_DAYS  = 7;
+// A day, not a week. The old threshold let a build drift for six days without
+// a word, and a quiet warning got ignored for nineteen.
+const STALE_DAYS  = 1;
 
 // The GitHub API is unauthenticated here, which is 60 requests an hour per IP.
 // One admin opening the panel costs three, so this only bites if something goes
@@ -97,10 +103,16 @@ async function github(pathAndQuery) {
  *
  * Returns one of:
  *   { state: 'release', tag, url, sizeBytes, publishedAt }
- *   { state: 'none' }          no release yet, or the latest one has no .dmg
+ *   { state: 'none' }          no release has been published at all
+ *   { state: 'no-asset' }      a release exists but nobody attached a .dmg
  *   { state: 'unreachable' }   GitHub said no, or the network did
  *
- * "none" is a real answer and gets cached. "unreachable" is not, so it is not.
+ * "none" and "no-asset" are real answers and get cached. "unreachable" is not.
+ *
+ * The middle two used to be one state, which meant publishing a release and
+ * forgetting the DMG looked exactly like not having released yet. It is not the
+ * same thing: one is where the project is, the other is a mistake someone just
+ * made, and the panel has to say so.
  */
 async function latestReleaseDmg() {
   const hit = cache.get('release');
@@ -124,7 +136,7 @@ async function latestReleaseDmg() {
             sizeBytes: asset.size,
             publishedAt: release.published_at || asset.updated_at || null,
           }
-        : { state: 'none', why: `release ${release.tag_name || 'latest'} has no .dmg asset` };
+        : { state: 'no-asset', why: `release ${release.tag_name || 'latest'} has no .dmg asset` };
     }
   } catch {
     result = { state: 'unreachable', why: 'could not reach the GitHub API' };
@@ -148,13 +160,45 @@ async function newestCommitDate(path) {
   });
 }
 
+/**
+ * The SHA256 of what the download button will actually hand over, short form.
+ *
+ * This is the check that would have caught the stale DMG on day one: build a
+ * DMG, note its hash, open the panel, and see whether they match. Without it
+ * "the newest build" is a claim about dates rather than about bytes.
+ *
+ * Streamed and capped, so a large asset cannot pin the function's memory.
+ */
+async function shortSha256(url) {
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok || !res.body) return null;
+    const hash = crypto.createHash('sha256');
+    let bytes = 0;
+    for await (const chunk of res.body) {
+      bytes += chunk.length;
+      if (bytes > MAX_HASH_BYTES) return null;   // too big to be a DMG we built
+      hash.update(chunk);
+    }
+    return hash.digest('hex').slice(0, 12);
+  } catch {
+    return null;
+  }
+}
+
+/** Where this site is, as the request saw it. */
+function requestOrigin(req) {
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+  const host  = req.headers['x-forwarded-host'] || req.headers.host;
+  return host ? `${proto}://${host}` : '';
+}
+
 /** The Last-Modified header and size the site itself serves for the DMG. */
 async function servedDmg(req) {
   try {
-    const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
-    const host  = req.headers['x-forwarded-host'] || req.headers.host;
-    if (!host) return { lastModified: null, sizeBytes: null };
-    const res = await fetch(`${proto}://${host}${DMG_PATH}`, { method: 'HEAD' });
+    const origin = requestOrigin(req);
+    if (!origin) return { lastModified: null, sizeBytes: null };
+    const res = await fetch(`${origin}${DMG_PATH}`, { method: 'HEAD' });
     const size = Number(res.headers.get('content-length'));
     return {
       lastModified: res.headers.get('last-modified'),
@@ -199,6 +243,9 @@ module.exports = async function handler(req, res) {
     newestCommitDate(SOURCE_PATH),
   ]);
 
+  // A release always wins, including one older than the committed file. If a
+  // release exists, it is what shipped, and quietly handing over something else
+  // is how the panel served a nineteen day old build without anyone noticing.
   const serving = release.state === 'release'
     ? {
         source: 'release',
@@ -206,7 +253,7 @@ module.exports = async function handler(req, res) {
         url: release.url,
         sizeBytes: release.sizeBytes,
         builtAt: release.publishedAt,
-        note: null,
+        fallback: null,
       }
     : {
         source: 'committed',
@@ -214,19 +261,33 @@ module.exports = async function handler(req, res) {
         url: DMG_PATH,
         sizeBytes: served.sizeBytes,
         builtAt: dmgCommitAt,
-        note: `${release.why}, serving the committed DMG`,
+        // Once a release exists this branch is always a mistake, so it is
+        // reported as a problem rather than as a note.
+        fallback: {
+          reason: release.why,
+          // "nothing published yet" is a fact about the project. A release that
+          // exists but cannot be served is a mistake, and reads as one.
+          severity: release.state === 'none' ? 'no-release' : 'error',
+        },
       };
 
   let daysBehind = null;
   if (serving.builtAt && sourceAt) {
     daysBehind = Math.round(((Date.parse(sourceAt) - Date.parse(serving.builtAt)) / 86400000) * 10) / 10;
   }
+  const stale = daysBehind !== null && daysBehind > STALE_DAYS;
+
+  const absoluteURL = serving.url.startsWith('http')
+    ? serving.url
+    : `${requestOrigin(req)}${serving.url}`;
 
   return res.json({
     ...serving,
     sourceAt,
     daysBehind,
-    stale: daysBehind !== null && daysBehind > STALE_DAYS,
+    stale,
+    staleDays: stale ? Math.max(1, Math.round(daysBehind)) : 0,
+    sha256: await shortSha256(absoluteURL),
     // only meaningful for the committed file, see the note at the top
     lastModified: serving.source === 'committed' ? served.lastModified : null,
   });
