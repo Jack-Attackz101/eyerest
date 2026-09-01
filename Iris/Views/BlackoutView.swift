@@ -40,16 +40,18 @@ struct BlackoutView: View {
         ZStack {
             background
 
-            if model.showStretchCard, let card = model.stretchCard {
-                stretchCardView(card)
-                    .transition(.opacity)
-            } else {
-                countdownView
-                    .transition(.opacity)
-            }
+            // The countdown owns the centre of the screen and keeps the size and
+            // position it has always had. The stretch card is a second element
+            // lower down, not a replacement, so nothing has to shrink to make
+            // room for it.
+            countdownView
 
             VStack {
                 Spacer()
+                if model.showStretchCard, let card = model.stretchCard {
+                    stretchCardView(card)
+                        .padding(.bottom, 22)
+                }
                 Text("iris")
                     .font(.system(size: 11, weight: .light))
                     .foregroundStyle(model.theme.wordmarkText)
@@ -60,7 +62,6 @@ struct BlackoutView: View {
         .ignoresSafeArea()
         .opacity(model.visible ? 1 : 0)
         .animation(.easeInOut(duration: model.fadeDuration), value: model.visible)
-        .animation(.easeInOut(duration: 0.6), value: model.showStretchCard)
     }
 
     /// A two stop gradient and, on Forest, one radial glow. This runs full
@@ -101,9 +102,9 @@ struct BlackoutView: View {
                 .font(.system(size: 13, weight: .light))
                 .foregroundStyle(model.theme.tertiaryText)
 
-            // The breathing square carries its own words, so the posture prompt
-            // stands down while it is up rather than competing with it.
-            if !model.promptText.isEmpty && !model.showBreathing {
+            // The breathing square and the stretch card both carry their own
+            // words, so the posture prompt stands down rather than competing.
+            if !model.promptText.isEmpty && !model.showBreathing && !model.showStretchCard {
                 Text(model.promptText)
                     .font(.system(size: 17, weight: .medium))
                     .foregroundStyle(model.theme.secondaryText)
@@ -116,28 +117,38 @@ struct BlackoutView: View {
         }
     }
 
+    /// A distinct card, in the same rounded and outlined treatment the rest of
+    /// the app uses, with every colour taken from the theme so it holds up on
+    /// all five. It appears at full opacity as soon as the rest starts: on a
+    /// twenty second break there is no time for it to fade in politely.
     private func stretchCardView(_ card: StretchCard) -> some View {
-        VStack(spacing: 24) {
+        HStack(alignment: .top, spacing: 14) {
             Image(systemName: card.symbol)
-                .font(.system(size: 64, weight: .light))
-                .foregroundStyle(model.theme.primaryText.opacity(0.85))
+                .font(.system(size: 26, weight: .light))
+                .foregroundStyle(model.theme.primaryText.opacity(0.9))
+                .frame(width: 34)
 
-            Text(card.title)
-                .font(.system(size: 24, weight: .medium))
-                .foregroundStyle(model.theme.primaryText)
-
-            Text(card.instruction)
-                .font(.system(size: 17, weight: .light))
-                .foregroundStyle(model.theme.secondaryText)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 360)
-                .lineSpacing(4)
-
-            Text("15 seconds")
-                .font(.system(size: 13, weight: .light))
-                .foregroundStyle(model.theme.tertiaryText)
-                .padding(.top, 8)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(card.title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(model.theme.primaryText)
+                Text(card.instruction)
+                    .font(.system(size: 14, weight: .light))
+                    .foregroundStyle(model.theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(2)
+            }
         }
-        .padding(.horizontal, 40)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .frame(maxWidth: 420, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(model.theme.cardSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(model.theme.ringTrack, lineWidth: 1)
+        )
     }
 }

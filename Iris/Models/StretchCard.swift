@@ -2,7 +2,8 @@
 //  StretchCard.swift
 //  Iris
 //
-//  Rotating 15-second guided stretch cards shown at the start of each rest.
+//  Rotating guided stretch cards, shown alongside the countdown for the whole
+//  rest rather than in place of it.
 //
 
 import Foundation
@@ -35,7 +36,7 @@ extension StretchCard {
               instruction: "Twist gently to the right, hold 8 seconds. Then to the left.",
               area: .back),
         .init(symbol: "hands.and.sparkles", title: "Wrist Circles",
-              instruction: "Roll both wrists slowly in full circles — 10 rotations each direction.",
+              instruction: "Roll both wrists slowly in full circles, 10 rotations each direction.",
               area: .wrists),
         .init(symbol: "hand.raised.circle", title: "Prayer Stretch",
               instruction: "Press palms together at chest height and gently push downward. Hold 10 seconds.",
