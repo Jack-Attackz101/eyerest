@@ -157,6 +157,50 @@
     .b-progress li { border-top: none; border-left: 1px solid rgba(28,28,28,0.10); padding: 0 0 0 16px; }
     .b-progress li:first-child { border-left: none; padding-left: 0; }
 
+
+    /* ---------- pricing ---------- */
+    /* Three cards, and the middle one is the answer. Twelve dollars once
+       against three a month makes the maths obvious after four months, and the
+       whole positioning is that you own it, so the one time price is the one
+       that gets the weight: brand green border, a lift, and the only filled
+       button of the three. */
+    .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: center; }
+    .price-card { background: var(--card); border: 2px solid var(--ink); border-radius: 8px;
+      box-shadow: 4px 4px 0 var(--ink); padding: 28px 24px; display: flex; flex-direction: column; }
+    .price-card.featured {
+      border-color: var(--green); box-shadow: 5px 5px 0 var(--green);
+      padding: 36px 26px; position: relative;
+    }
+    .price-flag { position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+      background: var(--green); color: #fff; font-family: var(--mono); font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 12px; border-radius: 4px;
+      white-space: nowrap; }
+    .price-name { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--green); }
+    .price-amount { font-family: var(--display); font-size: 54px; line-height: 1;
+      letter-spacing: 0.01em; margin-top: 10px; }
+    .price-card.featured .price-amount { font-size: 66px; }
+    .price-term { font-family: var(--sans); font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .price-who { font-family: var(--sans); font-size: 14px; color: var(--ink); margin-top: 14px;
+      line-height: 1.5; min-height: 42px; }
+    .price-list { list-style: none; margin: 16px 0 22px; }
+    .price-list li { font-family: var(--sans); font-size: 13px; color: var(--muted);
+      line-height: 1.5; padding: 6px 0 6px 20px; position: relative; }
+    .price-list li::before { content: ""; position: absolute; left: 2px; top: 12px;
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green); opacity: 0.55; }
+    .price-list li.lead { color: var(--ink); font-weight: 600; }
+    .price-list li.lead::before { opacity: 1; }
+    .price-cta { margin-top: auto; display: block; text-align: center; border-radius: 4px;
+      font-family: var(--sans); font-weight: 600; font-size: 14px; padding: 12px 18px;
+      border: 2px solid var(--ink); transition: transform 0.1s, box-shadow 0.1s; }
+    .price-cta.quiet { background: transparent; color: var(--ink); }
+    .price-cta.quiet:hover { box-shadow: 3px 3px 0 var(--ink); transform: translate(-1px, -1px); }
+    .price-cta.solid { background: var(--ink); color: #fff; border-color: var(--ink);
+      box-shadow: 3px 3px 0 var(--green); }
+    .price-cta.solid:hover { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--green); }
+    .price-foot { font-family: var(--sans); font-size: 14px; color: var(--muted);
+      text-align: center; margin-top: 26px; }
+
     /* ---------- stats ---------- */
     .stats { background: var(--ink); padding: 80px 32px; }
     .stats-inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 60px; }
@@ -274,6 +318,11 @@
       .hero-waitlist .wl-submit { width: 100%; }
       .feat-row { grid-template-columns: 1fr; gap: 28px; }
       .bento { grid-template-columns: 1fr; gap: 16px; }
+      /* stacked, all three the same width, and the middle one drops its extra
+         size so it does not read as a different kind of card */
+      .price-grid { grid-template-columns: 1fr; gap: 26px; }
+      .price-card.featured { padding: 32px 24px; }
+      .price-card.featured .price-amount { font-size: 54px; }
       .bento-cell { grid-column: auto !important; }
       .bento-photo img { min-height: 0; aspect-ratio: 4/3; }
       .b-progress ul { grid-template-columns: 1fr; gap: 0; }
@@ -457,6 +506,68 @@
     </div>
   </section>
 
+  <!-- pricing -->
+  <section class="pad" id="pricing">
+    <div class="wrap">
+      <h2 class="display sec-title reveal">Pricing.</h2>
+      <div class="price-grid reveal">
+
+        <div class="price-card">
+          <div class="price-name">Free</div>
+          <div class="price-amount">$0</div>
+          <div class="price-term">forever</div>
+          <p class="price-who">A complete break app. Install it and never pay anything.</p>
+          <ul class="price-list">
+            <li>20-20-20 breaks across every display</li>
+            <li>Waits for a natural gap so it never cuts you off mid-sentence</li>
+            <li>Blink reminders</li>
+            <li>Schedule blocks and quiet hours</li>
+            <li>Pauses during calls</li>
+            <li>Launch at login</li>
+          </ul>
+          <a class="price-cta quiet" id="cta-free" href="#waitlist">Join the waitlist</a>
+        </div>
+
+        <div class="price-card featured">
+          <div class="price-flag">most people pick this</div>
+          <div class="price-name">Iris</div>
+          <div class="price-amount">$12</div>
+          <div class="price-term">one time, yours to keep</div>
+          <p class="price-who">Everything Iris does, bought once, on every Mac you own.</p>
+          <ul class="price-list">
+            <li class="lead">Everything in Free, plus the focus blocker. Block distracting apps and sites while you work</li>
+            <li>Posture detection using the camera, on device</li>
+            <li>Box breathing and five break themes</li>
+            <li>Guided stretch cards during breaks</li>
+            <li>Water, standing, wrist relief and scroll fatigue nudges</li>
+            <li>Stats, streaks and a weekly report</li>
+            <li>Morning challenge, wind down, desk reset</li>
+          </ul>
+          <a class="price-cta solid" id="cta-once" href="#waitlist">Join the waitlist</a>
+        </div>
+
+        <div class="price-card">
+          <div class="price-name">Iris monthly</div>
+          <div class="price-amount">$3</div>
+          <div class="price-term">a month</div>
+          <p class="price-who">The same thing, monthly, if you would rather not pay up front.</p>
+          <ul class="price-list">
+            <li class="lead">Everything in Free, plus the focus blocker. Block distracting apps and sites while you work</li>
+            <li>Posture detection using the camera, on device</li>
+            <li>Box breathing and five break themes</li>
+            <li>Guided stretch cards during breaks</li>
+            <li>Water, standing, wrist relief and scroll fatigue nudges</li>
+            <li>Stats, streaks and a weekly report</li>
+            <li>Morning challenge, wind down, desk reset</li>
+          </ul>
+          <a class="price-cta quiet" id="cta-monthly" href="#waitlist">Join the waitlist</a>
+        </div>
+
+      </div>
+      <p class="price-foot reveal">The free version stays free and does not expire. No trial, no countdown, nothing switches off.</p>
+    </div>
+  </section>
+
   <!-- waitlist -->
   <section class="pad waitlist-section" id="waitlist">
     <div class="wrap">
@@ -527,6 +638,14 @@
 
         <details class="q-item">
           <summary class="q-sum">
+            <h3 class="display">Does the free version expire?</h3>
+            <span class="q-mark" aria-hidden="true"></span>
+          </summary>
+          <p class="q-a">no. the free version is a whole break app and it stays that way: breaks on every display, waiting for a natural gap, blink reminders, schedule blocks, quiet hours. there is no trial clock and nothing switches itself off after a while. paying gets you the focus blocker and the body features, and if you never pay, nothing you were using stops working.</p>
+        </details>
+
+        <details class="q-item">
+          <summary class="q-sum">
             <h3 class="display">When can I get it?</h3>
             <span class="q-mark" aria-hidden="true"></span>
           </summary>
@@ -551,6 +670,19 @@
   <div id="admin-panel"></div>
 
   <script>
+    // Where each pricing button goes. All three point at the waitlist while
+    // there is no checkout: the app is not on sale until the download exists.
+    // Swapping in Stripe is one line each, and nothing in the markup changes.
+    const CHECKOUT = {
+      free:    '#waitlist',
+      once:    '#waitlist',
+      monthly: '#waitlist',
+    };
+    for (const [tier, href] of Object.entries(CHECKOUT)) {
+      const link = document.getElementById('cta-' + tier);
+      if (link) link.href = href;
+    }
+
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // hero staged fade-in
