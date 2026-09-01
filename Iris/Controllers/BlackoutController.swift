@@ -58,18 +58,26 @@ final class BlackoutController {
         }
     }
 
-    /// Feature 1: show a 15-second stretch card at the start of rest, then switch to countdown.
+    /// The stretch card, shown beside the countdown for the whole rest rather
+    /// than taking the screen for the first fifteen seconds. It is chosen once
+    /// per break and rotates, weighted toward the problem area the user picked.
+    ///
+    /// Box breathing wins when both are on. Two guided exercises at once is
+    /// noise, and the breathing square is the more demanding of the two.
     private func prepareStretchCard() {
         model.showStretchCard = false
         model.stretchCard = nil
-        guard engine.stretchCardsEnabled else { return }
+        guard engine.stretchCardsEnabled, !boxBreathingWillRun else { return }
         model.stretchCard = StretchCard.consume(for: engine.problemArea,
                                                 using: UserDefaults.standard)
+        // No delay and no fade: on a twenty second rest it has to be readable
+        // in the first second.
         model.showStretchCard = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) { [weak self] in
-            guard let self, self.isActive else { return }
-            self.model.showStretchCard = false
-        }
+    }
+
+    /// Whether box breathing is going to take this break.
+    private var boxBreathingWillRun: Bool {
+        engine.boxBreathingEnabled && BoxBreathing.fits(restDuration: engine.restDuration)
     }
 
     /// Pick this session's posture prompt and reveal it 2s in (fade over 0.5s).
@@ -80,9 +88,10 @@ final class BlackoutController {
             return
         }
         model.promptText = engine.consumePosturePrompt()
-        // If stretch cards are enabled, posture prompt shows 17s in (2s after card ends).
-        let delay: TimeInterval = engine.stretchCardsEnabled ? 17.0 : 2.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+        // The stretch card gives a fuller instruction than the prompt does, so
+        // when one is up the prompt stays out of the way.
+        guard !model.showStretchCard else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             guard let self, self.isActive else { return }
             self.model.showPrompt = true
         }
@@ -102,14 +111,11 @@ final class BlackoutController {
         model.breathElapsed = 0
         model.showBreathing = false
 
-        guard engine.boxBreathingEnabled, BoxBreathing.fits(restDuration: engine.restDuration) else { return }
-        // Wait out the stretch card if there is one, then only start if a full
-        // lap still fits in what is left of the rest.
-        let delay: TimeInterval = engine.stretchCardsEnabled ? 15.0 : 0
-        let remainingAfterDelay = Double(engine.restDuration) - delay
-        guard remainingAfterDelay >= BoxBreathing.cycleSeconds else { return }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+        guard boxBreathingWillRun else { return }
+        // It starts with the rest now. It used to wait fifteen seconds for the
+        // stretch card to finish taking over the screen, which no longer
+        // happens: the two are mutually exclusive.
+        DispatchQueue.main.async { [weak self] in
             guard let self, self.isActive else { return }
             self.model.showBreathing = true
             let started = Date()

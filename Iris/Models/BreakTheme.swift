@@ -111,6 +111,14 @@ enum BreakTheme: String, CaseIterable, Identifiable, Codable {
         isLight ? Color(hex: 0x1C1C1E).opacity(0.18) : .white.opacity(0.15)
     }
 
+    /// A raised surface on top of the background, for the stretch card. A tint
+    /// of the text colour rather than a fixed grey, so it lifts off Paper and
+    /// off Ink by the same amount and never turns into a light box on a dark
+    /// theme.
+    var cardSurface: Color {
+        (isLight ? Color(hex: 0x1C1C1E) : Color.white).opacity(0.07)
+    }
+
     /// Depleting ring and the box breathing square.
     var ringTrack: Color {
         isLight ? Color(hex: 0x1C1C1E).opacity(0.12) : .white.opacity(0.15)
